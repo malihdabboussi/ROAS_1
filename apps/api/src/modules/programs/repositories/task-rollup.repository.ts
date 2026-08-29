@@ -98,7 +98,7 @@ export class TaskRollupRepository {
         'id, title, status, priority, start_date, due_date, assignee_type, assignee_id, assignees, space_id, description, notes, source, linked_mission_id, custom_data, org_id, user_id, sort_order, created_at, updated_at, suggestion_state, parent_item_id',
       )
       .in('space_id', input.spaceIds)
-      .is('parent_item_id', null)
+      .or('parent_item_id.is.null,custom_data->>entry_type.eq.follow_up')
       .not('status', 'in', '(done,archived)')
 
     if (input.orgId) query = query.eq('org_id', input.orgId)

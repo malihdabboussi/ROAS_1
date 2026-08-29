@@ -18,6 +18,7 @@ import {
 } from '@/features/spaces/types/space-schema'
 import { buildSpaceItemHref } from '@/lib/spaces/space-item-href'
 import type { TaskRollupItem } from '@/lib/tasks'
+import { taskNeedsReview, type TaskReviewDecision } from '@/lib/tasks/task-lifecycle-review'
 
 const ROLLUP_FIELDS: FieldDef[] = [
   ...DEFAULT_SPACE_SCHEMA.fields,
@@ -46,88 +47,134 @@ export function AllTasksNativeList({
   onOpenItem,
   onAddItem,
   persistItem,
+  onReviewItem,
 }: {
   items: TaskRollupItem[]
   reload: () => Promise<void>
   onOpenItem?: (item: TaskRollupItem) => void
   onAddItem?: (title: string) => Promise<void>
   persistItem?: (item: TaskRollupItem, payload: Partial<SpaceItem>) => Promise<void>
+  onReviewItem?: (item: TaskRollupItem, decision: TaskReviewDecision) => Promise<void>
 }) {
   const router = useRouter()
   const roster = useSpacesStore((state) => state.roster)
   const currentUserId = useSpacesStore((state) => state.currentUserId)
   const loadRoster = useSpacesStore((state) => state.loadRoster)
   const [activeView, setActiveView] = useState<ViewDef>(DEFAULT_ROLLUP_VIEW)
+  const [reviewingId, setReviewingId] = useState<string | null>(null)
 
   useEffect(() => {
     void loadRoster()
   }, [loadRoster])
 
   const spaceItems = useMemo(() => items.map(toSpaceItem), [items])
+  const reviewItems = useMemo(() => items.filter(taskNeedsReview), [items])
   const visibleFields = useMemo(() => {
     const visibleIds = new Set(activeView.visible_fields ?? [])
     return ROLLUP_FIELDS.filter((field) => visibleIds.has(field.id))
   }, [activeView.visible_fields])
 
   return (
-    <ListView
-      items={spaceItems}
-      visibleFields={visibleFields}
-      roster={roster}
-      currentUserId={currentUserId}
-      activeView={activeView}
-      allFields={ROLLUP_FIELDS}
-      onViewChange={async (patch) => setActiveView((current) => ({ ...current, ...patch }))}
-      onOpenDetail={(item) => {
-        if (onOpenItem) {
-          const row = items.find((entry) => entry.id === item.id)
-          if (row) onOpenItem(row)
-          return
-        }
-        router.push(buildSpaceItemHref(item.space_id, item.id))
-      }}
-      onUpdateItem={async (itemId, payload) => {
-        const item = spaceItems.find((row) => row.id === itemId)
-        const source = items.find((row) => row.id === itemId)
-        if (!item || !source) return
-        if (persistItem) await persistItem(source, payload)
-        else await updateSpaceItem(item.space_id, item.id, payload)
-        await reload()
-      }}
-      onPushToAgent={async (itemId, options) => {
-        const item = spaceItems.find((row) => row.id === itemId)
-        if (!item) return
-        await pushItemToAgent(item.space_id, item.id, options)
-        await reload()
-      }}
-      onDeleteItem={async (itemId) => {
-        const item = spaceItems.find((row) => row.id === itemId)
-        if (!item) return
-        await deleteSpaceItem(item.space_id, item.id)
-        await reload()
-      }}
-      onAddItemInGroup={async (title) => {
-        if (onAddItem) {
-          await onAddItem(title)
+    <div className="gap-spacing-3 flex flex-col">
+      {onReviewItem && reviewItems.length > 0 ? (
+        <div className="bg-surface-subtle border-border rounded-spacing-3 p-spacing-3 gap-spacing-3 flex flex-col border">
+          <p className="body-3 text-foreground font-semibold">Are these still open?</p>
+          {reviewItems.map((item) => (
+            <div
+              key={item.id}
+              className="border-border pb-spacing-3 gap-spacing-2 flex flex-wrap items-center justify-between border-b last:border-b-0 last:pb-0"
+            >
+              <p className="body-4 text-foreground font-medium">{item.title}</p>
+              <div className="gap-spacing-2 flex items-center">
+                {(['open', 'done', 'dismissed'] as const).map((decision) => (
+                  <button
+                    key={decision}
+                    type="button"
+                    className={
+                      decision === 'open'
+                        ? 'button-compact button-glass-primary'
+                        : decision === 'done'
+                          ? 'button-compact button-glass-neutral'
+                          : 'button-compact button-ghost'
+                    }
+                    disabled={Boolean(reviewingId)}
+                    onClick={async () => {
+                      setReviewingId(item.id)
+                      try {
+                        await onReviewItem(item, decision)
+                        await reload()
+                      } finally {
+                        setReviewingId(null)
+                      }
+                    }}
+                  >
+                    {decision === 'open' ? 'Still open' : decision === 'done' ? 'Done' : 'Dismiss'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+      <ListView
+        items={spaceItems}
+        visibleFields={visibleFields}
+        roster={roster}
+        currentUserId={currentUserId}
+        activeView={activeView}
+        allFields={ROLLUP_FIELDS}
+        onViewChange={async (patch) => setActiveView((current) => ({ ...current, ...patch }))}
+        onOpenDetail={(item) => {
+          if (onOpenItem) {
+            const row = items.find((entry) => entry.id === item.id)
+            if (row) onOpenItem(row)
+            return
+          }
+          router.push(buildSpaceItemHref(item.space_id, item.id))
+        }}
+        onUpdateItem={async (itemId, payload) => {
+          const item = spaceItems.find((row) => row.id === itemId)
+          const source = items.find((row) => row.id === itemId)
+          if (!item || !source) return
+          if (persistItem) await persistItem(source, payload)
+          else await updateSpaceItem(item.space_id, item.id, payload)
           await reload()
-          return
+        }}
+        onPushToAgent={async (itemId, options) => {
+          const item = spaceItems.find((row) => row.id === itemId)
+          if (!item) return
+          await pushItemToAgent(item.space_id, item.id, options)
+          await reload()
+        }}
+        onDeleteItem={async (itemId) => {
+          const item = spaceItems.find((row) => row.id === itemId)
+          if (!item) return
+          await deleteSpaceItem(item.space_id, item.id)
+          await reload()
+        }}
+        onAddItemInGroup={async (title) => {
+          if (onAddItem) {
+            await onAddItem(title)
+            await reload()
+            return
+          }
+          throw new Error('Choose a Campaign Space before adding a task.')
+        }}
+        quickAddOnSubmitItem={
+          onAddItem
+            ? async (title) => {
+                await onAddItem(title)
+                await reload()
+              }
+            : undefined
         }
-        throw new Error('Choose a Campaign Space before adding a task.')
-      }}
-      quickAddOnSubmitItem={
-        onAddItem
-          ? async (title) => {
-              await onAddItem(title)
-              await reload()
-            }
-          : undefined
-      }
-      quickAddInactiveAction={
-        onAddItem
-          ? undefined
-          : () => toast.info('Open a Campaign Space to add a task in the correct client context.')
-      }
-    />
+        quickAddInactiveAction={
+          onAddItem
+            ? undefined
+            : () => toast.info('Open a Campaign Space to add a task in the correct client context.')
+        }
+      />
+    </div>
   )
 }
 

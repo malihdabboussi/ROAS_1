@@ -9,6 +9,7 @@ describe('TaskRollupRepository', () => {
       select: vi.fn(() => query),
       in: vi.fn(() => query),
       is: vi.fn(() => query),
+      or: vi.fn(() => query),
       not: vi.fn(() => query),
       eq: vi.fn(() => query),
       contains: vi.fn(() => {
@@ -36,6 +37,9 @@ describe('TaskRollupRepository', () => {
     })
 
     expect(query.contains).toHaveBeenCalledWith('assignees', '[{"type":"human","id":"user-1"}]')
+    expect(query.or).toHaveBeenCalledWith(
+      'parent_item_id.is.null,custom_data->>entry_type.eq.follow_up',
+    )
     expect(query.limit).toHaveBeenCalledWith(5)
     expect(calls).toEqual(['contains', 'order', 'limit'])
   })

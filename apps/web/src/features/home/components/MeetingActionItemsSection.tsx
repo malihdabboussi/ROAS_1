@@ -10,6 +10,7 @@ import {
 import { meetingActionToTaskRollupItem } from '@/features/home/lib/meeting-action-to-task-rollup'
 import {
   createMeetingAction,
+  reviewMeetingAction,
   updateMeetingActionStatus,
   type MeetingAction,
 } from '@/features/home/services/meeting-workspace-api'
@@ -43,6 +44,7 @@ export function MeetingActionItemsSection({
   onReload: () => Promise<void>
 }) {
   const [saving, setSaving] = useState(false)
+  const [reviewingId, setReviewingId] = useState<string | null>(null)
   const mappingIndex = useSpaceMappingIndex(actions.length > 0)
   const mappingEntry = mappingIndex?.get(spaceId)
   const spaceTitle = mappingEntry?.spaceTitle ?? ''
@@ -55,6 +57,13 @@ export function MeetingActionItemsSection({
         meetingActionToTaskRollupItem(action, { spaceId, spaceTitle, campaignName }),
       ),
     [actions, campaignName, spaceId, spaceTitle],
+  )
+  const reviewActions = useMemo(
+    () =>
+      actions.filter(
+        (action) => String(action.action_lifecycle?.review_state ?? '') === 'needs_review',
+      ),
+    [actions],
   )
 
   const submit = async (title: string) => {
@@ -104,9 +113,69 @@ export function MeetingActionItemsSection({
     }
   }
 
+  const review = async (action: MeetingAction, decision: 'open' | 'done' | 'dismissed') => {
+    if (reviewingId) return
+    setReviewingId(action.id)
+    try {
+      await reviewMeetingAction(spaceId, meetingItemId, action.id, decision)
+      await onReload()
+      toast.success(HOME_TOAST_SUCCESS.MEETING_ACTION_REVIEWED.userMessage)
+    } catch {
+      toast.error(HOME_TOAST_ERRORS.MEETING_ACTION_UPDATE_FAILED.userMessage)
+    } finally {
+      setReviewingId(null)
+    }
+  }
+
   return (
     <section className="gap-spacing-3 flex w-full min-w-0 flex-col">
       <h2 className="body-3 text-foreground font-semibold">Action items ({actions.length})</h2>
+      {reviewActions.length > 0 ? (
+        <div className="bg-surface-subtle border-border rounded-spacing-3 p-spacing-3 gap-spacing-3 flex flex-col border">
+          <p className="body-3 text-foreground font-semibold">Are these still open?</p>
+          {reviewActions.map((action) => (
+            <div
+              key={action.id}
+              className="border-border pb-spacing-3 gap-spacing-2 flex flex-wrap items-center justify-between border-b last:border-b-0 last:pb-0"
+            >
+              <div className="min-w-0">
+                <p className="body-4 text-foreground font-medium">{action.title}</p>
+                <p className="typo-caption text-muted-foreground">
+                  {action.action_lifecycle?.review_reason === 'overdue'
+                    ? 'This action item is overdue.'
+                    : 'This action item has not changed in 30 days.'}
+                </p>
+              </div>
+              <div className="gap-spacing-2 flex items-center">
+                <button
+                  type="button"
+                  className="button-compact button-glass-primary"
+                  disabled={Boolean(reviewingId)}
+                  onClick={() => void review(action, 'open')}
+                >
+                  Still open
+                </button>
+                <button
+                  type="button"
+                  className="button-compact button-glass-neutral"
+                  disabled={Boolean(reviewingId)}
+                  onClick={() => void review(action, 'done')}
+                >
+                  Done
+                </button>
+                <button
+                  type="button"
+                  className="button-compact button-ghost"
+                  disabled={Boolean(reviewingId)}
+                  onClick={() => void review(action, 'dismissed')}
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
       {/* The rollup list's columns can outgrow the dialog width — scroll instead of clipping. */}
       <div className="min-w-0 overflow-x-auto">
         <AllTasksNativeList

@@ -60,6 +60,7 @@ export type MeetingAction = {
   canonical_assignee_name: string | null
   canonical_assignee_email: string | null
   evidence: Record<string, unknown>
+  action_lifecycle?: Record<string, unknown> | null
   created_at?: string | null
   updated_at?: string | null
 }
@@ -288,6 +289,17 @@ export function updateMeetingActionStatus(
 ) {
   return backendPatch<MeetingAction>(`${path(spaceId, meetingItemId)}/actions/${actionId}`, {
     status,
+  })
+}
+
+export function reviewMeetingAction(
+  spaceId: string,
+  meetingItemId: string,
+  actionId: string,
+  decision: 'open' | 'done' | 'dismissed',
+) {
+  return backendPatch<MeetingAction>(`${path(spaceId, meetingItemId)}/actions/${actionId}`, {
+    review_decision: decision,
   })
 }
 

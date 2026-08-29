@@ -15,4 +15,13 @@ describe('Vercel cron isolation', () => {
       '1-4,6-9,11-14,16-19,21-24,26-29,31-34,36-39,41-44,46-49,51-54,56-59 * * * *',
     )
   })
+
+  it('runs canonical meeting action reconciliation hourly', () => {
+    const config = JSON.parse(readFileSync(resolve(process.cwd(), 'vercel.json'), 'utf8')) as {
+      crons: CronEntry[]
+    }
+    expect(
+      config.crons.find((entry) => entry.path === '/cron/meeting-action-reconciliation')?.schedule,
+    ).toBe('0 * * * *')
+  })
 })

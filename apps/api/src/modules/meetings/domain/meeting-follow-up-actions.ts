@@ -44,6 +44,12 @@ export function mapFollowUpSpaceItemToMeetingAction(
       ? (custom.completion_origin as Record<string, unknown>)
       : null
   const dismissed = Boolean(firstText(custom.dismissed_at))
+  const actionLifecycle =
+    custom.action_lifecycle &&
+    typeof custom.action_lifecycle === 'object' &&
+    !Array.isArray(custom.action_lifecycle)
+      ? (custom.action_lifecycle as Record<string, unknown>)
+      : null
 
   return {
     id: String(item.id),
@@ -75,6 +81,7 @@ export function mapFollowUpSpaceItemToMeetingAction(
       ...(Object.keys(providerEvidence).length > 0 ? { provider_evidence: providerEvidence } : {}),
       ...(completionOrigin ? { completion_origin: completionOrigin } : {}),
     },
+    action_lifecycle: actionLifecycle,
     created_at: item.created_at ?? null,
     updated_at: item.updated_at ?? null,
   }

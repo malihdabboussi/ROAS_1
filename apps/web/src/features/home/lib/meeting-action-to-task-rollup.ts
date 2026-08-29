@@ -66,6 +66,9 @@ export function meetingActionToTaskRollupItem(
     notes: action.notes ?? null,
     source: sourceOf(action),
     linked_mission_id: action.linked_mission_id ?? null,
+    custom_data: action.action_lifecycle
+      ? { action_lifecycle: action.action_lifecycle }
+      : undefined,
     org_id: action.org_id ?? undefined,
     user_id: action.user_id ?? undefined,
     sort_order: action.sort_order ?? 0,
