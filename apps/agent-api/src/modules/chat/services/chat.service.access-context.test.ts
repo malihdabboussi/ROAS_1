@@ -1083,6 +1083,23 @@ describe('ChatService prewarm context', () => {
     )
   })
 
+  it('skips broad Brain preload before campaign-status scope validation', async () => {
+    const harness = makePrewarmHarness()
+
+    await harness.service.processMessage({
+      supabase: harness.supabase as any,
+      conversationId: 'conversation-1',
+      content: "What's the status of the live campaign?",
+      userId: 'user-1',
+      accessToken: 'token',
+      orgId: 'org-1',
+      source: 'studio',
+      send: vi.fn(async () => undefined),
+    })
+
+    expect(harness.brainContext.buildFullContext).not.toHaveBeenCalled()
+  })
+
   it('honors the live request model even when stable prewarm data is reused', async () => {
     const harness = makePrewarmHarness()
     const requestModel = 'openai-codex/gpt-5.5'

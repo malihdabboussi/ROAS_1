@@ -239,3 +239,13 @@ Why: Signed-in production QA found that a contextual prioritization follow-up re
 Impact: Pixel can now work through the day conversationally: it preserves the fast, owner-scoped retrieval path and gives a reasoned first step without Brain fan-out, invented tasks, or organization-wide widening.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, focused tests, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-08-29 13:08] - [FIX]
+
+What: Skipped broad Brain preload for campaign-status requests before deterministic campaign scope validation and canonical campaign evidence retrieval.
+
+Why: Signed-in production QA showed that “What's the status of the live campaign?” started a broad Brain read and produced no answer after 80 seconds instead of immediately requiring a campaign selection.
+
+Impact: Missing campaign scope now fails closed without data leakage or slow semantic retrieval. A resolved campaign still cross-references its live dashboard, Campaign Brain, and open tasks through the explicit campaign-intelligence route.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts`, `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`
