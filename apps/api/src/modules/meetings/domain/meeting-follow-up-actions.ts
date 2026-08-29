@@ -50,6 +50,12 @@ export function mapFollowUpSpaceItemToMeetingAction(
     !Array.isArray(custom.action_lifecycle)
       ? (custom.action_lifecycle as Record<string, unknown>)
       : null
+  const actionProvenance =
+    custom.action_provenance &&
+    typeof custom.action_provenance === 'object' &&
+    !Array.isArray(custom.action_provenance)
+      ? (custom.action_provenance as Record<string, unknown>)
+      : null
 
   return {
     id: String(item.id),
@@ -79,6 +85,7 @@ export function mapFollowUpSpaceItemToMeetingAction(
       space_item_id: String(item.id),
       entry_type: 'follow_up',
       ...(Object.keys(providerEvidence).length > 0 ? { provider_evidence: providerEvidence } : {}),
+      ...(actionProvenance ? { action_provenance: actionProvenance } : {}),
       ...(completionOrigin ? { completion_origin: completionOrigin } : {}),
     },
     action_lifecycle: actionLifecycle,

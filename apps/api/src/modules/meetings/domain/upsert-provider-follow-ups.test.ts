@@ -49,6 +49,11 @@ describe('planProviderFollowUpUpserts', () => {
           suggested_assignee_email: 'nate@roas.co',
           canonical_assignee_id: 'user-1',
           provider_evidence: expect.objectContaining({ completed_in_provider: false }),
+          action_provenance: expect.objectContaining({
+            source_kind: 'meeting_summary',
+            source_id: 'fathom:1:action:0',
+            meeting_item_id: 'meeting-1',
+          }),
         }),
       }),
     ])

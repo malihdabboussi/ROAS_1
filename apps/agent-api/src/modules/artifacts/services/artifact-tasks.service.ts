@@ -371,6 +371,20 @@ export class ArtifactTasksService {
       org_id: resolveScopedOrgId({ orgId }),
       source: 'agent',
     } as Record<string, unknown>
+    const slackProvenance = this.taskActivity.resolveSlackTaskProvenance(
+      target,
+      normalizedInput.title,
+      sessionKey,
+    )
+    if (slackProvenance) {
+      const customData =
+        payload.custom_data &&
+        typeof payload.custom_data === 'object' &&
+        !Array.isArray(payload.custom_data)
+          ? (payload.custom_data as Record<string, unknown>)
+          : {}
+      payload.custom_data = { ...customData, action_provenance: slackProvenance }
+    }
     if (payload.status === undefined) {
       const defaultStatus = this.taskSchema.defaultNewTaskStatusId(statusField)
       if (defaultStatus) payload.status = defaultStatus

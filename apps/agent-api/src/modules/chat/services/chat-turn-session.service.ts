@@ -2,7 +2,10 @@ import { Injectable, type Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ChatScopeKind } from '@vibey/api-shared'
 import { isChatTimingLogsEnabled } from '../../../lib/debug/chat-timing-logs'
-import { RequestContextService } from '../../shared/services/request-context.service'
+import {
+  RequestContextService,
+  type ChannelSourceContext,
+} from '../../shared/services/request-context.service'
 import { ChatAccessTokenService } from './chat-access-token.service'
 import type { ChatModelSettings } from './chat-model-input.service'
 import {
@@ -46,6 +49,7 @@ interface ChannelUser {
   is_connection_owner?: boolean
   personal_brain_access?: boolean
   organization_wide_data_access?: boolean
+  source_context?: ChannelSourceContext
 }
 
 interface MessageScope {
@@ -288,8 +292,8 @@ export class ChatTurnSessionService {
             relationship_kind: state.channelUser.relationship_kind,
             is_connection_owner: state.channelUser.is_connection_owner,
             personal_brain_access: state.channelUser.personal_brain_access,
-            organization_wide_data_access:
-              state.channelUser.organization_wide_data_access,
+            organization_wide_data_access: state.channelUser.organization_wide_data_access,
+            source_context: state.channelUser.source_context,
           }
         : null,
       state.messageScope.space_id,

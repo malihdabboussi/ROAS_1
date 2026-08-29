@@ -37,6 +37,14 @@ function normalizeScopeId(value: unknown): string | null {
  * Entries auto-expire after 5 minutes as a safety net.
  */
 
+export type ChannelSourceContext = {
+  slack_team_id?: string | null
+  slack_channel_id?: string | null
+  slack_thread_ts?: string | null
+  slack_message_ts?: string | null
+  source_excerpt?: string | null
+}
+
 export interface ChannelMemberContext {
   id?: string
   platform_id: string
@@ -47,6 +55,7 @@ export interface ChannelMemberContext {
   is_connection_owner?: boolean
   personal_brain_access?: boolean
   organization_wide_data_access?: boolean
+  source_context?: ChannelSourceContext
 }
 
 export interface RequestUploadAttachment {

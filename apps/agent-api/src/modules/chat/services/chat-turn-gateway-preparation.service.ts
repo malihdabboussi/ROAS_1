@@ -13,6 +13,7 @@ import { ChatMessageEnrichmentService } from './chat-message-enrichment.service'
 import { ChatModelInputService, type ChatModelSettings } from './chat-model-input.service'
 import { shouldSkipBrainContextForOperationalAgenda } from './chat-operational-agenda.util'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
+import type { ChannelUser } from './chat-process-message.types'
 import { ChatProfileContextService } from './chat-profile-context.service'
 import { ChatSessionHistoryService } from './chat-session-history.service'
 import { ChatSetupEventsService } from './chat-setup-events.service'
@@ -52,17 +53,6 @@ interface MessageReference {
   type?: string
   campaign_id?: string
   brain_id?: string
-}
-
-interface ChannelUser {
-  platform_id: string
-  username?: string
-  display_name: string
-  language?: string
-  relationship_kind?: 'internal'
-  is_connection_owner?: boolean
-  personal_brain_access?: boolean
-  organization_wide_data_access?: boolean
 }
 
 type RunPlatformTool = <T>(
