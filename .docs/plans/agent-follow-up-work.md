@@ -40187,3 +40187,15 @@ Evidence: `apps/agent-api/src/modules/chat/services/chat-stream-execution.servic
 Needed work: Extract Auto operational/campaign route orchestration and its fixtures into focused collaborators and test modules while preserving generation-stage recovery, structured tool failures, and deterministic direct-output behavior.
 
 Reason not done now: The requested user-facing regression is isolated and within the hard limit; decomposing the mature recovery and route harness would materially widen this release.
+
+## 2026-08-29 - [ARCH] Campaign preflight touched near-limit chat context coverage
+
+Status: Open
+
+Found while: Preventing broad Brain preload before campaign-status scope validation.
+
+Evidence: `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts` is 577 LOC against the 600-line service hard limit. `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts` is 1,463 LOC and remains above the test-file limit; its decomposition is already tracked elsewhere in this log.
+
+Needed work: Extract quick-route context policy from gateway preparation and split access/context cases by prewarm, attachment, and retrieval policy while retaining the shared harness.
+
+Reason not done now: The production latency and fail-closed regression is fixed with a small policy predicate and focused test; restructuring the full context harness would widen this release.

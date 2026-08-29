@@ -6,6 +6,7 @@ import { BrainContextService } from '../../brain/services/brain-context.service'
 import type { BrainRetrievalReceipt } from '../../brain/services/brain-retrieval-receipt'
 import { AgentRuntimeService } from '../../shared/services/agent-runtime.service'
 import { CampaignContextService } from './campaign-context.service'
+import { isCampaignStatusRequest } from './chat-campaign-intelligence.util'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatGatewayInputService, type ChatGatewayInputContext } from './chat-gateway-input.service'
@@ -217,8 +218,12 @@ export class ChatTurnGatewayPreparationService {
       resolvedAgentId,
     )
     const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(lastUserMessage)
+    const campaignIntelligenceQuickPath = isCampaignStatusRequest(lastUserMessage)
     const shouldBuildBrainContext =
-      cortexMaxEnabled && !publicAgentQuickContext && !operationalAgendaQuickPath
+      cortexMaxEnabled &&
+      !publicAgentQuickContext &&
+      !operationalAgendaQuickPath &&
+      !campaignIntelligenceQuickPath
     const brainContextStartedAt = Date.now()
     const retrievalReceipts: BrainRetrievalReceipt[] = []
     const userBrainSummary = shouldBuildBrainContext
@@ -258,7 +263,9 @@ export class ChatTurnGatewayPreparationService {
           ? 'public_agent_low_context'
           : operationalAgendaQuickPath
             ? 'canonical_operational_agenda'
-            : null,
+            : campaignIntelligenceQuickPath
+              ? 'canonical_campaign_intelligence'
+              : null,
       brain_context_chars: userBrainSummary.length,
       quick_context_chars: publicAgentQuickContext.length,
       user_brain_access: userBrainAccess,
