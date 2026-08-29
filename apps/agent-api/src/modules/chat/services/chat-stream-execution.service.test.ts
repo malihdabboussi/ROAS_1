@@ -469,19 +469,25 @@ describe('ChatStreamExecutionService', () => {
   it('fails closed when a campaign status question has no resolved client campaign', async () => {
     const executeAction = vi.fn()
     const streamCompletion = vi.fn()
+    const progressiveSend = vi.fn(async () => undefined)
     const service = makeService({ executeAction, streamCompletion })
 
     const result = await service.run(
       makeRunInput({
         selectedModelInput: 'auto',
+        progressiveSend,
         userContent: 'What is the current campaign status?',
       }),
     )
 
-    expect(result.failed).toBe('campaign_scope_required')
+    expect(result.failed).toBeUndefined()
     expect(result.content).toContain('specific client campaign')
     expect(executeAction).not.toHaveBeenCalled()
     expect(streamCompletion).not.toHaveBeenCalled()
+    expect(progressiveSend).toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ content: expect.stringContaining('specific client campaign') }),
+    )
   })
 
   it('retrieves only the seven-day calendar window for an ongoing meeting follow-up', async () => {

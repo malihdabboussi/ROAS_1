@@ -249,3 +249,13 @@ Why: Signed-in production QA showed that “What's the status of the live campai
 Impact: Missing campaign scope now fails closed without data leakage or slow semantic retrieval. A resolved campaign still cross-references its live dashboard, Campaign Brain, and open tasks through the explicit campaign-intelligence route.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts`, `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-08-29 13:20] - [FIX]
+
+What: Streamed missing campaign-scope guidance as a normal direct chat response while preserving the deterministic no-model, no-tool campaign preflight.
+
+Why: Signed-in production QA proved that the backend correctly rejected an unscoped campaign-status request, but the chat transport treated that guidance as a failed run and suppressed the answer from the user.
+
+Impact: Asking for “the live campaign” without identifying a client campaign now receives an immediate request to select or name one. The path remains fail-closed, performs no broad Brain search, leaks no campaign data, and does not start a writer pass.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`

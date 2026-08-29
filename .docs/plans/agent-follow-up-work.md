@@ -40199,3 +40199,15 @@ Evidence: `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparatio
 Needed work: Extract quick-route context policy from gateway preparation and split access/context cases by prewarm, attachment, and retrieval policy while retaining the shared harness.
 
 Reason not done now: The production latency and fail-closed regression is fixed with a small policy predicate and focused test; restructuring the full context harness would widen this release.
+
+## 2026-08-29 - [ARCH] Campaign guidance leaves chat stream files at the decomposition threshold
+
+Status: Open
+
+Found while: Making missing campaign scope visible to the user without converting the fail-closed preflight into a failed chat run.
+
+Evidence: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts` is 599 LOC against the 600-line service hard limit, and `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts` is 597 LOC after the focused regression case.
+
+Needed work: Extract deterministic direct-research output routing and its fixtures into a focused collaborator and test module while preserving generation-stage recovery, structured failures, and progressive streaming.
+
+Reason not done now: The production answer-suppression bug is fixed with a bounded branch and remains within the hard limit; decomposing the mature stream executor is separate architecture work.

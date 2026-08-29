@@ -172,6 +172,11 @@ export class ChatStreamExecutionService {
       operationalAgendaQuickPath && isOperationalPriorityRecommendationRequest(input.userContent)
     const canonicalTaskLookupTitle = extractCanonicalTaskLookupTitle(input.userContent)
     const campaignIntelligenceQuickPath = isCampaignStatusRequest(input.userContent)
+    const campaignScopeRequired = campaignIntelligenceQuickPath && !input.campaignId
+    const directResearchOutput =
+      canonicalTaskLookupTitle ||
+      campaignScopeRequired ||
+      (operationalAgendaQuickPath && !operationalPriorityRecommendation)
     const writerModelSettings = operationalAgendaQuickPath
       ? { ...writerRoute.modelSettings, reasoning_effort: 'low' as const }
       : writerRoute.modelSettings
@@ -182,13 +187,9 @@ export class ChatStreamExecutionService {
             researchRoute.modelId,
             researchRoute.modelSettings,
           )
-    const writerSettings =
-      canonicalTaskLookupTitle || (operationalAgendaQuickPath && !operationalPriorityRecommendation)
-        ? null
-        : await this.modelInputService.validateModelSettings(
-            writerRoute.modelId,
-            writerModelSettings,
-          )
+    const writerSettings = directResearchOutput
+      ? null
+      : await this.modelInputService.validateModelSettings(writerRoute.modelId, writerModelSettings)
     const researchSend: SendFn = async (type, data) => {
       if (type === 'content_delta' || type === 'thinking_delta') return
       await input.progressiveSend(type, data)
@@ -209,16 +210,18 @@ export class ChatStreamExecutionService {
               selectedModelInput: 'auto:economy',
               selectedSettings: researchSettings!,
             })
+    if (campaignScopeRequired && researchResult.content.trim().length > 0) {
+      const guidanceResult = { ...researchResult, failed: undefined }
+      await input.progressiveSend('content_delta', { content: guidanceResult.content })
+      return withGenerationStage(guidanceResult, 'research')
+    }
     if (
       researchResult.failed ||
       (researchResult.content.trim().length === 0 && researchResult.toolSteps.length === 0)
     ) {
       return withGenerationStage(researchResult, 'research')
     }
-    if (
-      canonicalTaskLookupTitle ||
-      (operationalAgendaQuickPath && !operationalPriorityRecommendation)
-    ) {
+    if (directResearchOutput) {
       await input.progressiveSend('content_delta', { content: researchResult.content })
       return withGenerationStage(researchResult, 'research')
     }
