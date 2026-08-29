@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { shouldSkipBrainContextForOperationalAgenda } from './chat-operational-agenda.util'
+import {
+  extractCanonicalTaskLookupTitle,
+  shouldSkipBrainContextForOperationalAgenda,
+} from './chat-operational-agenda.util'
 
 describe('shouldSkipBrainContextForOperationalAgenda', () => {
   it.each([
@@ -23,5 +26,21 @@ describe('shouldSkipBrainContextForOperationalAgenda', () => {
     expect(shouldSkipBrainContextForOperationalAgenda('What positioning did Curtis recommend?')).toBe(
       false,
     )
+  })
+})
+
+describe('extractCanonicalTaskLookupTitle', () => {
+  it('extracts a curly-quoted task title from an assignment and provenance follow-up', () => {
+    expect(
+      extractCanonicalTaskLookupTitle(
+        'What about “Introduce Shannon to Adley for the Sphere Rockets golf event” — is that actually assigned to me, and what meeting or Slack message did it come from?',
+      ),
+    ).toBe('Introduce Shannon to Adley for the Sphere Rockets golf event')
+  })
+
+  it('does not intercept unrelated quoted knowledge questions', () => {
+    expect(
+      extractCanonicalTaskLookupTitle('What did Curtis mean by “tactical empathy”?'),
+    ).toBeNull()
   })
 })

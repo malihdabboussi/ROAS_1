@@ -309,6 +309,67 @@ describe('ChatStreamExecutionService', () => {
     expect(streamCompletion.mock.calls[0]?.[0].instructions).toBe('Answer the user.')
   })
 
+  it('answers an exact quoted task provenance follow-up from one canonical task read', async () => {
+    const executeAction = vi.fn(async () => ({
+      tasks: [
+        {
+          id: 'task-source-1',
+          title: 'Introduce Shannon to Adley for the Sphere Rockets golf event',
+          status: 'logged',
+          source: 'fathom',
+          space_title: 'Meetings',
+          custom_data: {
+            provider: 'fathom',
+            source_call: 'Dylan and Shannon collaboration planning',
+            provider_source_key: 'fathom:174458566:action:0',
+            provider_evidence: {
+              recording_timestamp: '00:24:47',
+              recording_playback_url: 'https://fathom.video/calls/789735438?timestamp=1487.9999',
+            },
+          },
+        },
+      ],
+      total_count: 1,
+    }))
+    const streamCompletion = vi.fn()
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        progressiveSend,
+        selectedModelInput: 'auto',
+        userContent:
+          'What about “Introduce Shannon to Adley for the Sphere Rockets golf event” — is that actually assigned to me, and what meeting or Slack message did it come from? Show the source.',
+      }),
+    )
+
+    expect(executeAction).toHaveBeenCalledTimes(1)
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      {
+        assigned_to_me: true,
+        fields: 'summary',
+        include_closed: true,
+        include_count: true,
+        limit: 20,
+        search: 'Introduce Shannon to Adley for the Sphere Rockets golf event',
+      },
+      'session-1',
+    )
+    expect(streamCompletion).not.toHaveBeenCalled()
+    expect(result.content).toContain('is assigned to you')
+    expect(result.content).toContain('Dylan and Shannon collaboration planning')
+    expect(result.content).toContain('00:24:47')
+    expect(result.content).toContain(
+      'https://fathom.video/calls/789735438?timestamp=1487.9999',
+    )
+    expect(progressiveSend).toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ content: result.content }),
+    )
+  })
+
   it('deterministically combines live reporting, Brain context, and campaign tasks', async () => {
     const executeAction = vi.fn(async (action: string) => {
       if (action === 'get_campaign_main_dashboard') {

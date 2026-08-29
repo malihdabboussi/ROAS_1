@@ -18,11 +18,13 @@ import {
   type ValidatedModelSettings,
 } from './chat-model-input.service'
 import {
+  extractCanonicalTaskLookupTitle,
   isOperationalCalendarRequest,
   isOperationalTaskRequest,
   resolveOperationalCalendarWindow,
   shouldSkipBrainContextForOperationalAgenda,
 } from './chat-operational-agenda.util'
+import { runCanonicalTaskLookup } from './chat-canonical-task-lookup.util'
 import {
   formatCampaignIntelligenceResearch,
   isCampaignStatusRequest,
@@ -167,17 +169,19 @@ export class ChatStreamExecutionService {
     const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(
       input.userContent,
     )
+    const canonicalTaskLookupTitle = extractCanonicalTaskLookupTitle(input.userContent)
     const campaignIntelligenceQuickPath = isCampaignStatusRequest(input.userContent)
     const writerModelSettings = operationalAgendaQuickPath
       ? { ...writerRoute.modelSettings, reasoning_effort: 'low' as const }
       : writerRoute.modelSettings
-    const researchSettings = operationalAgendaQuickPath || campaignIntelligenceQuickPath
+    const researchSettings =
+      canonicalTaskLookupTitle || operationalAgendaQuickPath || campaignIntelligenceQuickPath
       ? null
       : await this.modelInputService.validateModelSettings(
           researchRoute.modelId,
           researchRoute.modelSettings,
         )
-    const writerSettings = operationalAgendaQuickPath
+    const writerSettings = canonicalTaskLookupTitle || operationalAgendaQuickPath
       ? null
       : await this.modelInputService.validateModelSettings(
           writerRoute.modelId,
@@ -187,26 +191,29 @@ export class ChatStreamExecutionService {
       if (type === 'content_delta' || type === 'thinking_delta') return
       await input.progressiveSend(type, data)
     }
-    const researchResult = operationalAgendaQuickPath
-      ? await this.runOperationalAgendaResearch(input)
-      : campaignIntelligenceQuickPath
-        ? await this.runCampaignIntelligenceResearch(input)
-        : await this.runWithRecovery({
-            ...input,
-            gatewayModelId: researchRoute.modelId,
-            generationStage: 'research',
-            instructions: input.instructions,
-            progressiveSend: researchSend,
-            selectedModelInput: 'auto:economy',
-            selectedSettings: researchSettings!,
-          })
+    const artifacts = this.moduleRef?.get(ArtifactsService, { strict: false })
+    const researchResult = canonicalTaskLookupTitle
+      ? await runCanonicalTaskLookup(input, artifacts, canonicalTaskLookupTitle)
+      : operationalAgendaQuickPath
+        ? await this.runOperationalAgendaResearch(input)
+        : campaignIntelligenceQuickPath
+          ? await this.runCampaignIntelligenceResearch(input)
+          : await this.runWithRecovery({
+              ...input,
+              gatewayModelId: researchRoute.modelId,
+              generationStage: 'research',
+              instructions: input.instructions,
+              progressiveSend: researchSend,
+              selectedModelInput: 'auto:economy',
+              selectedSettings: researchSettings!,
+            })
     if (
       researchResult.failed ||
       (researchResult.content.trim().length === 0 && researchResult.toolSteps.length === 0)
     ) {
       return withGenerationStage(researchResult, 'research')
     }
-    if (operationalAgendaQuickPath) {
+    if (canonicalTaskLookupTitle || operationalAgendaQuickPath) {
       await input.progressiveSend('content_delta', { content: researchResult.content })
       return withGenerationStage(researchResult, 'research')
     }

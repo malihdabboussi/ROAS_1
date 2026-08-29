@@ -169,3 +169,13 @@ Why: Pixel needs to answer campaign-status questions from current reporting whil
 Impact: Campaign-status questions resolve one client, retrieve canonical metrics with an as-of timestamp, cross-reference durable context in parallel, and fail closed when no client campaign is resolved. Brain, reporting, and chat now share `{ canonical_source, as_of, evidence, brain_context }`.
 
 Files: `apps/agent-api/src/modules/artifacts/services/artifact-source-truth-contract.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-source-truth.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-input.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-analytics.service.ts`, `apps/agent-api/src/modules/chat/services/chat-source-truth-instructions.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.ts`, `apps/agent-api/src/modules/chat/services/chat-artifact-read-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-gateway-input.service.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 11:00] - [FIX]
+
+What: Added a deterministic quoted-task follow-up route that performs one canonical assigned-task lookup and renders assignment, current status, and stored meeting or Slack provenance directly.
+
+Why: Signed-in production QA found that asking where one visible task came from triggered repeated Brain, Slack, meeting, and calendar searches, took nearly two minutes, and incorrectly claimed the assigned Fathom task had no source even though its canonical row contained both assignment and recording evidence.
+
+Impact: Exact task assignment/source questions no longer invoke model-led research. They remain scoped to the signed-in user's tasks, include completed rows for lifecycle explanations, require an exact title match, and cite stored Fathom timestamps/playback links or Slack provenance without cross-client widening.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-canonical-task-lookup.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`

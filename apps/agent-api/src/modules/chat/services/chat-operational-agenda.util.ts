@@ -10,11 +10,19 @@ const EXTENDED_CALENDAR_REQUEST =
 const AFTER_TODAY_CALENDAR_REQUEST =
   /\b(?:after today|starting tomorrow|from tomorrow|beginning tomorrow)\b/i
 const TOMORROW_CALENDAR_REQUEST = /\btomorrow\b/i
+const TASK_LOOKUP_CONTEXT =
+  /\b(?:assign(?:ed|ment)?|source|origin|came from|come from|meeting|call|slack|transcript|provenance)\b/i
+const QUOTED_TASK_TITLE = /[\u201c"]([^\u201d"]{3,240})[\u201d"]/u
 
 export function shouldSkipBrainContextForOperationalAgenda(content: string): boolean {
   const normalized = content.trim()
   if (!normalized || !OPERATIONAL_AGENDA_INTENT.test(normalized)) return false
   return !CONVERSATIONAL_CONTEXT_INTENT.test(normalized)
+}
+
+export function extractCanonicalTaskLookupTitle(content: string): string | null {
+  if (!TASK_LOOKUP_CONTEXT.test(content)) return null
+  return content.match(QUOTED_TASK_TITLE)?.[1]?.trim() || null
 }
 
 export const isOperationalTaskRequest = (content: string): boolean => TASK_REQUEST.test(content)
