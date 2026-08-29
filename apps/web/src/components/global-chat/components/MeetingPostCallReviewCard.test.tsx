@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { MeetingPostCallReview } from '../store/use-global-chat-store'
 import { MeetingPostCallReviewCard } from './MeetingPostCallReviewCard'
 
 vi.mock('@/lib/agency-clients', async (importOriginal) => ({
@@ -25,6 +26,30 @@ describe('MeetingPostCallReviewCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Refresh from meeting' }))
 
     expect(onRefreshFollowUps).toHaveBeenCalledOnce()
+  })
+
+  it('hydrates a saved ISO due date as a date-only task value', () => {
+    const review = reviewFixture()
+    review.clientCampaign = {
+      client_id: 'client-1',
+      client_name: 'Yasir Khan',
+      campaign_id: 'campaign-1',
+      campaign_name: 'Yasir Khan',
+    }
+    review.followUps = [
+      {
+        id: 'follow-up-1',
+        title: 'Send recap',
+        status: 'confirmed',
+        owner: 'Dylan',
+        dueDate: '2026-08-29T00:00:00+00:00',
+      },
+    ]
+
+    render(<MeetingPostCallReviewCard review={review} onContinue={vi.fn()} />)
+
+    expect(screen.getByText('Aug 29, 2026')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Continue to task review' })).toBeEnabled()
   })
 
   it('shows editable Slack recap details and continues with the edited values', () => {
@@ -154,7 +179,7 @@ describe('MeetingPostCallReviewCard', () => {
   })
 })
 
-function reviewFixture() {
+function reviewFixture(): MeetingPostCallReview {
   return {
     spaceId: 'space-1',
     conversationId: 'conversation-1',

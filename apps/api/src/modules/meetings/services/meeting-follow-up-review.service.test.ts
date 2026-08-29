@@ -47,6 +47,7 @@ describe('MeetingFollowUpReviewService', () => {
       expect.anything(),
       expect.objectContaining({
         meetingItemId: 'meeting-1',
+        reopenDismissed: true,
         actions: [expect.objectContaining({ sourceText: 'Send AI meeting notes' })],
       }),
     )

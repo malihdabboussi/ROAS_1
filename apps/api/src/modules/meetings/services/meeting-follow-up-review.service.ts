@@ -271,6 +271,7 @@ export class MeetingFollowUpReviewService {
       orgId: firstText(call.org_id) || null,
       meetingTitle: firstText(call.title),
       actions,
+      reopenDismissed: true,
     })
     return this.getReviewForCall(call)
   }

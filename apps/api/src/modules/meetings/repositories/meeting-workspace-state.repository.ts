@@ -189,6 +189,7 @@ export class MeetingWorkspaceStateRepository {
     input: MeetingScope & {
       actions: readonly FathomSourceAction[]
       meetingTitle?: string | null
+      reopenDismissed?: boolean
     },
   ): Promise<string[]> {
     if (input.actions.length === 0) return []
@@ -208,6 +209,7 @@ export class MeetingWorkspaceStateRepository {
       meetingTitle: input.meetingTitle?.trim() || String(meeting.title ?? '').trim() || null,
       actions: input.actions,
       existingFollowUps: existing,
+      reopenDismissed: input.reopenDismissed,
     })
 
     const ids: string[] = []

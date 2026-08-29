@@ -77,4 +77,44 @@ describe('planProviderFollowUpUpserts', () => {
       }),
     ).toEqual([])
   })
+
+  it('reopens a dismissed provider follow-up only when refresh requests it', () => {
+    const existingFollowUps = [
+      {
+        id: 'fu-1',
+        title: 'Send recap',
+        status: 'logged',
+        custom_data: {
+          entry_type: 'follow_up',
+          provider_source_key: 'fathom:1:action:0',
+          dismissed_at: '2026-08-27T20:00:00.000Z',
+        },
+      },
+    ]
+
+    const normalPlan = planProviderFollowUpUpserts({
+      meetingItemId: 'meeting-1',
+      meetingTitle: 'Weekly',
+      actions: [action('Send recap')],
+      existingFollowUps,
+    })
+    const refreshPlan = planProviderFollowUpUpserts({
+      meetingItemId: 'meeting-1',
+      meetingTitle: 'Weekly',
+      actions: [action('Send recap')],
+      existingFollowUps,
+      reopenDismissed: true,
+    })
+
+    expect(normalPlan[0]).toEqual(
+      expect.objectContaining({
+        customData: expect.objectContaining({ dismissed_at: '2026-08-27T20:00:00.000Z' }),
+      }),
+    )
+    expect(refreshPlan[0]).toEqual(
+      expect.objectContaining({
+        customData: expect.not.objectContaining({ dismissed_at: expect.anything() }),
+      }),
+    )
+  })
 })

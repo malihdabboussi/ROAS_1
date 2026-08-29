@@ -38,3 +38,13 @@ Why: Deleted follow-up rows could not be reconstructed, and the task-review step
 Impact: Reviewers can recover grounded meeting tasks and complete the existing task-by-task delegation UI without leaving the meeting review page. No task or follow-up message is sent automatically.
 
 Files: `apps/api/src/modules/meetings/controllers/meeting-follow-up-review.controller.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewStages.tsx`, `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.tsx`, `apps/web/src/features/home/services/meeting-follow-up-review-api.ts`, tests, and feature documentation.
+
+## [2026-08-28 21:10] - [FIX]
+
+What: Made the explicit post-call refresh reopen dismissed provider follow-ups without changing normal ingestion semantics, and normalized saved ISO due dates when the meeting review card hydrates.
+
+Why: Refresh returned success while restored tasks stayed hidden because their dismissal marker was preserved, and persisted timestamps rendered as an empty date because the card treated them as date-only strings.
+
+Impact: Reviewers can recover grounded meeting tasks and see previously saved dates before continuing to the inline delegation review; routine Fathom syncs still respect intentional task dismissals.
+
+Files: `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.ts`, `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.test.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-state.repository.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.test.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.test.tsx`, `documentation/features/meeting-follow-up-slack.md`

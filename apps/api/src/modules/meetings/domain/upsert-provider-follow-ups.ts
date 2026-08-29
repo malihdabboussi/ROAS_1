@@ -25,6 +25,7 @@ export function planProviderFollowUpUpserts(input: {
   meetingTitle: string | null
   actions: readonly FathomSourceAction[]
   existingFollowUps: ReadonlyArray<Record<string, unknown>>
+  reopenDismissed?: boolean
 }): ProviderFollowUpUpsertPlan[] {
   if (input.actions.length === 0) return []
 
@@ -65,6 +66,14 @@ export function planProviderFollowUpUpserts(input: {
 
     if (byTitle?.id) {
       const existingCustom = record(byTitle.custom_data)
+      const customData: Record<string, unknown> = {
+        ...existingCustom,
+        ...baseCustom,
+        ...(existingCustom.suggestion_origin
+          ? { suggestion_origin: existingCustom.suggestion_origin }
+          : {}),
+      }
+      if (input.reopenDismissed) delete customData.dismissed_at
       plans.push({
         kind: 'update',
         itemId: String(byTitle.id),
@@ -73,13 +82,7 @@ export function planProviderFollowUpUpserts(input: {
           String(byTitle.status ?? '').toLowerCase() === 'done' || action.completed
             ? 'done'
             : String(byTitle.status ?? status),
-        customData: {
-          ...existingCustom,
-          ...baseCustom,
-          ...(existingCustom.suggestion_origin
-            ? { suggestion_origin: existingCustom.suggestion_origin }
-            : {}),
-        },
+        customData,
       })
       continue
     }

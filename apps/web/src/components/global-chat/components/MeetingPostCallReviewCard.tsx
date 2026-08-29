@@ -303,7 +303,18 @@ function MeetingSelect({
 }
 
 function normalizeReviewSummary(review: MeetingPostCallReview): MeetingPostCallReview {
-  return { ...review, summary: stripSlackHeadingMarkers(review.summary) }
+  return {
+    ...review,
+    summary: stripSlackHeadingMarkers(review.summary),
+    followUps: review.followUps.map((followUp) => ({
+      ...followUp,
+      dueDate: normalizeTaskDueDate(followUp.dueDate),
+    })),
+  }
+}
+
+function normalizeTaskDueDate(value: string): string {
+  return /^\d{4}-\d{2}-\d{2}/.test(value) ? value.slice(0, 10) : ''
 }
 
 function stripSlackHeadingMarkers(summary: string): string {
