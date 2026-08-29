@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  appendCampaignEvidenceReceipt,
   formatCampaignIntelligenceResearch,
   isCampaignStatusRequest,
 } from './chat-campaign-intelligence.util'
@@ -46,5 +47,43 @@ describe('campaign intelligence routing', () => {
       },
       live_campaign_dashboard: { kpis: { roas: 2.4 } },
     })
+  })
+
+  it('appends a deterministic source, freshness, Brain, and task receipt', () => {
+    const content = appendCampaignEvidenceReceipt('Campaign performance is flat.', [
+      {
+        name: 'get_campaign_main_dashboard',
+        action: 'get_campaign_main_dashboard',
+        label: 'dashboard',
+        status: 'completed',
+        result: {
+          canonical_source: {
+            system: 'campaign_reporting',
+            owner: 'main_dashboard',
+          },
+          as_of: '2026-08-29T12:00:00.000Z',
+        },
+      },
+      {
+        name: 'search_campaign_brain',
+        action: 'search_campaign_brain',
+        label: 'brain',
+        status: 'completed',
+        result: { results: [] },
+      },
+      {
+        name: 'list_tasks',
+        action: 'list_tasks',
+        label: 'tasks',
+        status: 'completed',
+        result: { tasks: [{ id: 'task-1' }], total_count: 4 },
+      },
+    ])
+
+    expect(content).toContain('**Evidence**')
+    expect(content).toContain('campaign_reporting / main_dashboard')
+    expect(content).toContain('2026-08-29T12:00:00.000Z')
+    expect(content).toContain('Campaign Brain: 0 relevant context')
+    expect(content).toContain('Open campaign tasks: 4 open tasks')
   })
 })

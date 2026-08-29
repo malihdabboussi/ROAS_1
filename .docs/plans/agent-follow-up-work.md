@@ -40178,7 +40178,7 @@ Reason not done now: The production omission is fixed with two regression cases;
 
 ## 2026-08-29 - [ARCH] Chat stream execution and regression suite reached decomposition thresholds
 
-Status: Open
+Status: Resolved on 2026-08-29
 
 Found while: Separating deterministic daily-focus inventory from conversational first-action recommendations.
 
@@ -40187,6 +40187,8 @@ Evidence: `apps/agent-api/src/modules/chat/services/chat-stream-execution.servic
 Needed work: Extract Auto operational/campaign route orchestration and its fixtures into focused collaborators and test modules while preserving generation-stage recovery, structured tool failures, and deterministic direct-output behavior.
 
 Reason not done now: The requested user-facing regression is isolated and within the hard limit; decomposing the mature recovery and route harness would materially widen this release.
+
+Resolution: Campaign research now lives in `chat-campaign-intelligence-execution.ts`, shared stream-test fixtures live in `chat-stream-execution.service.test-helpers.ts`, the stream service is 564 LOC, and its regression suite is 570 LOC.
 
 ## 2026-08-29 - [ARCH] Campaign preflight touched near-limit chat context coverage
 
@@ -40202,7 +40204,7 @@ Reason not done now: The production latency and fail-closed regression is fixed 
 
 ## 2026-08-29 - [ARCH] Campaign guidance leaves chat stream files at the decomposition threshold
 
-Status: Open
+Status: Resolved on 2026-08-29
 
 Found while: Making missing campaign scope visible to the user without converting the fail-closed preflight into a failed chat run.
 
@@ -40211,3 +40213,5 @@ Evidence: `apps/agent-api/src/modules/chat/services/chat-stream-execution.servic
 Needed work: Extract deterministic direct-research output routing and its fixtures into a focused collaborator and test module while preserving generation-stage recovery, structured failures, and progressive streaming.
 
 Reason not done now: The production answer-suppression bug is fixed with a bounded branch and remains within the hard limit; decomposing the mature stream executor is separate architecture work.
+
+Resolution: The campaign executor and shared test fixtures were extracted while adding the deterministic source receipt. The stream service is now 564 LOC and its regression suite is 570 LOC.

@@ -259,3 +259,13 @@ Why: Signed-in production QA proved that the backend correctly rejected an unsco
 Impact: Asking for “the live campaign” without identifying a client campaign now receives an immediate request to select or name one. The path remains fail-closed, performs no broad Brain search, leaks no campaign data, and does not start a writer pass.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-08-29 13:39] - [FIX]
+
+What: Added a deterministic campaign evidence receipt after the tool-free writer and extracted campaign research plus shared stream-test fixtures from the near-limit stream executor.
+
+Why: Signed-in production QA confirmed that the canonical dashboard, Campaign Brain, and task reads all completed, but the generated answer omitted the reporting source and as-of timestamp and inferred possible causes for zero metrics without supporting context.
+
+Impact: Every scoped campaign-status answer now states the exact live reporting source and freshness, Campaign Brain result count, and open-task count. Missing evidence is labeled unavailable, and zero or missing metrics are no longer instructions to invent an operational cause.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test-helpers.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/plans/agent-follow-up-work.md`

@@ -1,82 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { ChatModelInputService } from './chat-model-input.service'
-import { ChatStreamExecutionService } from './chat-stream-execution.service'
-import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
-
-function makeService(input?: {
-  streamCompletion?: ReturnType<typeof vi.fn>
-  recovery?: ChatStreamRecoveryService
-  validateModelSettings?: ReturnType<typeof vi.fn>
-  executeAction?: ReturnType<typeof vi.fn>
-}) {
-  const openClaw = {
-    streamCompletion:
-      input?.streamCompletion ??
-      vi.fn(async () => ({
-        content: 'ok',
-        toolSteps: [],
-      })),
-  }
-  const executeAction =
-    input?.executeAction ??
-    vi.fn(async (action: string) =>
-      action === 'list_tasks'
-        ? { tasks: [{ id: 'task-1', title: 'Assigned task' }], total_count: 1 }
-        : { events: [{ id: 'event-1', title: 'Today meeting' }] },
-    )
-  return new ChatStreamExecutionService(
-    openClaw as any,
-    input?.recovery ?? new ChatStreamRecoveryService(),
-    {
-      mergeResolvedModelSettings: vi.fn((resolved) => resolved.modelSettings),
-      validateModelSettings:
-        input?.validateModelSettings ??
-        vi.fn(async (modelId, settings) => ({
-          requestedModelId: modelId,
-          resolvedModelId: modelId,
-          request: {},
-          openClaw: {
-            contextWindowTokens: settings?.context_window_tokens,
-            reasoningEffort: settings?.reasoning_effort,
-          },
-        })),
-    } as unknown as ChatModelInputService,
-    {
-      get: vi.fn(() => ({ executeAction })),
-    } as any,
-  )
-}
-
-function makeRunInput(overrides: Record<string, unknown> = {}) {
-  return {
-    chatDiag: 'test',
-    chatTimingLogsEnabled: false,
-    channel: 'studio' as const,
-    conversationId: 'conversation-1',
-    disabledNativeActions: [],
-    gatewayAgentId: 'vibey',
-    gatewayModelId: 'anthropic/claude-sonnet-4.6',
-    getAccumulatedContent: () => '',
-    inputArray: [{ type: 'message', role: 'user', content: 'Hi' }],
-    instructions: 'Answer the user.',
-    logChatFlow: vi.fn(),
-    logger: { warn: vi.fn() },
-    progressiveSend: vi.fn(async () => undefined),
-    recordRunCheckpoint: vi.fn(async () => undefined),
-    relaxedResponseFilter: false,
-    selectedModelInput: null,
-    selectedSettings: {
-      requestedModelId: 'anthropic/claude-sonnet-4.6',
-      resolvedModelId: 'anthropic/claude-sonnet-4.6',
-      request: {},
-      openClaw: {},
-    },
-    sessionKey: 'session-1',
-    userContent: 'Hi',
-    userId: 'user-1',
-    ...overrides,
-  }
-}
+import {
+  makeChatStreamExecutionInput as makeRunInput,
+  makeChatStreamExecutionService as makeService,
+} from './chat-stream-execution.service.test-helpers'
 
 describe('ChatStreamExecutionService', () => {
   afterEach(() => {
@@ -410,10 +336,16 @@ describe('ChatStreamExecutionService', () => {
   })
 
   it('deterministically combines live reporting, Brain context, and campaign tasks', async () => {
+    const progressiveSend = vi.fn(async () => undefined)
     const executeAction = vi.fn(async (action: string) => {
       if (action === 'get_campaign_main_dashboard') {
         return {
           fetched_at: '2026-08-29T12:00:00.000Z',
+          canonical_source: {
+            system: 'campaign_reporting',
+            owner: 'main_dashboard',
+          },
+          as_of: '2026-08-29T12:00:00.000Z',
           kpis: { roas: 2.4, leads: 18 },
         }
       }
@@ -435,6 +367,7 @@ describe('ChatStreamExecutionService', () => {
     const result = await service.run(
       makeRunInput({
         campaignId: 'campaign-1',
+        progressiveSend,
         selectedModelInput: 'auto',
         userContent: 'What is the current status of this live campaign?',
       }),
@@ -464,6 +397,46 @@ describe('ChatStreamExecutionService', () => {
       'Approved budget is $30k.',
     )
     expect(result.content).toContain('Live ROAS is 2.4')
+    expect(result.content).toContain('campaign_reporting / main_dashboard')
+    expect(result.content).toContain('Reporting as of: 2026-08-29T12:00:00.000Z')
+    expect(result.content).toContain('Campaign Brain: 1 relevant context')
+    expect(result.content).toContain('Open campaign tasks: 1 open tasks')
+    expect(progressiveSend).toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ delta: expect.stringContaining('**Evidence**') }),
+    )
+  })
+
+  it('keeps the campaign evidence receipt when the writer fails', async () => {
+    const executeAction = vi.fn(async (action: string) =>
+      action === 'get_campaign_main_dashboard'
+        ? {
+            canonical_source: { system: 'campaign_reporting', owner: 'main_dashboard' },
+            as_of: '2026-08-29T12:00:00.000Z',
+          }
+        : action === 'search_campaign_brain'
+          ? { results: [] }
+          : { tasks: [], total_count: 0 },
+    )
+    const streamCompletion = vi.fn(async () => ({
+      content: '',
+      toolSteps: [],
+      failed: 'stream_stalled',
+    }))
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        campaignId: 'campaign-1',
+        selectedModelInput: 'auto',
+        userContent: 'What is the current status of this live campaign?',
+      }),
+    )
+
+    expect(result.failed).toBeUndefined()
+    expect(result.content).toContain('could not safely complete the narrative summary')
+    expect(result.content).toContain('campaign_reporting / main_dashboard')
+    expect(result.content).toContain('Reporting as of: 2026-08-29T12:00:00.000Z')
   })
 
   it('fails closed when a campaign status question has no resolved client campaign', async () => {

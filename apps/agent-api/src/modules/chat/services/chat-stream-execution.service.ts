@@ -14,8 +14,9 @@ import {
   mergeAutoStageResults,
   withGenerationStage,
 } from './chat-auto-pipeline'
+import { runCampaignIntelligenceResearch } from './chat-campaign-intelligence-execution'
 import {
-  formatCampaignIntelligenceResearch,
+  appendCampaignEvidenceReceipt,
   isCampaignStatusRequest,
 } from './chat-campaign-intelligence.util'
 import { runCanonicalTaskLookup } from './chat-canonical-task-lookup.util'
@@ -200,7 +201,7 @@ export class ChatStreamExecutionService {
       : operationalAgendaQuickPath
         ? await this.runOperationalAgendaResearch(input)
         : campaignIntelligenceQuickPath
-          ? await this.runCampaignIntelligenceResearch(input)
+          ? await runCampaignIntelligenceResearch(input, artifacts)
           : await this.runWithRecovery({
               ...input,
               gatewayModelId: researchRoute.modelId,
@@ -249,9 +250,15 @@ export class ChatStreamExecutionService {
     const stagedResearch = withGenerationStage(researchResult, 'research')
     const stagedWriter = withGenerationStage(writerResult, 'write')
     if (writerResult.failed || writerResult.content.trim().length === 0) {
-      await input.progressiveSend('content_delta', { delta: researchResult.content })
+      const fallbackContent = campaignIntelligenceQuickPath
+        ? appendCampaignEvidenceReceipt(
+            'I retrieved the campaign evidence, but could not safely complete the narrative summary.',
+            researchResult.toolSteps,
+          )
+        : researchResult.content
+      await input.progressiveSend('content_delta', { delta: fallbackContent })
       return mergeAutoStageResults(stagedResearch, stagedWriter, {
-        content: researchResult.content,
+        content: fallbackContent,
         failed: undefined,
         recoveryEvent: this.buildRecoveryEvent(
           'writer_fallback_to_research',
@@ -261,8 +268,16 @@ export class ChatStreamExecutionService {
       })
     }
 
+    const finalContent = campaignIntelligenceQuickPath
+      ? appendCampaignEvidenceReceipt(writerResult.content, researchResult.toolSteps)
+      : writerResult.content
+    if (finalContent !== writerResult.content) {
+      await input.progressiveSend('content_delta', {
+        delta: finalContent.slice(writerResult.content.length),
+      })
+    }
     return mergeAutoStageResults(stagedResearch, stagedWriter, {
-      content: writerResult.content,
+      content: finalContent,
       failed: writerResult.failed,
     })
   }
@@ -308,56 +323,6 @@ export class ChatStreamExecutionService {
       content: formatOperationalAgenda(toolSteps),
       toolSteps,
       ...(failedStep ? { failed: failedStep.error ?? `${failedStep.name} failed` } : {}),
-    }
-  }
-
-  private async runCampaignIntelligenceResearch(
-    input: ChatStreamExecutionInput,
-  ): Promise<OpenClawCompletionResult> {
-    const artifacts = this.moduleRef?.get(ArtifactsService, { strict: false })
-    if (!artifacts) {
-      return {
-        content: '',
-        toolSteps: [],
-        failed: 'campaign_intelligence_executor_unavailable',
-      }
-    }
-    if (!input.campaignId) {
-      return {
-        content:
-          'I need one specific client campaign before I can retrieve live reporting. Select the client campaign or name it unambiguously, then ask again.',
-        toolSteps: [],
-        failed: 'campaign_scope_required',
-      }
-    }
-
-    const campaignId = input.campaignId
-    const toolSteps = await Promise.all([
-      executeArtifactRead(input, artifacts, {
-        action: 'get_campaign_main_dashboard',
-        label: 'Retrieving live campaign performance',
-        data: { campaign_id: campaignId, refresh: true },
-      }),
-      executeArtifactRead(input, artifacts, {
-        action: 'search_campaign_brain',
-        label: 'Cross-referencing campaign decisions and context',
-        data: { campaign_id: campaignId, query: input.userContent, limit: 10 },
-      }),
-      executeArtifactRead(input, artifacts, {
-        action: 'list_tasks',
-        label: 'Retrieving open campaign work',
-        data: { campaign_id: campaignId, include_closed: false, include_count: true },
-      }),
-    ])
-    const dashboard = toolSteps.find(
-      (step) => (step.action ?? step.name) === 'get_campaign_main_dashboard',
-    )
-    return {
-      content: formatCampaignIntelligenceResearch(campaignId, toolSteps),
-      toolSteps,
-      ...(dashboard?.status === 'failed'
-        ? { failed: dashboard.error ?? 'get_campaign_main_dashboard failed' }
-        : {}),
     }
   }
 
