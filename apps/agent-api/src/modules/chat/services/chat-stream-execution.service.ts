@@ -29,6 +29,7 @@ import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
 import {
   extractCanonicalTaskLookupTitle,
   isOperationalCalendarRequest,
+  isOperationalDailyFocusRequest,
   isOperationalPriorityRecommendationRequest,
   isOperationalTaskRequest,
   resolveOperationalCalendarWindow,
@@ -295,7 +296,9 @@ export class ChatStreamExecutionService {
     }
 
     const wantsTasks = isOperationalTaskRequest(input.userContent)
-    const wantsCalendar = isOperationalCalendarRequest(input.userContent)
+    const wantsCalendar =
+      isOperationalCalendarRequest(input.userContent) ||
+      isOperationalDailyFocusRequest(input.userContent)
     const actions: Array<Promise<ToolStep>> = []
     if (wantsTasks) {
       actions.push(

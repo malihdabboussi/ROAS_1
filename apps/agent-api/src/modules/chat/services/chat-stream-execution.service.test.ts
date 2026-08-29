@@ -174,7 +174,7 @@ describe('ChatStreamExecutionService', () => {
       makeRunInput({
         selectedModelInput: 'auto',
         progressiveSend,
-        userContent: "What should I focus on today? Show my open tasks and today's meetings.",
+        userContent: 'What should I focus on today, and what open tasks are there?',
       }),
     )
 

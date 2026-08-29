@@ -1,5 +1,15 @@
 # Changelog - August 29, 2026
 
+## [2026-08-29 15:48] - [FIX]
+
+What: Made daily-focus and “what's on top” prompts retrieve today's calendar alongside canonical My Tasks without requiring an explicit meeting keyword.
+
+Why: Signed-in production QA showed that “What should I focus on today, and what open tasks are there?” returned assigned tasks in one second but omitted today's meetings, contrary to the daily operating-assistant contract.
+
+Impact: A normal start-of-day focus question now provides both work and schedule from their authoritative live systems. Narrow task-only and calendar-only requests retain their existing bounded reads.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`.
+
 ## [2026-08-29 15:39] - [FIX]
 
 What: Prioritized a uniquely explicit full campaign Space title in status prompts before running fuzzy Space-name matching.
