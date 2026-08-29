@@ -72,6 +72,21 @@ describe('ArtifactBrainSearchActionsService.searchCampaignBrain', () => {
       campaign_id: 'campaign-1',
       family: 'campaign',
       count: 1,
+      canonical_source: {
+        system: 'brain',
+        owner: 'ns_memories',
+        mutable: false,
+        campaign_id: 'campaign-1',
+      },
+      as_of: expect.any(String),
+      evidence: expect.any(Array),
+      brain_context: {
+        family: 'campaign',
+        brain_id: 'brain-campaign-1',
+        campaign_id: 'campaign-1',
+        context_sufficient: true,
+        result_count: 1,
+      },
     })
     expect(brainRetrievalSearch).toHaveBeenCalledWith(
       expect.objectContaining({

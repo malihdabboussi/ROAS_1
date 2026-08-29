@@ -40140,3 +40140,15 @@ Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-tasks.service.
 Needed work: Extract task creation and mutation orchestration into focused collaborators while retaining the existing action registry, schema validation, preflight, activity, and structured error boundaries.
 
 Reason not done now: The requested provenance fix is a bounded addition at the existing create boundary; decomposing every task mutation would materially widen this source-evidence phase.
+
+## 2026-08-29 - [ARCH] Source-of-truth chat orchestrators remain near service limits
+
+Status: Open
+
+Found while: Adding the canonical Brain/reporting envelope and deterministic campaign-status route.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts` is 590 LOC and `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts` is 584 LOC after extracting Brain input parsing, source-truth construction, and artifact-read execution. Both remain below the 600-line hard limit but above the proactive extraction threshold.
+
+Needed work: Split campaign-Brain resolution from multi-family search and extract Auto research-route selection from stream recovery while preserving fail-closed client binding, tool errors, and generation-stage recovery.
+
+Reason not done now: The requested routing and live-reporting behavior is isolated and compliant; decomposing the mature search and recovery pipelines further would widen this release beyond the source-of-truth contract.

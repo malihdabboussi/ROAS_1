@@ -18,13 +18,20 @@ import {
   type ValidatedModelSettings,
 } from './chat-model-input.service'
 import {
+  extractCanonicalTaskLookupTitle,
   isOperationalCalendarRequest,
   isOperationalTaskRequest,
   resolveOperationalCalendarWindow,
   shouldSkipBrainContextForOperationalAgenda,
 } from './chat-operational-agenda.util'
+import { runCanonicalTaskLookup } from './chat-canonical-task-lookup.util'
+import {
+  formatCampaignIntelligenceResearch,
+  isCampaignStatusRequest,
+} from './chat-campaign-intelligence.util'
 import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
 import type { ChatRunCheckpointKind } from './chat-run-checkpoint.service'
+import { executeArtifactRead } from './chat-artifact-read-execution'
 import { ChatStreamRecoveryService } from './chat-stream-recovery.service'
 import {
   OpenClawProxyService,
@@ -162,16 +169,19 @@ export class ChatStreamExecutionService {
     const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(
       input.userContent,
     )
+    const canonicalTaskLookupTitle = extractCanonicalTaskLookupTitle(input.userContent)
+    const campaignIntelligenceQuickPath = isCampaignStatusRequest(input.userContent)
     const writerModelSettings = operationalAgendaQuickPath
       ? { ...writerRoute.modelSettings, reasoning_effort: 'low' as const }
       : writerRoute.modelSettings
-    const researchSettings = operationalAgendaQuickPath
+    const researchSettings =
+      canonicalTaskLookupTitle || operationalAgendaQuickPath || campaignIntelligenceQuickPath
       ? null
       : await this.modelInputService.validateModelSettings(
           researchRoute.modelId,
           researchRoute.modelSettings,
         )
-    const writerSettings = operationalAgendaQuickPath
+    const writerSettings = canonicalTaskLookupTitle || operationalAgendaQuickPath
       ? null
       : await this.modelInputService.validateModelSettings(
           writerRoute.modelId,
@@ -181,24 +191,29 @@ export class ChatStreamExecutionService {
       if (type === 'content_delta' || type === 'thinking_delta') return
       await input.progressiveSend(type, data)
     }
-    const researchResult = operationalAgendaQuickPath
-      ? await this.runOperationalAgendaResearch(input)
-      : await this.runWithRecovery({
-          ...input,
-          gatewayModelId: researchRoute.modelId,
-          generationStage: 'research',
-          instructions: input.instructions,
-          progressiveSend: researchSend,
-          selectedModelInput: 'auto:economy',
-          selectedSettings: researchSettings!,
-        })
+    const artifacts = this.moduleRef?.get(ArtifactsService, { strict: false })
+    const researchResult = canonicalTaskLookupTitle
+      ? await runCanonicalTaskLookup(input, artifacts, canonicalTaskLookupTitle)
+      : operationalAgendaQuickPath
+        ? await this.runOperationalAgendaResearch(input)
+        : campaignIntelligenceQuickPath
+          ? await this.runCampaignIntelligenceResearch(input)
+          : await this.runWithRecovery({
+              ...input,
+              gatewayModelId: researchRoute.modelId,
+              generationStage: 'research',
+              instructions: input.instructions,
+              progressiveSend: researchSend,
+              selectedModelInput: 'auto:economy',
+              selectedSettings: researchSettings!,
+            })
     if (
       researchResult.failed ||
       (researchResult.content.trim().length === 0 && researchResult.toolSteps.length === 0)
     ) {
       return withGenerationStage(researchResult, 'research')
     }
-    if (operationalAgendaQuickPath) {
+    if (canonicalTaskLookupTitle || operationalAgendaQuickPath) {
       await input.progressiveSend('content_delta', { content: researchResult.content })
       return withGenerationStage(researchResult, 'research')
     }
@@ -261,7 +276,7 @@ export class ChatStreamExecutionService {
     const actions: Array<Promise<ToolStep>> = []
     if (wantsTasks) {
       actions.push(
-        this.executeOperationalRead(input, artifacts, {
+        executeArtifactRead(input, artifacts, {
           action: 'list_tasks',
           label: 'Retrieving your open assigned tasks',
           data: { assigned_to_me: true, include_closed: false, include_count: true },
@@ -271,7 +286,7 @@ export class ChatStreamExecutionService {
     if (wantsCalendar) {
       const { start, end, label } = resolveOperationalCalendarWindow(input.userContent)
       actions.push(
-        this.executeOperationalRead(input, artifacts, {
+        executeArtifactRead(input, artifacts, {
           action: 'list_calendar_events',
           label,
           data: { start, end },
@@ -288,75 +303,54 @@ export class ChatStreamExecutionService {
     }
   }
 
-  private async executeOperationalRead(
+  private async runCampaignIntelligenceResearch(
     input: ChatStreamExecutionInput,
-    artifacts: ArtifactsService,
-    request: { action: string; label: string; data: Record<string, unknown> },
-  ): Promise<ToolStep> {
-    const toolCallId = `operational-${request.action}-${input.messageId ?? input.runId ?? 'turn'}`
-    await input.progressiveSend('status', { phase: 'executing', message: request.label })
-    await input.progressiveSend('tool_start', {
-      name: request.action,
-      action: request.action,
-      label: request.label,
-      tool_call_id: toolCallId,
-    })
-    try {
-      const result = await artifacts.executeAction(request.action, request.data, input.sessionKey)
-      const record = this.asRecord(result)
-      const failed = record.success === false || typeof record.error_code === 'string'
-      const error = failed ? this.readActionError(record, request.action) : undefined
-      await input.progressiveSend('tool_end', {
-        name: request.action,
-        action: request.action,
-        label: request.label,
-        tool_call_id: toolCallId,
-        status: failed ? 'failed' : 'completed',
-        ...(error ? { error } : {}),
-      })
+  ): Promise<OpenClawCompletionResult> {
+    const artifacts = this.moduleRef?.get(ArtifactsService, { strict: false })
+    if (!artifacts) {
       return {
-        name: request.action,
-        action: request.action,
-        label: request.label,
-        tool_call_id: toolCallId,
-        input: request.data,
-        result: record,
-        status: failed ? 'failed' : 'completed',
-        ...(error ? { error } : {}),
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error)
-      await input.progressiveSend('tool_end', {
-        name: request.action,
-        action: request.action,
-        label: request.label,
-        tool_call_id: toolCallId,
-        status: 'failed',
-        error: message,
-      })
-      return {
-        name: request.action,
-        action: request.action,
-        label: request.label,
-        tool_call_id: toolCallId,
-        input: request.data,
-        status: 'failed',
-        error: message,
+        content: '',
+        toolSteps: [],
+        failed: 'campaign_intelligence_executor_unavailable',
       }
     }
-  }
+    if (!input.campaignId) {
+      return {
+        content:
+          'I need one specific client campaign before I can retrieve live reporting. Select the client campaign or name it unambiguously, then ask again.',
+        toolSteps: [],
+        failed: 'campaign_scope_required',
+      }
+    }
 
-  private asRecord(value: unknown): Record<string, unknown> {
-    return value && typeof value === 'object' && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : { data: value }
-  }
-
-  private readActionError(record: Record<string, unknown>, action: string): string {
-    const explanation = this.asRecord(record.user_explanation)
-    if (typeof explanation.sentence === 'string') return explanation.sentence
-    if (typeof record.error === 'string') return record.error
-    return `${action} failed`
+    const campaignId = input.campaignId
+    const toolSteps = await Promise.all([
+      executeArtifactRead(input, artifacts, {
+        action: 'get_campaign_main_dashboard',
+        label: 'Retrieving live campaign performance',
+        data: { campaign_id: campaignId, refresh: true },
+      }),
+      executeArtifactRead(input, artifacts, {
+        action: 'search_campaign_brain',
+        label: 'Cross-referencing campaign decisions and context',
+        data: { campaign_id: campaignId, query: input.userContent, limit: 10 },
+      }),
+      executeArtifactRead(input, artifacts, {
+        action: 'list_tasks',
+        label: 'Retrieving open campaign work',
+        data: { campaign_id: campaignId, include_closed: false, include_count: true },
+      }),
+    ])
+    const dashboard = toolSteps.find(
+      (step) => (step.action ?? step.name) === 'get_campaign_main_dashboard',
+    )
+    return {
+      content: formatCampaignIntelligenceResearch(campaignId, toolSteps),
+      toolSteps,
+      ...(dashboard?.status === 'failed'
+        ? { failed: dashboard.error ?? 'get_campaign_main_dashboard failed' }
+        : {}),
+    }
   }
 
   private streamCompletion(

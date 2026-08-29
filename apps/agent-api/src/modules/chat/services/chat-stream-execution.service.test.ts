@@ -309,6 +309,142 @@ describe('ChatStreamExecutionService', () => {
     expect(streamCompletion.mock.calls[0]?.[0].instructions).toBe('Answer the user.')
   })
 
+  it('answers an exact quoted task provenance follow-up from one canonical task read', async () => {
+    const executeAction = vi.fn(async () => ({
+      tasks: [
+        {
+          id: 'task-source-1',
+          title: 'Introduce Shannon to Adley for the Sphere Rockets golf event',
+          status: 'logged',
+          source: 'fathom',
+          space_title: 'Meetings',
+          custom_data: {
+            provider: 'fathom',
+            source_call: 'Dylan and Shannon collaboration planning',
+            provider_source_key: 'fathom:174458566:action:0',
+            provider_evidence: {
+              recording_timestamp: '00:24:47',
+              recording_playback_url: 'https://fathom.video/calls/789735438?timestamp=1487.9999',
+            },
+          },
+        },
+      ],
+      total_count: 1,
+    }))
+    const streamCompletion = vi.fn()
+    const progressiveSend = vi.fn(async () => undefined)
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        progressiveSend,
+        selectedModelInput: 'auto',
+        userContent:
+          'What about “Introduce Shannon to Adley for the Sphere Rockets golf event” — is that actually assigned to me, and what meeting or Slack message did it come from? Show the source.',
+      }),
+    )
+
+    expect(executeAction).toHaveBeenCalledTimes(1)
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      {
+        assigned_to_me: true,
+        fields: 'summary',
+        include_closed: true,
+        include_count: true,
+        limit: 20,
+        search: 'Introduce Shannon to Adley for the Sphere Rockets golf event',
+      },
+      'session-1',
+    )
+    expect(streamCompletion).not.toHaveBeenCalled()
+    expect(result.content).toContain('is assigned to you')
+    expect(result.content).toContain('Dylan and Shannon collaboration planning')
+    expect(result.content).toContain('00:24:47')
+    expect(result.content).toContain(
+      'https://fathom.video/calls/789735438?timestamp=1487.9999',
+    )
+    expect(progressiveSend).toHaveBeenCalledWith(
+      'content_delta',
+      expect.objectContaining({ content: result.content }),
+    )
+  })
+
+  it('deterministically combines live reporting, Brain context, and campaign tasks', async () => {
+    const executeAction = vi.fn(async (action: string) => {
+      if (action === 'get_campaign_main_dashboard') {
+        return {
+          fetched_at: '2026-08-29T12:00:00.000Z',
+          kpis: { roas: 2.4, leads: 18 },
+        }
+      }
+      if (action === 'search_campaign_brain') {
+        return {
+          results: [{ content: 'Approved budget is $30k.' }],
+          context_sufficient: true,
+        }
+      }
+      return { tasks: [{ id: 'task-1', title: 'Refresh creative' }], total_count: 1 }
+    })
+    const streamCompletion = vi.fn(async ({ input }) => ({
+      content: 'Live ROAS is 2.4 as of Aug 29; the approved budget is $30k.',
+      toolSteps: [],
+      llmInput: input,
+    }))
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        campaignId: 'campaign-1',
+        selectedModelInput: 'auto',
+        userContent: 'What is the current status of this live campaign?',
+      }),
+    )
+
+    expect(executeAction).toHaveBeenCalledTimes(3)
+    expect(executeAction).toHaveBeenCalledWith(
+      'get_campaign_main_dashboard',
+      { campaign_id: 'campaign-1', refresh: true },
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'search_campaign_brain',
+      expect.objectContaining({ campaign_id: 'campaign-1' }),
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      { campaign_id: 'campaign-1', include_closed: false, include_count: true },
+      'session-1',
+    )
+    expect(streamCompletion).toHaveBeenCalledTimes(1)
+    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain(
+      'campaign_reporting',
+    )
+    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain(
+      'Approved budget is $30k.',
+    )
+    expect(result.content).toContain('Live ROAS is 2.4')
+  })
+
+  it('fails closed when a campaign status question has no resolved client campaign', async () => {
+    const executeAction = vi.fn()
+    const streamCompletion = vi.fn()
+    const service = makeService({ executeAction, streamCompletion })
+
+    const result = await service.run(
+      makeRunInput({
+        selectedModelInput: 'auto',
+        userContent: 'What is the current campaign status?',
+      }),
+    )
+
+    expect(result.failed).toBe('campaign_scope_required')
+    expect(result.content).toContain('specific client campaign')
+    expect(executeAction).not.toHaveBeenCalled()
+    expect(streamCompletion).not.toHaveBeenCalled()
+  })
+
   it('retrieves only the seven-day calendar window for an ongoing meeting follow-up', async () => {
     const executeAction = vi.fn(async () => ({ events: [] }))
     const streamCompletion = vi.fn(async () => ({ content: 'No upcoming meetings.', toolSteps: [] }))

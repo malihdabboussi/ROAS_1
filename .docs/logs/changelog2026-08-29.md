@@ -159,3 +159,23 @@ Why: A task title and assignee were not enough for Pixel or an operator to verif
 Impact: Contextual task questions can use the canonical task record to cite the originating conversation while task status remains owned by `space_items`. Missing provenance is explicit instead of being inferred or hidden.
 
 Files: `apps/api/src/modules/meetings/domain/meeting-action-provenance.ts`, `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.ts`, `apps/api/src/modules/meetings/providers/fathom-meeting-source.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-read.repository.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-state.repository.ts`, `apps/api/src/modules/meetings/services/meeting-source-ingestion.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-task-activity-helper.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-tasks.service.ts`, `documentation/features/meeting-follow-up-slack.md`.
+
+## [2026-08-29 09:58] - [FEATURE]
+
+What: Added a shared source-of-truth response envelope to Brain and live campaign reporting, injected the canonical routing policy into chat, and added a deterministic Auto path that combines a refreshed campaign dashboard with campaign Brain context and open campaign work.
+
+Why: Pixel needs to answer campaign-status questions from current reporting while using Brain to explain approved decisions and conversation history, without treating a stale memory or unrelated client as the current record.
+
+Impact: Campaign-status questions resolve one client, retrieve canonical metrics with an as-of timestamp, cross-reference durable context in parallel, and fail closed when no client campaign is resolved. Brain, reporting, and chat now share `{ canonical_source, as_of, evidence, brain_context }`.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-source-truth-contract.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-source-truth.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-input.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-brain-search-actions.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-analytics.service.ts`, `apps/agent-api/src/modules/chat/services/chat-source-truth-instructions.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence.util.ts`, `apps/agent-api/src/modules/chat/services/chat-artifact-read-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-gateway-input.service.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 11:00] - [FIX]
+
+What: Added a deterministic quoted-task follow-up route that performs one canonical assigned-task lookup and renders assignment, current status, and stored meeting or Slack provenance directly.
+
+Why: Signed-in production QA found that asking where one visible task came from triggered repeated Brain, Slack, meeting, and calendar searches, took nearly two minutes, and incorrectly claimed the assigned Fathom task had no source even though its canonical row contained both assignment and recording evidence.
+
+Impact: Exact task assignment/source questions no longer invoke model-led research. They remain scoped to the signed-in user's tasks, include completed rows for lifecycle explanations, require an exact title match, and cite stored Fathom timestamps/playback links or Slack provenance without cross-client widening.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-canonical-task-lookup.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
