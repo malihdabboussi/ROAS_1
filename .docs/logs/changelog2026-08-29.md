@@ -209,3 +209,13 @@ Why: Signed-in production QA proved that a Fathom action could be correctly assi
 Impact: Call-derived commitments now appear everywhere that reads My Tasks, completed commitments remain available for lifecycle/source explanations when explicitly requested, and direct assignment/source questions perform only the canonical task read.
 
 Files: `apps/agent-api/src/modules/artifacts/repositories/artifact-tasks.repository.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-my-tasks.helper.ts`, `apps/agent-api/src/modules/artifacts/services/__tests__/artifact-tasks.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 12:30] - [FIX]
+
+What: Bounded operational daily-focus answers to ten current tasks and eight upcoming meetings, separated stale or overdue commitments into a three-item review preview, and retained the complete canonical counts plus My Tasks handoff.
+
+Why: Signed-in production QA proved that including meeting child actions fixed provenance lookup but caused “What should I focus on?” to dump 143 assigned records, letting historical calls bury current work.
+
+Impact: Pixel now gives a usable workday agenda while preserving every task in My Tasks and keeping exact quoted-task provenance lookup complete. Old commitments remain visible as a review count with explicit Done / Keep open guidance instead of masquerading as today’s priorities.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`
