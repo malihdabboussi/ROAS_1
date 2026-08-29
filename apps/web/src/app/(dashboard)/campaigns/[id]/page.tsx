@@ -45,6 +45,7 @@ import { useCampaignDetailData } from './_hooks/use-campaign-detail-data'
 import {
   CAMPAIGN_TAB_ICONS,
   CAMPAIGN_TAB_LABELS,
+  CLIENT_WORKSPACE_NAV_TABS,
   DEFAULT_CAMPAIGN_TAB,
   normalizeCampaignTabId,
   readVisibleCampaignTabs,
@@ -63,16 +64,6 @@ const MOBILE_TAB_ICONS: Partial<Record<string, typeof BarChart3>> = {
   reporting: PieChart,
   communications: MessageSquare,
 }
-
-const CLIENT_WORKSPACE_NAV_TABS = [
-  { value: 'overview', label: 'Overview', icon: 'layout-grid' },
-  { value: 'dashboard', label: 'Campaigns', icon: 'folder-kanban' },
-  { value: 'list', label: 'Tasks & Requests', icon: 'list' },
-  { value: 'reporting', label: 'Performance', icon: 'pie-chart' },
-  { value: 'calendar', label: 'Meetings', icon: 'calendar-days' },
-  { value: 'communications', label: 'Chats & Missions', icon: 'message-square' },
-  { value: 'knowledge', label: 'Brain', icon: 'brain' },
-] as const
 
 const CLIENT_WORKSPACE_TAB_IDS = new Set<string>(CLIENT_WORKSPACE_NAV_TABS.map((tab) => tab.value))
 

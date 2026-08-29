@@ -139,3 +139,13 @@ Why: Signed-in lifecycle QA and the final context audit found that client chat s
 Impact: Client chat and Mission execution now apply the same fail-closed fundamentals contract for the selected client campaign.
 
 Files: `apps/mission-worker/src/modules/missions/services/context/mission-context.service.ts`, `apps/mission-worker/src/modules/missions/services/__tests__/hybrid-context.test.ts`, `.docs/logs/changelog2026-08-29.md`
+
+## [2026-08-29 09:15] - [FIX]
+
+What: Added Canvas to the fixed client-workspace campaign navigation and moved that navigation contract into the tested campaign-tab module.
+
+Why: A valid chat-created Canvas receipt linked to `?view=canvas`, but client workspaces rejected Canvas as an allowed tab and normalized the destination back to Overview.
+
+Impact: Canvas outputs now open the editable Canvas inside the correct client campaign, while existing client-workspace tabs and scope remain unchanged.
+
+Files: `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx`, `apps/web/src/app/(dashboard)/campaigns/[id]/_lib/campaign-nav-tabs.ts`, `apps/web/src/app/(dashboard)/campaigns/[id]/_lib/campaign-nav-tabs.test.ts`, `documentation/features/claude-chatgpt-shell.md`
