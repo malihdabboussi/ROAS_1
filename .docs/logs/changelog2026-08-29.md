@@ -1,5 +1,15 @@
 # Changelog - August 29, 2026
 
+## [2026-08-29 15:59] - [FIX]
+
+What: Replaced the first-action writer pass with a deterministic one-task formatter over the canonical My Tasks focus queue and today's calendar.
+
+Why: Signed-in production QA showed “What should I do first?” taking 46 seconds, returning four recommendations, and promoting an overdue Needs review example above the active focus list.
+
+Impact: The follow-up now returns exactly one current task, never selects stale owner-review work, includes concise schedule context, and avoids a second model call.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`.
+
 ## [2026-08-29 15:48] - [FIX]
 
 What: Made daily-focus and “what's on top” prompts retrieve today's calendar alongside canonical My Tasks without requiring an explicit meeting keyword.

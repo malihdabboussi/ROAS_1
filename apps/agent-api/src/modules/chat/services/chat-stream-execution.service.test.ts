@@ -201,10 +201,7 @@ describe('ChatStreamExecutionService', () => {
   })
 
   it('uses bounded operational data and a writer to choose the first action', async () => {
-    const streamCompletion = vi.fn(async () => ({
-      content: 'Start with Assigned task before Today meeting.',
-      toolSteps: [],
-    }))
+    const streamCompletion = vi.fn()
     const validateModelSettings = vi.fn(async (modelId, settings) => ({
       requestedModelId: modelId,
       resolvedModelId: modelId,
@@ -223,24 +220,15 @@ describe('ChatStreamExecutionService', () => {
       }),
     )
 
-    expect(validateModelSettings).toHaveBeenCalledTimes(1)
-    expect(validateModelSettings).toHaveBeenCalledWith(
-      'anthropic/claude-sonnet-4.6',
-      expect.objectContaining({ reasoning_effort: 'low' }),
-    )
-    expect(streamCompletion).toHaveBeenCalledTimes(1)
-    expect(streamCompletion.mock.calls[0]?.[0]).toMatchObject({
-      model: 'anthropic/claude-sonnet-4.6',
-      generationStage: 'write',
-      toolChoice: 'none',
-    })
-    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain('Assigned task')
-    expect(JSON.stringify(streamCompletion.mock.calls[0]?.[0].input)).toContain('Today meeting')
-    expect(progressiveSend).not.toHaveBeenCalledWith(
+    expect(validateModelSettings).not.toHaveBeenCalled()
+    expect(streamCompletion).not.toHaveBeenCalled()
+    expect(progressiveSend).toHaveBeenCalledWith(
       'content_delta',
-      expect.objectContaining({ content: expect.stringContaining('## Open tasks') }),
+      expect.objectContaining({ content: expect.stringContaining('## Do this first') }),
     )
-    expect(result.content).toBe('Start with Assigned task before Today meeting.')
+    expect(result.content).toContain('Assigned task')
+    expect(result.content).toContain('Today meeting')
+    expect(result.content).not.toContain('## Open tasks')
   })
 
   it('preserves full Auto reasoning for contextual agenda questions', async () => {

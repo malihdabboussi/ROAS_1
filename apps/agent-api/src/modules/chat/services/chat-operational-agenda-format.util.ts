@@ -14,6 +14,28 @@ export function formatOperationalAgenda(toolSteps: ToolStep[], now = new Date())
   return sections.filter(Boolean).join('\n\n') || 'No task or meeting records were requested.'
 }
 
+export function formatOperationalFirstAction(toolSteps: ToolStep[], now = new Date()): string {
+  const taskStep = toolSteps.find((step) => step.name === 'list_tasks')
+  if (!taskStep || taskStep.status === 'failed') {
+    return `## Do this first\n\n${taskStep?.error ?? 'I could not retrieve your assigned tasks.'}`
+  }
+  const tasks = records(record(taskStep.result).tasks)
+  const firstTask = tasks.find((task) => !needsReview(task, now))
+  if (!firstTask) {
+    return '## Do this first\n\nNo current assigned task is ready to prioritize. Review older commitments in My Tasks instead.'
+  }
+  const calendarStep = toolSteps.find((step) => step.name === 'list_calendar_events')
+  const nextMeeting =
+    calendarStep?.status === 'completed'
+      ? records(record(calendarStep.result).events)[0]
+      : undefined
+  return [
+    `## Do this first\n\n${formatTaskLine(firstTask)}`,
+    'This is the first current item in your My Tasks focus queue.',
+    ...(nextMeeting ? [`### Schedule context\n\n${formatCalendarLine(nextMeeting)}`] : []),
+  ].join('\n\n')
+}
+
 function formatTaskSection(step: ToolStep, now: Date): string {
   if (step.status === 'failed') return `## Open tasks\n\n${step.error ?? 'Task retrieval failed.'}`
   const result = record(step.result)
@@ -64,14 +86,7 @@ function formatCalendarSection(step: ToolStep): string {
   const events = records(result.events)
   if (events.length === 0) return `${heading}\n\nNo meetings are scheduled in this window.`
   const visibleEvents = events.slice(0, MAX_MEETINGS)
-  const lines = visibleEvents.map((event) => {
-    const title = text(event.title) || 'Untitled meeting'
-    const timing =
-      event.all_day === true
-        ? 'All day'
-        : [formatDate(text(event.start)), formatDate(text(event.end))].filter(Boolean).join(' – ')
-    return `- **${escapeMarkdown(title)}**${timing ? ` — ${timing}` : ''}`
-  })
+  const lines = visibleEvents.map(formatCalendarLine)
   const boundedHeading =
     events.length > MAX_MEETINGS
       ? `${heading} (next ${visibleEvents.length} of ${events.length})`
@@ -81,6 +96,15 @@ function formatCalendarSection(step: ToolStep): string {
     `${boundedHeading}\n\n${lines.join('\n')}`,
     ...(remainder > 0 ? [`${remainder} more meetings are in this window.`] : []),
   ].join('\n\n')
+}
+
+function formatCalendarLine(event: Record<string, unknown>): string {
+  const title = text(event.title) || 'Untitled meeting'
+  const timing =
+    event.all_day === true
+      ? 'All day'
+      : [formatDate(text(event.start)), formatDate(text(event.end))].filter(Boolean).join(' – ')
+  return `- **${escapeMarkdown(title)}**${timing ? ` — ${timing}` : ''}`
 }
 
 function formatTaskLine(task: Record<string, unknown>): string {

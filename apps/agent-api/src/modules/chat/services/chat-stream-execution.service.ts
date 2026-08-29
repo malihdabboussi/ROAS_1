@@ -25,7 +25,10 @@ import {
   type ChatModelSettings,
   type ValidatedModelSettings,
 } from './chat-model-input.service'
-import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
+import {
+  formatOperationalAgenda,
+  formatOperationalFirstAction,
+} from './chat-operational-agenda-format.util'
 import {
   extractCanonicalTaskLookupTitle,
   isOperationalCalendarRequest,
@@ -170,18 +173,11 @@ export class ChatStreamExecutionService {
     const researchRoute = resolveChatStageModel('auto', 'research')
     const writerRoute = resolveChatStageModel('auto', 'write')
     const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(input.userContent)
-    const operationalPriorityRecommendation =
-      operationalAgendaQuickPath && isOperationalPriorityRecommendationRequest(input.userContent)
     const canonicalTaskLookupTitle = extractCanonicalTaskLookupTitle(input.userContent)
     const campaignIntelligenceQuickPath = isCampaignStatusRequest(input.userContent)
     const campaignScopeRequired = campaignIntelligenceQuickPath && !input.campaignId
     const directResearchOutput =
-      canonicalTaskLookupTitle ||
-      campaignIntelligenceQuickPath ||
-      (operationalAgendaQuickPath && !operationalPriorityRecommendation)
-    const writerModelSettings = operationalAgendaQuickPath
-      ? { ...writerRoute.modelSettings, reasoning_effort: 'low' as const }
-      : writerRoute.modelSettings
+      canonicalTaskLookupTitle || campaignIntelligenceQuickPath || operationalAgendaQuickPath
     const researchSettings =
       canonicalTaskLookupTitle || operationalAgendaQuickPath || campaignIntelligenceQuickPath
         ? null
@@ -191,7 +187,10 @@ export class ChatStreamExecutionService {
           )
     const writerSettings = directResearchOutput
       ? null
-      : await this.modelInputService.validateModelSettings(writerRoute.modelId, writerModelSettings)
+      : await this.modelInputService.validateModelSettings(
+          writerRoute.modelId,
+          writerRoute.modelSettings,
+        )
     const researchSend: SendFn = async (type, data) => {
       if (type === 'content_delta' || type === 'thinking_delta') return
       await input.progressiveSend(type, data)
@@ -323,7 +322,9 @@ export class ChatStreamExecutionService {
     const toolSteps = await Promise.all(actions)
     const failedStep = toolSteps.find((step) => step.status === 'failed')
     return {
-      content: formatOperationalAgenda(toolSteps),
+      content: isOperationalPriorityRecommendationRequest(input.userContent)
+        ? formatOperationalFirstAction(toolSteps)
+        : formatOperationalAgenda(toolSteps),
       toolSteps,
       ...(failedStep ? { failed: failedStep.error ?? `${failedStep.name} failed` } : {}),
     }

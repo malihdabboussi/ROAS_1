@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest'
-import { formatOperationalAgenda } from './chat-operational-agenda-format.util'
+import {
+  formatOperationalAgenda,
+  formatOperationalFirstAction,
+} from './chat-operational-agenda-format.util'
 
 describe('formatOperationalAgenda', () => {
   it('keeps the daily agenda bounded while preserving the full open-task count', () => {
@@ -120,5 +123,40 @@ describe('formatOperationalAgenda', () => {
     ])
 
     expect(output).toBe("## Tomorrow's meetings\n\nNo meetings are scheduled in this window.")
+  })
+
+  it('chooses exactly one current task and excludes stale review work', () => {
+    const output = formatOperationalFirstAction(
+      [
+        {
+          name: 'list_tasks',
+          label: 'Retrieving your open assigned tasks',
+          status: 'completed',
+          result: {
+            tasks: [
+              {
+                title: 'Launch an old agent',
+                custom_data: { action_lifecycle: { review_state: 'needs_review' } },
+              },
+              { title: 'Introduce Shannon to Adley', due_date: '2026-08-31T00:00:00Z' },
+              { title: 'Build the VSL funnel', due_date: '2026-09-03T20:00:00Z' },
+            ],
+          },
+        },
+        {
+          name: 'list_calendar_events',
+          label: "Retrieving today's meetings",
+          status: 'completed',
+          result: { events: [{ title: 'Peter strategy call', all_day: true }] },
+        },
+      ],
+      new Date('2026-08-29T19:00:00Z'),
+    )
+
+    expect(output).toContain('## Do this first')
+    expect(output).toContain('**Introduce Shannon to Adley**')
+    expect(output).toContain('**Peter strategy call**')
+    expect(output).not.toContain('Launch an old agent')
+    expect(output).not.toContain('Build the VSL funnel')
   })
 })
