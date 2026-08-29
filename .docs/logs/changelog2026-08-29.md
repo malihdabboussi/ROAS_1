@@ -1,5 +1,15 @@
 # Changelog - August 29, 2026
 
+## [2026-08-29 15:20] - [FIX]
+
+What: Bound deterministic campaign-status evidence to the canonical campaign and its uniquely named Space, added explicit read-only scope override validation for live dashboard reads, and made Campaign Brain retain deterministic evidence when the optional LLM reranker fails.
+
+Why: Signed-in production QA showed that a stale active General workspace could reject the requested dashboard scope and return unrelated Personal Dashboard tasks. The same run showed that malformed reranker JSON could discard otherwise usable Campaign Brain candidates.
+
+Impact: Named campaign questions now read live reporting, Brain context, and only the requested campaign Space's open tasks across stale chat context. Optional reranking can improve relevance but can no longer make grounded Brain retrieval unavailable.
+
+Files: `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.ts`, `apps/agent-api/src/modules/chat/services/chat-campaign-intelligence-execution.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.test.ts`, `apps/agent-api/src/modules/brain/services/brain-reranker.service.ts`, `apps/agent-api/src/modules/brain/services/brain-reranker.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`.
+
 ## [2026-08-29 07:55] - [FEATURE]
 
 What: Added canonical meeting-action lifecycle reconciliation. An authenticated hourly cron marks overdue and 30-day inactive follow-ups for owner review, Meetings and My Tasks surface explicit Still open / Done / Dismiss decisions, and those decisions preserve task/provider evidence in `space_items.custom_data`. Updated the task rollup to include meeting follow-up child rows.

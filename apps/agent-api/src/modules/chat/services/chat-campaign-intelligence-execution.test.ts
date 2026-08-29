@@ -8,6 +8,9 @@ describe('campaign intelligence execution', () => {
   it('deterministically combines live reporting, Brain context, and campaign tasks', async () => {
     const progressiveSend = vi.fn(async () => undefined)
     const executeAction = vi.fn(async (action: string) => {
+      if (action === 'list_spaces') {
+        return { spaces: [{ id: 'space-1', title: 'Campaign Tasks' }] }
+      }
       if (action === 'get_campaign_main_dashboard') {
         return {
           fetched_at: '2026-08-29T12:00:00.000Z',
@@ -44,7 +47,7 @@ describe('campaign intelligence execution', () => {
       }),
     )
 
-    expect(executeAction).toHaveBeenCalledTimes(3)
+    expect(executeAction).toHaveBeenCalledTimes(4)
     expect(resolveCampaignIdByNameForContext).toHaveBeenCalledWith(
       'user-1',
       'What is the current status of this live campaign?',
@@ -52,17 +55,22 @@ describe('campaign intelligence execution', () => {
     )
     expect(executeAction).toHaveBeenCalledWith(
       'get_campaign_main_dashboard',
-      { campaign_id: 'campaign-1', refresh: true },
+      { campaign_id: 'campaign-1', refresh: true, scope_override: true },
       'session-1',
     )
     expect(executeAction).toHaveBeenCalledWith(
       'search_campaign_brain',
-      expect.objectContaining({ campaign_id: 'campaign-1' }),
+      expect.objectContaining({ campaign_id: 'campaign-1', scope_override: true }),
       'session-1',
     )
     expect(executeAction).toHaveBeenCalledWith(
       'list_tasks',
-      { campaign_id: 'campaign-1', include_closed: false, include_count: true },
+      {
+        space_id: 'space-1',
+        include_closed: false,
+        include_count: true,
+        scope_override: true,
+      },
       'session-1',
     )
     expect(streamCompletion).not.toHaveBeenCalled()
@@ -80,6 +88,17 @@ describe('campaign intelligence execution', () => {
   it('resolves a named client campaign instead of reading the General campaign', async () => {
     const resolveCampaignIdByNameForContext = vi.fn(async () => 'campaign-multifamily')
     const executeAction = vi.fn(async (action: string) => {
+      if (action === 'list_spaces') {
+        return {
+          spaces: [
+            { id: 'space-general', title: 'General' },
+            {
+              id: 'space-multifamily-vsl',
+              title: 'VSL - MultiFamily Strategy - Ongoing VSL & Call Booking',
+            },
+          ],
+        }
+      }
       if (action === 'search_campaign_brain') return { results: [], count: 0 }
       if (action === 'get_campaign_main_dashboard') {
         return {
@@ -104,15 +123,41 @@ describe('campaign intelligence execution', () => {
     )
 
     expect(resolveCampaignIdByNameForContext).toHaveBeenCalledWith('user-1', prompt, undefined)
-    for (const [, data] of executeAction.mock.calls) {
-      expect(data).toEqual(expect.objectContaining({ campaign_id: 'campaign-multifamily' }))
-    }
+    expect(executeAction).toHaveBeenCalledWith(
+      'get_campaign_main_dashboard',
+      {
+        campaign_id: 'campaign-multifamily',
+        refresh: true,
+        scope_override: true,
+      },
+      'session-1',
+    )
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      {
+        space_id: 'space-multifamily-vsl',
+        include_closed: false,
+        include_count: true,
+        scope_override: true,
+      },
+      'session-1',
+    )
     expect(result.content).toContain('| Leads | 4 |')
   })
 
   it('keeps live reporting and tasks when Campaign Brain retrieval fails', async () => {
     const resolveCampaignIdByNameForContext = vi.fn(async () => 'campaign-multifamily')
     const executeAction = vi.fn(async (action: string) => {
+      if (action === 'list_spaces') {
+        return {
+          spaces: [
+            {
+              id: 'space-multifamily-vsl',
+              title: 'VSL - MultiFamily Strategy - Ongoing VSL & Call Booking',
+            },
+          ],
+        }
+      }
       if (action === 'search_campaign_brain') {
         return { success: false, error: 'Campaign Brain unavailable' }
       }
@@ -143,10 +188,15 @@ describe('campaign intelligence execution', () => {
       expect.stringContaining('MultiFamily Strategy'),
       'org-1',
     )
-    expect(executeAction).toHaveBeenCalledTimes(3)
-    for (const [, data] of executeAction.mock.calls) {
-      expect(data).toEqual(expect.objectContaining({ campaign_id: 'campaign-multifamily' }))
-    }
+    expect(executeAction).toHaveBeenCalledTimes(4)
+    expect(executeAction).toHaveBeenCalledWith(
+      'list_tasks',
+      expect.objectContaining({
+        space_id: 'space-multifamily-vsl',
+        scope_override: true,
+      }),
+      'session-1',
+    )
     expect(result.content).toContain('| Leads | 7 |')
     expect(result.content).toContain('Campaign Brain: unavailable')
     expect(result.content).toContain('Open campaign tasks: 1 open tasks')
@@ -154,14 +204,16 @@ describe('campaign intelligence execution', () => {
 
   it('keeps the campaign evidence receipt without invoking a writer', async () => {
     const executeAction = vi.fn(async (action: string) =>
-      action === 'get_campaign_main_dashboard'
-        ? {
-            canonical_source: { system: 'campaign_reporting', owner: 'main_dashboard' },
-            as_of: '2026-08-29T12:00:00.000Z',
-          }
-        : action === 'search_campaign_brain'
-          ? { results: [] }
-          : { tasks: [], total_count: 0 },
+      action === 'list_spaces'
+        ? { spaces: [{ id: 'space-1', title: 'Campaign Tasks' }] }
+        : action === 'get_campaign_main_dashboard'
+          ? {
+              canonical_source: { system: 'campaign_reporting', owner: 'main_dashboard' },
+              as_of: '2026-08-29T12:00:00.000Z',
+            }
+          : action === 'search_campaign_brain'
+            ? { results: [] }
+            : { tasks: [], total_count: 0 },
     )
     const streamCompletion = vi.fn()
     const service = makeService({ executeAction, streamCompletion })

@@ -4250,13 +4250,14 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
   // the schema and let the handler surface a typed error if no resolution is possible.
   get_campaign_main_dashboard: {
     required: [],
-    optional: ['campaign_id', 'campaignId', 'since', 'until', 'refresh'],
+    optional: ['campaign_id', 'campaignId', 'since', 'until', 'refresh', 'scope_override'],
     types: {
       campaign_id: 'string',
       campaignId: 'string',
       since: 'iso_date',
       until: 'iso_date',
       refresh: 'boolean',
+      scope_override: 'boolean',
     },
   },
   get_campaign_social_analytics: {

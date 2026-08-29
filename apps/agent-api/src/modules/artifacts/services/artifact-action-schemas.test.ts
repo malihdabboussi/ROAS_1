@@ -1140,6 +1140,25 @@ describe('validateActionData', () => {
       ).toBeNull()
     })
 
+    it('accepts an explicit read-only campaign scope override', () => {
+      expect(
+        validateActionData('get_campaign_main_dashboard', {
+          campaign_id: 'c1',
+          refresh: true,
+          scope_override: true,
+        }),
+      ).toBeNull()
+    })
+
+    it('rejects a non-boolean campaign scope override', () => {
+      expect(
+        validateActionData('get_campaign_main_dashboard', {
+          campaign_id: 'c1',
+          scope_override: 'yes',
+        }),
+      ).toMatch(/scope_override.*boolean/i)
+    })
+
     it('rejects malformed since', () => {
       expect(validateActionData('get_campaign_main_dashboard', { since: 'not-a-date' })).toMatch(
         /since.*ISO/i,

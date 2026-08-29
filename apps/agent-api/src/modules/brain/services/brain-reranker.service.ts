@@ -104,9 +104,19 @@ export class BrainRerankerService {
     billing?: BrainRerankerBillingContext,
   ): Promise<BrainRetrievalCandidate[]> {
     if (process.env.BRAIN_LLM_RERANKER === '1' && candidates.length > 0) {
-      const llmRanked = await this.rerankWithLlm(query, candidates, limit, billing)
-      if (llmRanked) return llmRanked
-      throw new Error('Brain LLM reranker returned no usable ranking')
+      try {
+        const llmRanked = await this.rerankWithLlm(query, candidates, limit, billing)
+        if (llmRanked) return llmRanked
+      } catch (error) {
+        this.logger.warn(
+          JSON.stringify({
+            feature: 'brain_reranker_fallback_v1',
+            reason:
+              error instanceof Error ? error.message.slice(0, 200) : String(error).slice(0, 200),
+            candidate_count: candidates.length,
+          }),
+        )
+      }
     }
     return this.rerankDeterministic(query, candidates, limit)
   }
@@ -218,8 +228,7 @@ export class BrainRerankerService {
     billing?: BrainRerankerBillingContext,
   ): Promise<string> {
     const openRouterKey =
-      process.env.OPENROUTER_BACKGROUND_API_KEY?.trim() ||
-      process.env.OPENROUTER_API_KEY?.trim()
+      process.env.OPENROUTER_BACKGROUND_API_KEY?.trim() || process.env.OPENROUTER_API_KEY?.trim()
     const model = process.env.BRAIN_LLM_RERANKER_MODEL?.trim() || 'deepseek/deepseek-chat-v3.1'
     if (!billing?.userId) {
       throw new Error('Brain LLM reranker requires a customer billing owner')

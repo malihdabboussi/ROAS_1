@@ -159,6 +159,36 @@ describe('BrainRerankerService', () => {
     expect(cost).toBeNull()
   })
 
+  it('falls back to deterministic evidence when the optional LLM reranker fails', async () => {
+    vi.stubEnv('BRAIN_LLM_RERANKER', '1')
+    const service = new BrainRerankerService()
+    vi.spyOn(service as never, 'rerankWithLlm').mockRejectedValue(
+      new Error('Brain LLM reranker returned no usable ranking'),
+    )
+
+    const result = await service.rerank(
+      'Multifamily campaign status',
+      [
+        candidate({
+          id: 'generic',
+          title: 'General campaign note',
+          scores: { semantic: 0.8, final: 0.8 },
+        }),
+        candidate({
+          id: 'multifamily',
+          title: 'Multifamily campaign status',
+          source_id: 'source-1',
+          evidence_refs: [{ type: 'memory', id: 'memory-1' }],
+          scores: { lexical: 0.7, final: 0.7 },
+        }),
+      ],
+      2,
+      { userId: 'user-1' },
+    )
+
+    expect(result[0]?.id).toBe('multifamily')
+  })
+
   it('caps reranker output and preserves low reasoning for relevance judgment', async () => {
     vi.stubEnv('BRAIN_LLM_RERANKER', '1')
     vi.stubEnv('BRAIN_LLM_RERANKER_MODEL', 'google/gemini-3.5-flash')

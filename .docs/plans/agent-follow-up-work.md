@@ -40215,3 +40215,17 @@ Needed work: Extract deterministic direct-research output routing and its fixtur
 Reason not done now: The production answer-suppression bug is fixed with a bounded branch and remains within the hard limit; decomposing the mature stream executor is separate architecture work.
 
 Resolution: The campaign executor and shared test fixtures were extracted while adding the deterministic source receipt. The stream service is now 564 LOC and its regression suite is 570 LOC.
+## 2026-08-29 - Agent API campaign-status scope contract catalog debt
+
+Feature/app: Agent API artifact action contracts
+
+Files:
+
+- `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`
+- `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.test.ts`
+
+Evidence: The scoped dashboard `scope_override` contract change leaves these pre-existing aggregate catalogs at 4,460 and 2,556 LOC respectively, above the architecture limits. The new behavior itself remains isolated to the existing dashboard schema and two focused assertions.
+
+Needed work: Split the artifact schemas and their tests by domain while preserving the aggregate schema, lifecycle, preflight, action-contract, and drift checks.
+
+Reason not done now: Catalog decomposition is unrelated to the requested production campaign-status correction and would materially broaden deployment risk.
