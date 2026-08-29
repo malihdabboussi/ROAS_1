@@ -8,7 +8,9 @@ import { AllTasksNativeList } from '@/components/work-views/AllTasksNativeList'
 import { fetchCampaigns, type Campaign } from '@/lib/campaigns'
 import { useClientScope } from '@/lib/client-scope'
 import { fetchPrograms, type Program } from '@/lib/programs'
+import { updateSpaceItem } from '@/lib/spaces'
 import type { TaskRollupItem, TaskRollupView } from '@/lib/tasks'
+import { buildTaskReviewPatch } from '@/lib/tasks/task-lifecycle-review'
 import { useTaskRollup } from '@/lib/work-views'
 import { ALL_TASKS_MESSAGES } from '../config/all-tasks-messages.config'
 import { ALL_TASKS_TOAST_ERRORS } from '../config/all-tasks-toast-errors.config'
@@ -125,7 +127,19 @@ export function AllTasksBoard({
         {loading ? (
           <ListSkeleton rows={8} label={ALL_TASKS_MESSAGES.LOADING} />
         ) : items.length ? (
-          <AllTasksNativeList items={items} reload={reload} onOpenItem={onOpenItem} />
+          <AllTasksNativeList
+            items={items}
+            reload={reload}
+            onOpenItem={onOpenItem}
+            onReviewItem={async (item, decision) => {
+              try {
+                await updateSpaceItem(item.space_id, item.id, buildTaskReviewPatch(item, decision))
+                toast.success(ALL_TASKS_MESSAGES.REVIEW_SAVED)
+              } catch {
+                toast.error(ALL_TASKS_TOAST_ERRORS.REVIEW_FAILED.userMessage)
+              }
+            }}
+          />
         ) : (
           <div className="surface-card border-border rounded-spacing-3 p-spacing-6 border text-center">
             <p className="body-2 text-foreground font-medium">No open tasks</p>

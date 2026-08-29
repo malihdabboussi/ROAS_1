@@ -41,6 +41,7 @@ const ActionPatchSchema = z
     due_at: z.string().datetime().nullable().optional(),
     priority: z.enum(['low', 'medium', 'high', 'urgent']).nullable().optional(),
     resolution: z.record(z.unknown()).optional(),
+    review_decision: z.enum(['open', 'done', 'dismissed']).optional(),
   })
   .refine((value) => Object.keys(value).length > 0)
 const ActionCreateSchema = z.object({

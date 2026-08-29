@@ -38,6 +38,7 @@ export const HOME_TOAST_SUCCESS = {
   MEETING_ACTION_ALREADY_EXISTS: {
     userMessage: 'Already on the list — no duplicate added.',
   },
+  MEETING_ACTION_REVIEWED: { userMessage: 'Action item review saved.' },
   MEETING_RECORDING_LINKED: { userMessage: 'Recording linked to this meeting.' },
   MEETING_NOTE_ADDED: { userMessage: 'Note saved to this meeting.' },
   MEETING_RENAMED: { userMessage: 'Meeting renamed everywhere.' },

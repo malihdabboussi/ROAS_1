@@ -108,4 +108,30 @@ describe('AllTasksNativeList', () => {
       expect(reload).toHaveBeenCalled()
     })
   })
+
+  it('lets the owner clear a canonical stale-task review', async () => {
+    const onReviewItem = vi.fn().mockResolvedValue(undefined)
+    const reload = vi.fn().mockResolvedValue(undefined)
+    render(
+      <AllTasksNativeList
+        items={[
+          {
+            ...item,
+            custom_data: {
+              action_lifecycle: { review_state: 'needs_review', review_reason: 'inactive' },
+            },
+          },
+        ]}
+        reload={reload}
+        onReviewItem={onReviewItem}
+      />,
+    )
+
+    expect(screen.getByText('Are these still open?')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Still open' }))
+    await waitFor(() => {
+      expect(onReviewItem).toHaveBeenCalledWith(expect.objectContaining({ id: 'task-1' }), 'open')
+      expect(reload).toHaveBeenCalled()
+    })
+  })
 })

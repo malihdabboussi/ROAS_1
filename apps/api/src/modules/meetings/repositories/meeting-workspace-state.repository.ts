@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { findMatchingMeetingAction } from '../domain/meeting-action-dedupe'
+import { applyMeetingActionReviewDecision } from '../domain/meeting-action-lifecycle'
 import type { CanonicalMeetingAssignee } from '../domain/meeting-assignee-identity'
 import {
   isFollowUpSpaceItem,
@@ -76,17 +77,26 @@ export class MeetingWorkspaceStateRepository {
   ): Promise<Record<string, unknown>> {
     const followUp = await this.findFollowUpAction(supabase, input)
     if (followUp) {
-      const nextStatus = meetingActionStatusToFollowUpStatus(input.patch.status)
       const currentCustom = record(followUp.custom_data)
-      const dismissed = String(input.patch.status ?? '') === 'dismissed'
+      const reviewDecision = reviewDecisionOf(input.patch.review_decision)
+      const nextStatus = reviewDecision
+        ? reviewDecision === 'done'
+          ? 'done'
+          : 'logged'
+        : meetingActionStatusToFollowUpStatus(input.patch.status)
+      const dismissed =
+        reviewDecision === 'dismissed' || String(input.patch.status ?? '') === 'dismissed'
+      const nextCustom = reviewDecision
+        ? applyMeetingActionReviewDecision(currentCustom, reviewDecision)
+        : {
+            ...currentCustom,
+            dismissed_at: dismissed ? new Date().toISOString() : null,
+          }
       const { data, error } = await supabase
         .from('space_items')
         .update({
           status: nextStatus,
-          custom_data: {
-            ...currentCustom,
-            dismissed_at: dismissed ? new Date().toISOString() : null,
-          },
+          custom_data: nextCustom,
           updated_at: new Date().toISOString(),
         })
         .eq('id', input.actionId)
@@ -307,4 +317,8 @@ function record(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {}
+}
+
+function reviewDecisionOf(value: unknown): 'open' | 'done' | 'dismissed' | null {
+  return value === 'open' || value === 'done' || value === 'dismissed' ? value : null
 }

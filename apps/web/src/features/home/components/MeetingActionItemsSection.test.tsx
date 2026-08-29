@@ -7,6 +7,7 @@ import { MeetingActionItemsSection } from './MeetingActionItemsSection'
 const mocks = vi.hoisted(() => ({
   createMeetingAction: vi.fn(),
   updateMeetingActionStatus: vi.fn(),
+  reviewMeetingAction: vi.fn(),
   updateSpaceItem: vi.fn(),
   toastSuccess: vi.fn(),
   toastError: vi.fn(),
@@ -16,6 +17,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('@/features/home/services/meeting-workspace-api', () => ({
   createMeetingAction: mocks.createMeetingAction,
   updateMeetingActionStatus: mocks.updateMeetingActionStatus,
+  reviewMeetingAction: mocks.reviewMeetingAction,
 }))
 
 vi.mock('@/lib/spaces', async (importOriginal) => {
@@ -223,6 +225,45 @@ describe('MeetingActionItemsSection', () => {
         'action-1',
         'confirmed',
       )
+    })
+  })
+
+  it('asks for an owner decision and records the selected review outcome', async () => {
+    mocks.useSpaceMappingIndex.mockReturnValue(null)
+    mocks.reviewMeetingAction.mockResolvedValue(action({}))
+    const onReload = vi.fn().mockResolvedValue(undefined)
+
+    render(
+      <MeetingActionItemsSection
+        spaceId="space-1"
+        meetingItemId="meeting-1"
+        actions={[
+          action({
+            action_lifecycle: {
+              review_state: 'needs_review',
+              review_reason: 'overdue',
+            },
+          }),
+        ]}
+        loading={false}
+        onCreated={vi.fn()}
+        onReload={onReload}
+      />,
+    )
+
+    expect(screen.getByText('Are these still open?')).toBeInTheDocument()
+    expect(screen.getByText('This action item is overdue.')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }))
+
+    await waitFor(() => {
+      expect(mocks.reviewMeetingAction).toHaveBeenCalledWith(
+        'space-1',
+        'meeting-1',
+        'action-1',
+        'done',
+      )
+      expect(onReload).toHaveBeenCalled()
+      expect(mocks.toastSuccess).toHaveBeenCalled()
     })
   })
 })

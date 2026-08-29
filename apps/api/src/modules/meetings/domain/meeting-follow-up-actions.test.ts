@@ -98,4 +98,20 @@ describe('meeting-follow-up-actions', () => {
     })
     expect(action.status).toBe('dismissed')
   })
+
+  it('exposes canonical lifecycle review state to meeting consumers', () => {
+    const action = mapFollowUpSpaceItemToMeetingAction({
+      id: 'follow-up-review',
+      title: 'Confirm whether this is done',
+      status: 'logged',
+      custom_data: {
+        entry_type: 'follow_up',
+        action_lifecycle: { review_state: 'needs_review', review_reason: 'inactive' },
+      },
+    })
+    expect(action.action_lifecycle).toEqual({
+      review_state: 'needs_review',
+      review_reason: 'inactive',
+    })
+  })
 })

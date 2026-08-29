@@ -1,5 +1,15 @@
 # Changelog - August 29, 2026
 
+## [2026-08-29 07:55] - [FEATURE]
+
+What: Added canonical meeting-action lifecycle reconciliation. An authenticated hourly cron marks overdue and 30-day inactive follow-ups for owner review, Meetings and My Tasks surface explicit Still open / Done / Dismiss decisions, and those decisions preserve task/provider evidence in `space_items.custom_data`. Updated the task rollup to include meeting follow-up child rows.
+
+Why: Canonical call tasks could remain stale indefinitely, and the All Tasks query hid follow-ups attached to a parent meeting even when Pixel correctly retrieved those same assignments.
+
+Impact: Old meeting commitments can now be reviewed without automatic completion or duplicate task creation. A confirmed-open item is suppressed for 14 days; completed and dismissed decisions retain their owner-review origin; and the same canonical follow-up appears in Meetings, My Tasks, and Pixel's task retrieval path.
+
+Files: `apps/api/src/modules/meetings/`, `apps/api/src/modules/programs/repositories/task-rollup.repository.ts`, `apps/api/api/meeting-action-reconciliation-cron.ts`, `apps/api/vercel.json`, `apps/web/src/components/work-views/AllTasksNativeList.tsx`, `apps/web/src/features/all-tasks/`, `apps/web/src/features/home/components/MeetingActionItemsSection.tsx`, `apps/web/src/lib/tasks/task-lifecycle-review.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`.
+
 ## 2026-08-29 06:42 - [FIX]
 
 What: Preserved provider follow-up refresh compatibility when no canonical assignee map is available, while retaining human assignment propagation during normal Fathom ingestion.

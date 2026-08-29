@@ -54,4 +54,14 @@ describe('meetingActionToTaskRollupItem', () => {
       }).status,
     ).toBe('done')
   })
+
+  it('preserves lifecycle review state in the canonical task row', () => {
+    const lifecycle = { review_state: 'needs_review', review_reason: 'inactive' }
+    const item = meetingActionToTaskRollupItem(action({ action_lifecycle: lifecycle }), {
+      spaceId: 'space-1',
+      spaceTitle: 'Meetings',
+      campaignName: null,
+    })
+    expect(item.custom_data).toEqual({ action_lifecycle: lifecycle })
+  })
 })
