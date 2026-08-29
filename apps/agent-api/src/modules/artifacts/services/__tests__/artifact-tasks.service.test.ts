@@ -191,6 +191,7 @@ function makeTarget(
     uploadedAttachments?: Array<Record<string, unknown>>
     indexedSources?: Array<Record<string, unknown>>
     orgId?: string | null
+    requestContext?: Record<string, unknown> | null
   },
 ) {
   const supabase = {
@@ -202,6 +203,7 @@ function makeTarget(
     getUserClient: vi.fn(async () => supabase),
     requestContext: {
       getUploadedAttachments: vi.fn(() => options?.uploadedAttachments ?? []),
+      get: vi.fn(() => options?.requestContext ?? null),
     },
     spaceAssetIndexService: options?.indexedSources
       ? {
@@ -505,6 +507,34 @@ describe('ArtifactTasksService', () => {
 
     expect(result.success).toBe(true)
     expect(result.task.source).toBe('agent')
+  })
+
+  it('stamps Slack-created tasks with server-owned thread provenance', async () => {
+    const db: Db = { spaces: [makeSpace(schema)], space_items: [], space_item_activity: [] }
+    const service = new ArtifactTasksService()
+    const conversationId = '00000000-0000-0000-0000-000000000999'
+    const target = makeTarget(db, {
+      requestContext: {
+        channel: 'slack',
+        channelMember: { platform_id: 'U123' },
+      },
+    })
+
+    const result = (await service
+      .getHandlers(target)
+      .create_task(
+        { space_id: 'space-1', title: 'Send Curtis the recap', status: 'spaces' },
+        `agent:pixel:${conversationId}`,
+      )) as { success: boolean; task: Record<string, any> }
+
+    expect(result.success).toBe(true)
+    expect(result.task.custom_data.action_provenance).toEqual({
+      source_kind: 'slack_thread',
+      source_id: `slack:${conversationId}`,
+      source_excerpt: 'Send Curtis the recap',
+      conversation_id: conversationId,
+      slack_user_id: 'U123',
+    })
   })
 
   it('resolves create_task human assignee_name from active organization members', async () => {
@@ -1292,18 +1322,16 @@ describe('ArtifactTasksService', () => {
     }
     const service = new ArtifactTasksService()
 
-    const result = (await service
-      .getHandlers(makeTarget(db, { orgId: 'org-1' }))
-      .list_tasks(
-        {
-          space_id: 'space-1',
-          assigned_to_me: true,
-          fields: 'summary',
-          include_count: true,
-          limit: 20,
-        },
-        'agent:vibey:stub',
-      )) as {
+    const result = (await service.getHandlers(makeTarget(db, { orgId: 'org-1' })).list_tasks(
+      {
+        space_id: 'space-1',
+        assigned_to_me: true,
+        fields: 'summary',
+        include_count: true,
+        limit: 20,
+      },
+      'agent:vibey:stub',
+    )) as {
       success: boolean
       scope: string
       tasks: Record<string, unknown>[]

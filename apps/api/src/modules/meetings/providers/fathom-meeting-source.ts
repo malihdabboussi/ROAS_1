@@ -15,6 +15,13 @@ export type FathomSourceAction = {
   completed: boolean
   userGenerated: boolean
   raw: Record<string, unknown>
+  evidence?: {
+    sourceKind: 'meeting_transcript' | 'meeting_summary'
+    excerpt: string
+    speakerName: string | null
+    timestamp: string | null
+    transcriptTurnIndex: number | null
+  }
   /** Present when the LLM judgment pass rewrote or annotated this action. */
   refinement?: { original_text: string; why?: string }
 }
@@ -102,24 +109,24 @@ function normalizeProviderActions(
   externalRecordingId: string,
 ): FathomSourceAction[] {
   return actionItems.flatMap((raw, index) => {
-      const action = objectRecord(raw)
-      const sourceText = firstText(action.description, action.title, action.text)
-      if (!sourceText) return []
-      const assignee = objectRecord(action.assignee)
-      return [
-        {
-          sourceKey: `fathom:${externalRecordingId}:action:${index}`,
-          sourceText,
-          assigneeName: firstText(assignee.name),
-          assigneeEmail: normalizedEmail(assignee.email),
-          recordingTimestamp: firstText(action.recording_timestamp),
-          recordingPlaybackUrl: httpUrl(action.recording_playback_url),
-          completed: action.completed === true,
-          userGenerated: action.user_generated === true,
-          raw: action,
-        },
-      ]
-    })
+    const action = objectRecord(raw)
+    const sourceText = firstText(action.description, action.title, action.text)
+    if (!sourceText) return []
+    const assignee = objectRecord(action.assignee)
+    return [
+      {
+        sourceKey: `fathom:${externalRecordingId}:action:${index}`,
+        sourceText,
+        assigneeName: firstText(assignee.name),
+        assigneeEmail: normalizedEmail(assignee.email),
+        recordingTimestamp: firstText(action.recording_timestamp),
+        recordingPlaybackUrl: httpUrl(action.recording_playback_url),
+        completed: action.completed === true,
+        userGenerated: action.user_generated === true,
+        raw: action,
+      },
+    ]
+  })
 }
 
 export function resolveCanonicalFathomTitle(input: {
@@ -203,7 +210,9 @@ function stripMarkdown(value: string): string {
 }
 
 function cleanSentence(value: string): string {
-  return stripMarkdown(value).replace(/[.!?]+$/g, '').trim()
+  return stripMarkdown(value)
+    .replace(/[.!?]+$/g, '')
+    .trim()
 }
 
 function collectParticipantNames(event: Record<string, unknown>): string[] {

@@ -149,3 +149,13 @@ Why: A valid chat-created Canvas receipt linked to `?view=canvas`, but client wo
 Impact: Canvas outputs now open the editable Canvas inside the correct client campaign, while existing client-workspace tabs and scope remain unchanged.
 
 Files: `apps/web/src/app/(dashboard)/campaigns/[id]/page.tsx`, `apps/web/src/app/(dashboard)/campaigns/[id]/_lib/campaign-nav-tabs.ts`, `apps/web/src/app/(dashboard)/campaigns/[id]/_lib/campaign-nav-tabs.test.ts`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-29 08:39] - [FEATURE]
+
+What: Added server-owned provenance to canonical meeting and Slack-derived tasks. Fathom follow-ups now retain recording/transcript identifiers and bounded evidence excerpts; manual call actions retain manual-note evidence; Slack-created tasks retain their originating conversation plus exact Slack team, channel, thread, and message identifiers. Meeting workspace responses include sourced, missing-source, percentage, and source-kind coverage.
+
+Why: A task title and assignee were not enough for Pixel or an operator to verify why the task existed, and historical rows could not be distinguished from fully sourced actions.
+
+Impact: Contextual task questions can use the canonical task record to cite the originating conversation while task status remains owned by `space_items`. Missing provenance is explicit instead of being inferred or hidden.
+
+Files: `apps/api/src/modules/meetings/domain/meeting-action-provenance.ts`, `apps/api/src/modules/meetings/domain/upsert-provider-follow-ups.ts`, `apps/api/src/modules/meetings/providers/fathom-meeting-source.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-read.repository.ts`, `apps/api/src/modules/meetings/repositories/meeting-workspace-state.repository.ts`, `apps/api/src/modules/meetings/services/meeting-source-ingestion.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-task-activity-helper.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-tasks.service.ts`, `documentation/features/meeting-follow-up-slack.md`.

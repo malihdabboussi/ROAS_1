@@ -40128,3 +40128,15 @@ Evidence: `apps/agent-api/src/modules/shared/ui-block-extractor.ts` is 1,122 lin
 Needed work: Split the remaining Agent API output builders (media/files, durable artifacts, integrations/Meta, clarification/plans) into domain-focused modules while preserving `resolveUiBlocksFromToolResult` as the shared transport contract.
 
 Reason not done now: The web extraction was completed because it was local and behavior-locked. Splitting the oversized Agent API transport chokepoint is broader architecture work than the requested output-contract change.
+
+## 2026-08-29 - [ARCH] Artifact task service is near the hard file limit
+
+Status: Open
+
+Found while: Adding server-owned Slack conversation provenance to agent-created tasks.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-tasks.service.ts` is 592 LOC against the 600-line hard limit and still owns Space discovery, list/view reads, task CRUD, assignment, activity, indexing, and mutation responses.
+
+Needed work: Extract task creation and mutation orchestration into focused collaborators while retaining the existing action registry, schema validation, preflight, activity, and structured error boundaries.
+
+Reason not done now: The requested provenance fix is a bounded addition at the existing create boundary; decomposing every task mutation would materially widen this source-evidence phase.

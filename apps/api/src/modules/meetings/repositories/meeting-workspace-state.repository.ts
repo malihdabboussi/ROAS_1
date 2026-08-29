@@ -180,6 +180,12 @@ export class MeetingWorkspaceStateRepository {
           entry_type: 'follow_up',
           source_call_item_id: input.meetingItemId,
           source_call: String(meeting.title ?? '').trim() || null,
+          action_provenance: {
+            source_kind: 'manual_note',
+            source_id: `meeting:${input.meetingItemId}:manual-action`,
+            source_excerpt: title.slice(0, 500),
+            meeting_item_id: input.meetingItemId,
+          },
           ...(input.assigneeName?.trim()
             ? { suggested_assignee_name: input.assigneeName.trim() }
             : {}),
@@ -201,6 +207,10 @@ export class MeetingWorkspaceStateRepository {
       actions: readonly FathomSourceAction[]
       assignees?: ReadonlyMap<string, CanonicalMeetingAssignee>
       meetingTitle?: string | null
+      recordingId?: string | null
+      externalRecordingId?: string | null
+      transcriptDocItemId?: string | null
+      recordingUrl?: string | null
       reopenDismissed?: boolean
     },
   ): Promise<string[]> {
@@ -219,6 +229,10 @@ export class MeetingWorkspaceStateRepository {
     const plans = planProviderFollowUpUpserts({
       meetingItemId: input.meetingItemId,
       meetingTitle: input.meetingTitle?.trim() || String(meeting.title ?? '').trim() || null,
+      recordingId: input.recordingId,
+      externalRecordingId: input.externalRecordingId,
+      transcriptDocItemId: input.transcriptDocItemId,
+      recordingUrl: input.recordingUrl,
       actions: input.actions,
       assignees: input.assignees,
       existingFollowUps: existing,

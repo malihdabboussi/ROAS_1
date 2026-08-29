@@ -7,6 +7,7 @@ import {
   FATHOM_ACTION_REFINEMENT_SCHEMA,
   FATHOM_ACTION_REFINEMENT_SYSTEM_PROMPT,
 } from '../domain/fathom-action-refinement'
+import { attachFathomActionEvidence } from '../domain/meeting-action-provenance'
 import { resolveMeetingActionAssignees } from '../domain/meeting-assignee-identity'
 import {
   buildMeetingCallIdentity,
@@ -211,9 +212,12 @@ export class MeetingSourceIngestionService {
       userId: input.userId,
       orgId: input.orgId,
     })
-    const refinedActions = await this.refineSourceActions(source, {
-      userId: input.userId,
-      orgId: input.orgId,
+    const refinedActions = attachFathomActionEvidence({
+      actions: await this.refineSourceActions(source, {
+        userId: input.userId,
+        orgId: input.orgId,
+      }),
+      transcript: source.transcript,
     })
     const resolvedAssignees = resolveMeetingActionAssignees(refinedActions, assigneeCandidates)
     const providerActionIds = await this.providerActions.upsertProviderActions(supabase, {
@@ -229,6 +233,10 @@ export class MeetingSourceIngestionService {
       actions: refinedActions,
       assignees: resolvedAssignees,
       meetingTitle: source.title,
+      recordingId,
+      externalRecordingId: source.externalRecordingId,
+      transcriptDocItemId,
+      recordingUrl: source.recordingUrl,
     })
     const recordings = await this.repository.listRecordings(supabase, input.meetingItemId)
     const candidates = recordings.map(toCandidate)

@@ -234,6 +234,15 @@ describe('MeetingSourceIngestionService', () => {
       expect.anything(),
       expect.objectContaining({
         assignees: expect.any(Map),
+        recordingId: 'source-1',
+        externalRecordingId: 'rec-1',
+        transcriptDocItemId: 'doc-1',
+        recordingUrl: 'https://fathom.video/share/rec-1',
+        actions: [
+          expect.objectContaining({
+            evidence: expect.objectContaining({ sourceKind: 'meeting_summary' }),
+          }),
+        ],
       }),
     )
     expect(repository.upsertParticipantContextLinks).toHaveBeenCalledWith(

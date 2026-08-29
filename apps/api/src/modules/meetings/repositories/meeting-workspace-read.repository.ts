@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { summarizeActionProvenance } from '../domain/meeting-action-provenance'
 import {
   isFollowUpSpaceItem,
   isMeetingAgendaSpaceItem,
@@ -126,6 +127,7 @@ export class MeetingWorkspaceReadRepository {
       workspace: workspace.data ?? null,
       recordings: recordings.data ?? [],
       actions,
+      action_provenance_coverage: summarizeActionProvenance(actions),
       context_links: contextLinks.data ?? [],
       snippets: snippets.data ?? [],
       deliverables,

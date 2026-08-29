@@ -138,6 +138,32 @@ export class ArtifactTaskActivityHelper {
     return this.normalizeActivityAttachments(uploaded)
   }
 
+  resolveSlackTaskProvenance(
+    target: Record<string, any>,
+    title: unknown,
+    sessionKey?: string,
+  ): Record<string, unknown> | null {
+    const conversationId = parseConversationIdFromSessionKey(sessionKey)
+    if (!conversationId || typeof target.requestContext?.get !== 'function') return null
+    const context = target.requestContext.get(conversationId) as {
+      channel?: unknown
+      channelMember?: { platform_id?: unknown } | null
+    } | null
+    if (context?.channel !== 'slack') return null
+    return {
+      source_kind: 'slack_thread',
+      source_id: `slack:${conversationId}`,
+      source_excerpt: String(title ?? '')
+        .trim()
+        .slice(0, 500),
+      conversation_id: conversationId,
+      slack_user_id:
+        typeof context.channelMember?.platform_id === 'string'
+          ? context.channelMember.platform_id
+          : null,
+    }
+  }
+
   async createActivity(
     supabase: SupabaseClient,
     input: ArtifactTaskActivityInput,

@@ -32,6 +32,10 @@ export type ProviderFollowUpUpsertPlan =
 export function planProviderFollowUpUpserts(input: {
   meetingItemId: string
   meetingTitle: string | null
+  recordingId?: string | null
+  externalRecordingId?: string | null
+  transcriptDocItemId?: string | null
+  recordingUrl?: string | null
   actions: readonly FathomSourceAction[]
   assignees?: ReadonlyMap<string, CanonicalMeetingAssignee>
   existingFollowUps: ReadonlyArray<Record<string, unknown>>
@@ -87,6 +91,20 @@ export function planProviderFollowUpUpserts(input: {
         user_generated: action.userGenerated,
         completed_in_provider: action.completed,
         cross_referenced_from: 'provider_recording',
+      },
+      action_provenance: {
+        source_kind: action.evidence?.sourceKind ?? 'meeting_summary',
+        source_id: action.sourceKey,
+        source_excerpt: action.evidence?.excerpt ?? action.sourceText,
+        meeting_item_id: input.meetingItemId,
+        recording_id: input.recordingId ?? null,
+        external_recording_id: input.externalRecordingId ?? null,
+        transcript_doc_item_id: input.transcriptDocItemId ?? null,
+        recording_url: action.recordingPlaybackUrl ?? input.recordingUrl ?? null,
+        recording_timestamp: action.evidence?.timestamp ?? action.recordingTimestamp,
+        transcript_turn_index: action.evidence?.transcriptTurnIndex ?? null,
+        speaker_name: action.evidence?.speakerName ?? null,
+        provider: 'fathom',
       },
       ...(action.refinement ? { refinement: action.refinement } : {}),
     }
