@@ -369,3 +369,13 @@ Why: Signed-in production QA showed the chat correctly prioritizing current work
 Impact: Homepage suggestions and “In your court” now surface current assigned work; stale tasks remain available in My Tasks for explicit owner reconciliation.
 
 Files: `apps/api/src/modules/programs/dto/task-rollup.dto.ts`, `apps/api/src/modules/programs/services/task-rollup.service.ts`, `apps/api/src/modules/programs/repositories/task-rollup.repository.ts`, `apps/api/src/modules/home/services/next-moves.service.ts`, `apps/web/src/lib/tasks/tasks-api.ts`, `apps/web/src/components/shell/ShellNewChatTasks.tsx`, tests, and `documentation/features/meeting-follow-up-slack.md`.
+
+## 2026-08-29 16:29 - [DOCS]
+
+What: Recorded production acceptance for action-intelligence phases 3 through 6 and marked the complete phase table production-verified.
+
+Why: Exact-SHA API, web, and agent-runtime deployments plus signed-in browser acceptance now satisfy the documented release gates.
+
+Impact: The implementation plan and decision record now match the live shipped state, including the non-destructive QA boundary.
+
+Files: `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`.
