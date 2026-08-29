@@ -81,6 +81,13 @@ export class MeetingFollowUpReviewController {
   }
 
   @Public()
+  @Post(':token/follow-ups/refresh')
+  @HttpCode(HttpStatus.OK)
+  refreshFollowUps(@Param(new ZodValidationPipe(TokenSchema)) params: { token: string }) {
+    return this.reviews.refreshFollowUps(params.token)
+  }
+
+  @Public()
   @Get(':token/chat')
   getChat(@Param(new ZodValidationPipe(TokenSchema)) params: { token: string }) {
     return this.reviews.getChat(params.token)

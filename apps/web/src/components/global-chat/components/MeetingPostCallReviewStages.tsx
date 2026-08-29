@@ -17,18 +17,15 @@ export function MeetingTaskReviewStep({
       <div>
         <h2 className="title-h6 uppercase">REVIEW AND DELEGATE TASKS</h2>
         <p className="body-3 text-muted-foreground mt-spacing-1">
-          Open the existing bulk task review, confirm each task, then return here.
+          Review and confirm each task below using the existing bulk delegation flow.
         </p>
       </div>
-      <div className="gap-spacing-2 flex flex-wrap justify-end">
-        <a
-          className="button-default button-glass-accent"
-          href={preview.confirm_url}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Open task review
-        </a>
+      <iframe
+        className="border-border rounded-spacing-2 h-screen w-full border"
+        src={preview.confirm_url}
+        title="Bulk task delegation review"
+      />
+      <div className="flex justify-end">
         <button type="button" className="button-default button-glass-primary" onClick={onComplete}>
           I finished task review
         </button>

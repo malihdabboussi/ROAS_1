@@ -2,6 +2,56 @@ import { describe, expect, it, vi } from 'vitest'
 import { MeetingFollowUpReviewService } from './meeting-follow-up-review.service'
 
 describe('MeetingFollowUpReviewService', () => {
+  it('restores deleted follow-up rows from canonical provider actions', async () => {
+    const actions = [
+      {
+        source_key: 'fathom:action-1',
+        source_text: 'Send AI meeting notes',
+        status: 'confirmed',
+        canonical_assignee_name: 'Nate Tilley',
+        canonical_assignee_email: 'nate@example.com',
+        evidence: { recording_timestamp: '00:42:00' },
+      },
+    ]
+    const result = Promise.resolve({ data: actions, error: null })
+    const chain = {
+      select: vi.fn(),
+      eq: vi.fn(),
+      neq: vi.fn(),
+      order: vi.fn(() => result),
+    }
+    chain.select.mockReturnValue(chain)
+    chain.eq.mockReturnValue(chain)
+    chain.neq.mockReturnValue(chain)
+    const upsertProviderFollowUps = vi.fn().mockResolvedValue(['follow-up-1'])
+    const service = new MeetingFollowUpReviewService(
+      { client: { from: vi.fn(() => chain) } } as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { upsertProviderFollowUps } as never,
+    )
+    const call = {
+      id: 'meeting-1',
+      space_id: 'space-1',
+      user_id: 'user-1',
+      org_id: 'org-1',
+      title: 'Yasir webinar review',
+    }
+    vi.spyOn(service as never, 'requireCall').mockResolvedValue(call)
+    vi.spyOn(service as never, 'getReviewForCall').mockResolvedValue({ meeting: {} } as never)
+
+    await service.refreshFollowUps('review-token')
+
+    expect(upsertProviderFollowUps).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        meetingItemId: 'meeting-1',
+        actions: [expect.objectContaining({ sourceText: 'Send AI meeting notes' })],
+      }),
+    )
+  })
+
   it('fills a missing meeting campaign id from the connected client scope map', async () => {
     const chain = (result: { data: unknown; error: null }) => {
       const promise = Promise.resolve(result)
@@ -43,6 +93,7 @@ describe('MeetingFollowUpReviewService', () => {
           }),
         },
       } as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,
@@ -100,6 +151,7 @@ describe('MeetingFollowUpReviewService', () => {
       {} as never,
       {} as never,
       { get: vi.fn(() => pageGrader) } as never,
+      {} as never,
     )
     vi.spyOn(service as never, 'requireCall').mockResolvedValue({
       id: 'meeting-1',
@@ -124,9 +176,7 @@ describe('MeetingFollowUpReviewService', () => {
         campaign_id: 'campaign-1',
       }),
     )
-    expect(result.confirm_url).toBe(
-      'https://portal.roas.io/dashboard?delegation=delegation-1',
-    )
+    expect(result.confirm_url).toBe('https://portal.roas.io/dashboard?delegation=delegation-1')
   })
 
   it('replaces a deleted mapped campaign with the only live Portal campaign', async () => {
@@ -168,6 +218,7 @@ describe('MeetingFollowUpReviewService', () => {
       {} as never,
       {} as never,
       { get: vi.fn(() => pageGrader) } as never,
+      {} as never,
     )
     vi.spyOn(service as never, 'requireCall').mockResolvedValue({
       id: 'meeting-1',
@@ -203,6 +254,7 @@ describe('MeetingFollowUpReviewService', () => {
   it('uses the owned meeting path for the authenticated inline preview', async () => {
     const service = new MeetingFollowUpReviewService(
       { client: {} } as never,
+      {} as never,
       {} as never,
       {} as never,
       {} as never,

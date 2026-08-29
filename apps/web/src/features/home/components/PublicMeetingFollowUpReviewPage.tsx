@@ -12,6 +12,7 @@ import { WorkspaceSettingsModalProvider } from '@/lib/settings/workspace-setting
 import {
   createMeetingDelegationPreview,
   fetchMeetingFollowUpReview,
+  refreshMeetingFollowUps,
   updateMeetingFollowUpReview,
   type MeetingDelegationPreview,
   type PublicMeetingFollowUpReview,
@@ -97,6 +98,10 @@ export function PublicMeetingFollowUpReviewPage({ token }: { token: string }) {
             <MeetingPostCallReviewCard
               review={review}
               clientWorkspaceOptions={clientOptions}
+              onRefreshFollowUps={async () => {
+                const refreshed = await refreshMeetingFollowUps(token)
+                setPayload(refreshed)
+              }}
               onContinue={continueReview}
             />
           ) : null}

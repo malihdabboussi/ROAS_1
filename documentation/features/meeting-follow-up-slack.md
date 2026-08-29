@@ -1,6 +1,6 @@
 # Meeting Follow-Up Slack Confirm
 
-**Last Modified:** 2026-08-28 (thread-aware Slack recording retrieval)
+**Last Modified:** 2026-08-28 (inline delegation review, follow-up refresh, and thread-aware Slack recording retrieval)
 
 ## Thread-aware recording retrieval
 
@@ -456,6 +456,7 @@ All phases use one agent (`vibey`, currently displayed as Pixel), multiple narro
 - **2026-08-27:** The authenticated meeting-chat flow now uses the same deterministic backend delegation-preview endpoint and shared task-review/follow-up stages as the public review. Continuing from the context card no longer seeds Pixel or lets the model reinterpret, omit, or reroute confirmed tasks.
 - **2026-08-27:** A meeting mapped to a Portal client but not an explicit campaign inherits that client's canonical campaign and Space from the connected Page Grader scope map before preview creation. The visible Client Workspace remains authoritative while the delegation request receives the required campaign ID.
 - **2026-08-27:** Delegation preview creation validates the saved campaign against the Portal's current client campaign catalog. If that campaign was deleted and the client has one live campaign, the review uses that live campaign and repairs the saved client scope mapping before opening the task review.
+- **2026-08-28:** The review can restore missing provider follow-ups from the meeting's canonical Fathom actions without removing manual items. The existing Portal bulk-delegation review is embedded beneath the confirmed meeting context, so reviewers complete it in the same post-call page before advancing to the follow-up message.
 
 ## Related
 

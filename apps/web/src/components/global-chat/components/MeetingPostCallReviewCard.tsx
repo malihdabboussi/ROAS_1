@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react'
-import { Calendar, X } from 'lucide-react'
+import { Calendar, RefreshCw, X } from 'lucide-react'
 import { ClientCampaignCell } from '@/components/spaces/cells/ClientCampaignCell'
 import { DueDateCell } from '@/components/spaces/cells/DueDateCell'
 import { MultiSelectCell } from '@/components/spaces/cells/MultiSelectCell'
@@ -18,15 +18,18 @@ import type { MeetingPostCallReview } from '../store/use-global-chat-store'
 export function MeetingPostCallReviewCard({
   review,
   onContinue,
+  onRefreshFollowUps,
   clientWorkspaceOptions,
 }: {
   review: MeetingPostCallReview
   onContinue: (review: MeetingPostCallReview) => void | Promise<void>
+  onRefreshFollowUps?: () => Promise<void>
   clientWorkspaceOptions?: ClientCampaignMapping[]
 }) {
   const [draft, setDraft] = useState(() => normalizeReviewSummary(review))
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(false)
   const loaded = useClientCampaignGroups(clientWorkspaceOptions === undefined)
   const groups = useMemo<ClientCampaignGroup[] | undefined>(() => {
     if (clientWorkspaceOptions === undefined) return loaded.groups ?? undefined
@@ -125,11 +128,36 @@ export function MeetingPostCallReviewCard({
           </div>
         </div>
         <div className="gap-spacing-2 flex flex-col">
-          <div>
-            <p className="body-3 text-muted-foreground">
-              Follow-ups to review ({draft.followUps.length})
-            </p>
-            <p className="body-4 text-muted-foreground">Every task requires WHO, WHAT, and WHEN.</p>
+          <div className="gap-spacing-2 flex items-start justify-between">
+            <div>
+              <p className="body-3 text-muted-foreground">
+                Follow-ups to review ({draft.followUps.length})
+              </p>
+              <p className="body-4 text-muted-foreground">
+                Every task requires WHO, WHAT, and WHEN.
+              </p>
+            </div>
+            {onRefreshFollowUps ? (
+              <button
+                type="button"
+                className="button-default button-glass-neutral"
+                disabled={refreshing}
+                onClick={async () => {
+                  setRefreshing(true)
+                  setSubmitError(null)
+                  try {
+                    await onRefreshFollowUps()
+                  } catch {
+                    setSubmitError(MEETING_POST_CALL_REVIEW_MESSAGES.refreshError)
+                  } finally {
+                    setRefreshing(false)
+                  }
+                }}
+              >
+                <RefreshCw className="icon-xs" aria-hidden />
+                {refreshing ? 'Refreshing...' : 'Refresh from meeting'}
+              </button>
+            ) : null}
           </div>
           {draft.followUps.map((followUp) => (
             <div

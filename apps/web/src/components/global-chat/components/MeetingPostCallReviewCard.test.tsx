@@ -12,6 +12,21 @@ vi.mock('@/lib/agency-clients', async (importOriginal) => ({
 afterEach(cleanup)
 
 describe('MeetingPostCallReviewCard', () => {
+  it('refreshes follow-ups from the canonical meeting source', async () => {
+    const onRefreshFollowUps = vi.fn().mockResolvedValue(undefined)
+    render(
+      <MeetingPostCallReviewCard
+        review={reviewFixture()}
+        onRefreshFollowUps={onRefreshFollowUps}
+        onContinue={vi.fn()}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: 'Refresh from meeting' }))
+
+    expect(onRefreshFollowUps).toHaveBeenCalledOnce()
+  })
+
   it('shows editable Slack recap details and continues with the edited values', () => {
     const onContinue = vi.fn()
     render(
@@ -138,3 +153,32 @@ describe('MeetingPostCallReviewCard', () => {
     )
   })
 })
+
+function reviewFixture() {
+  return {
+    spaceId: 'space-1',
+    conversationId: 'conversation-1',
+    meetingItemId: 'meeting-1',
+    meetingTitle: 'Yasir webinar review',
+    summary: 'Summary',
+    clientWorkspace: 'Yasir Khan',
+    clientCampaign: null,
+    attendeeIds: [],
+    attendees: '',
+    callKind: 'client',
+    callStatus: 'completed',
+    fields: {
+      callKind: { id: 'call_kind', name: 'Call Kind', type: 'select' as const, options: [] },
+      callStatus: { id: 'call_status', name: 'Call status', type: 'select' as const, options: [] },
+      attendees: {
+        id: 'attendees',
+        name: 'Attendees',
+        type: 'multi_select' as const,
+        options: [],
+      },
+    },
+    followUpCount: 0,
+    followUps: [],
+    followUpMessage: '',
+  }
+}

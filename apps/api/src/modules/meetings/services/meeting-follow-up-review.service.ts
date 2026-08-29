@@ -9,11 +9,11 @@ import {
   isFollowUpSpaceItem,
   mapFollowUpSpaceItemToMeetingAction,
 } from '../domain/meeting-follow-up-actions'
+import { providerActionFromRow } from '../domain/meeting-provider-action-restoration'
+import type { FathomSourceAction } from '../providers/fathom-meeting-source'
+import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 
-function normalizePortalDelegationUrl(result: {
-  confirm_url: string
-  delegation_id?: string
-}) {
+function normalizePortalDelegationUrl(result: { confirm_url: string; delegation_id?: string }) {
   if (!result.confirm_url || !result.delegation_id) return result.confirm_url
   try {
     const url = new URL(result.confirm_url)
@@ -33,6 +33,7 @@ export class MeetingFollowUpReviewService {
     private readonly userSessionMint: UserSessionMintService,
     private readonly userAgentApi: UserAgentApiService,
     private readonly moduleRef: ModuleRef,
+    private readonly workspaceState: MeetingWorkspaceStateRepository,
   ) {}
 
   async getReview(token: string) {
@@ -241,6 +242,37 @@ export class MeetingFollowUpReviewService {
   async createDelegationPreview(token: string) {
     const call = await this.requireCall(token)
     return this.createDelegationPreviewForCall(call)
+  }
+
+  async refreshFollowUps(token: string) {
+    const call = await this.requireCall(token)
+    const { data, error } = await this.client
+      .from('meeting_actions')
+      .select(
+        'source_key, source_text, title, status, canonical_assignee_name, canonical_assignee_email, evidence',
+      )
+      .eq('meeting_item_id', String(call.id))
+      .eq('source_type', 'provider')
+      .neq('status', 'dismissed')
+      .order('created_at', { ascending: true })
+    if (error) throw new BadRequestException(error.message)
+
+    const actions = ((data ?? []) as Record<string, unknown>[])
+      .map(providerActionFromRow)
+      .filter((action): action is FathomSourceAction => Boolean(action))
+    if (actions.length === 0) {
+      throw new BadRequestException('No meeting follow-ups were found to refresh')
+    }
+
+    await this.workspaceState.upsertProviderFollowUps(this.client, {
+      meetingItemId: String(call.id),
+      spaceId: String(call.space_id),
+      userId: String(call.user_id),
+      orgId: firstText(call.org_id) || null,
+      meetingTitle: firstText(call.title),
+      actions,
+    })
+    return this.getReviewForCall(call)
   }
 
   async createAuthenticatedDelegationPreview(

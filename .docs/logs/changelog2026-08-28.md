@@ -29,3 +29,12 @@ Why: The pinned prompt, opaque wrapper, and gradient fade made the top message l
 Impact: Studio, Space, project, Team, HR, and voice chats now follow the same streamlined ChatGPT-style reading flow while preserving edit, copy, reply, and fork actions.
 
 Files: `apps/web/src/features/studio/components/message-bubble/UserMessageBubble.tsx`, `apps/web/src/features/studio/components/message-bubble/AssistantActions.tsx`, `apps/web/src/features/studio/components/message-bubble/MessageBubbleOrderedBlocks.tsx`, `apps/web/src/features/studio/components/MessageBubble.tsx`, `apps/web/src/features/studio/components/ChatInterface.tsx`, `apps/web/src/features/projects/components/ProjectChatPane.tsx`, `apps/web/src/features/spaces/components/chat/SpaceVibeyChatPanel.tsx`, `apps/web/src/features/team/components/agent-chat-panel/AgentChatThread.tsx`, `apps/web/src/features/team-2/components/hr-side-chat/TeamHrChatMessageTurns.tsx`, `apps/web/src/features/team/components/voice/agent-voice-mode/AgentVoiceTranscript.tsx`, `documentation/features/claude-chatgpt-shell.md`
+## [2026-08-28 15:49] - [FIX]
+
+What: Added a public post-call action that restores missing Fathom follow-ups from canonical meeting actions, added the review-page refresh control, and embedded the existing Portal bulk-delegation review inline before the final follow-up message.
+
+Why: Deleted follow-up rows could not be reconstructed, and the task-review step forced reviewers into a separate Portal screen instead of continuing in the post-call flow.
+
+Impact: Reviewers can recover grounded meeting tasks and complete the existing task-by-task delegation UI without leaving the meeting review page. No task or follow-up message is sent automatically.
+
+Files: `apps/api/src/modules/meetings/controllers/meeting-follow-up-review.controller.ts`, `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx`, `apps/web/src/components/global-chat/components/MeetingPostCallReviewStages.tsx`, `apps/web/src/features/home/components/PublicMeetingFollowUpReviewPage.tsx`, `apps/web/src/features/home/services/meeting-follow-up-review-api.ts`, tests, and feature documentation.

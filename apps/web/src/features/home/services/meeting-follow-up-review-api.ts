@@ -53,6 +53,10 @@ export function fetchMeetingFollowUpReview(token: string) {
   return request<PublicMeetingFollowUpReview>(token)
 }
 
+export function refreshMeetingFollowUps(token: string) {
+  return request<PublicMeetingFollowUpReview>(token, { method: 'POST' }, '/follow-ups/refresh')
+}
+
 export function updateMeetingFollowUpReview(
   token: string,
   input: {

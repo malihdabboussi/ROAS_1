@@ -40024,6 +40024,18 @@ Evidence: `apps/api/src/modules/meetings/services/meeting-follow-up-review.servi
 Needed work: Extract Portal campaign/preview orchestration and guest chat streaming into focused services while preserving the public and authenticated review contracts.
 
 Reason not done now: Decomposing unrelated token and chat behavior would materially widen this production preview fix.
+## 2026-08-28 - [ARCH] Meeting follow-up review surfaces remain over file limits
+
+Status: Open
+
+Found while: Adding provider-action refresh and keeping the Portal delegation review inline.
+
+Evidence: `apps/api/src/modules/meetings/services/meeting-follow-up-review.service.ts` is 615 LOC against the 500-line service limit. `apps/web/src/components/global-chat/components/MeetingPostCallReviewCard.tsx` is 358 LOC and already combines meeting context fields, task editing, campaign mapping, date selection, and submission state.
+
+Needed work: Extract provider follow-up restoration and Portal preview orchestration into focused services, then split the task list/editor from the meeting context card.
+
+Reason not done now: The requested behavior is covered and tested; decomposing the surrounding token, chat, and field-editor behavior would materially widen this focused flow correction.
+
 ## 2026-08-28 - [ARCH] Slack event orchestration remains above the service limit
 
 Status: Open

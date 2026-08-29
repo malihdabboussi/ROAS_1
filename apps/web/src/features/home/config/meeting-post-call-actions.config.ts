@@ -36,6 +36,7 @@ export const MEETING_POST_CALL_REVIEW_MESSAGES = {
   continueLabel: 'Continue to task review',
   continuingLabel: 'Preparing task review...',
   continueError: 'The meeting review could not be saved. Try again.',
+  refreshError: 'Follow-ups could not be refreshed from this meeting.',
 } as const
 
 /**
