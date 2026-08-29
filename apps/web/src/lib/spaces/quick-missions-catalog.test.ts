@@ -8,6 +8,7 @@ describe('quick-missions-catalog', () => {
   })
 
   it('resolves playbooks by key or id', () => {
+    expect(findQuickMissionByKey('client-lifecycle')?.name).toBe('Client Lifecycle')
     expect(findQuickMissionByKey('webinar-fulfillment')?.name).toBe('Webinar Fulfillment')
     expect(findQuickMissionByKey('client-strategy')?.name).toBe('Client Strategy')
     expect(findQuickMissionByKey('meta-ads-audit')?.id).toBe('meta-ads-audit')

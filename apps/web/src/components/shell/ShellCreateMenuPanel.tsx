@@ -55,6 +55,32 @@ function BackRow({ onClick }: { onClick: () => void }) {
   )
 }
 
+function MissionPlaybookRow({
+  playbook,
+  onSelect,
+}: {
+  playbook: (typeof QUICK_MISSION_PLAYBOOKS)[number]
+  onSelect: () => void
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-start text-left transition-colors"
+    >
+      <span className="badge-glass-purple p-spacing-1 flex shrink-0 items-center justify-center rounded-md">
+        <Rocket className="icon-sm" aria-hidden />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="body-3 text-foreground block font-medium">{playbook.name}</span>
+        <span className="body-4 text-muted-foreground mt-spacing-1 block">
+          {playbook.description}
+        </span>
+      </span>
+    </button>
+  )
+}
+
 export function ShellCreateMenuPanel({
   onSelectCreateItem,
   onSelectMissionPlaybook,
@@ -69,6 +95,9 @@ export function ShellCreateMenuPanel({
 }) {
   const [view, setView] = useState<CreateMenuView>('create')
   const moreGroup = SHELL_CREATE_MENU_GROUPS.find((group) => group.id === 'more')
+  const clientLifecycle = QUICK_MISSION_PLAYBOOKS.find(
+    (playbook) => playbook.id === 'client-lifecycle',
+  )
 
   if (view === 'missions') {
     return (
@@ -78,25 +107,14 @@ export function ShellCreateMenuPanel({
           Missions
         </p>
         {QUICK_MISSION_PLAYBOOKS.map((playbook) => (
-          <button
+          <MissionPlaybookRow
             key={playbook.id}
-            type="button"
-            onClick={() => {
+            playbook={playbook}
+            onSelect={() => {
               onCloseMenu()
               onSelectMissionPlaybook(playbook.key)
             }}
-            className="hover:bg-hover-subtle px-spacing-3 py-spacing-2 gap-spacing-2 flex w-full items-start text-left transition-colors"
-          >
-            <span className="badge-glass-purple p-spacing-1 flex shrink-0 items-center justify-center rounded-md">
-              <Rocket className="icon-sm" aria-hidden />
-            </span>
-            <span className="min-w-0 flex-1">
-              <span className="body-3 text-foreground block font-medium">{playbook.name}</span>
-              <span className="body-4 text-muted-foreground mt-spacing-1 block">
-                {playbook.description}
-              </span>
-            </span>
-          </button>
+          />
         ))}
       </div>
     )
@@ -109,6 +127,15 @@ export function ShellCreateMenuPanel({
         <p className="typo-caption text-muted-foreground px-spacing-3 pb-spacing-1 pt-spacing-2 font-medium uppercase tracking-wide">
           More
         </p>
+        {clientLifecycle ? (
+          <MissionPlaybookRow
+            playbook={clientLifecycle}
+            onSelect={() => {
+              onCloseMenu()
+              onSelectMissionPlaybook(clientLifecycle.key)
+            }}
+          />
+        ) : null}
         {moreGroup?.items.map((item) => (
           <CreateItemRow
             key={item.id}

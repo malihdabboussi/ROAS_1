@@ -503,11 +503,17 @@ describe('@vibey/agent-policy action contracts', () => {
       'prepare_mission_replan',
       'approve_mission',
     ] satisfies Action[]) {
+      const readOnly =
+        action === 'answer_mission_question' ||
+        action === 'summarize_mission_state' ||
+        action === 'show_mission_deliverable'
       expect(getActionContract(action)).toMatchObject({
         domain: 'manage_mission_control',
         family: 'mission.manager',
         exclusiveOwner: 'vibey',
         userPolicyAddable: false,
+        requiresExplicitUserIntent: !readOnly,
+        forbiddenUnlessExplicit: !readOnly,
         delegateResolution: 'exact_system_agent',
       })
     }

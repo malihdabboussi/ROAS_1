@@ -22,10 +22,12 @@ export function QuickMissionCampaignSpaceSelect({
   clients,
   value,
   onChange,
+  portalContainer,
 }: {
   clients: CampaignSpaceOption[]
   value: string
   onChange: (spaceId: string) => void
+  portalContainer?: Element | DocumentFragment | null
 }) {
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
 
@@ -63,6 +65,7 @@ export function QuickMissionCampaignSpaceSelect({
       onChange={onChange}
       placeholder="Select a campaign and space…"
       searchPlaceholder="Search campaigns & spaces…"
+      portalContainer={portalContainer}
     />
   )
 }

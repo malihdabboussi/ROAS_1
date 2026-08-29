@@ -26,6 +26,10 @@ import type {
   PrewarmChatContextOptions,
   PrewarmDbAccess,
 } from './chat-prewarm-context.types'
+import {
+  deserializeResolvedAgentPolicy,
+  serializeResolvedAgentPolicy,
+} from './chat-prewarm-policy-codec'
 import { ChatProfileContextService } from './chat-profile-context.service'
 import { IntegrationContextService } from './integration-context.service'
 
@@ -444,30 +448,41 @@ export class ChatPrewarmContextService {
     const resolvedChannel =
       source === 'telegram' ? 'telegram' : source === 'slack' ? 'slack' : 'studio'
     const skipPreviousImages = resolvedChannel !== 'studio'
-    const [previousImageUrls, campaignTeamSummary, themeSummary] = await Promise.all([
-      skipPreviousImages
-        ? Promise.resolve([] as Array<{ filename: string; url: string }>)
-        : this.chatDocumentContextService
-            .loadPreviousImageUrls(resolvedConversationId)
-            .catch((err) => {
-              logger.warn(`Failed to load previous image URLs: ${err}`)
-              return [] as Array<{ filename: string; url: string }>
-            }),
-      agentContext.hasCampaignAccess
-        ? this.chatProfileContextService
-            .buildCampaignTeamContext(resolvedCampaignId)
-            .catch((err) => {
-              logger.warn(`Campaign team context failed: ${err}`)
-              return ''
-            })
-        : Promise.resolve(''),
-      agentContext.hasCampaignAccess && resolvedCampaignId
-        ? this.campaignContext.buildThemeSummary(userId, resolvedCampaignId, orgId).catch((err) => {
-            logger.warn(`Theme context failed: ${err}`)
-            return ''
-          })
-        : Promise.resolve(''),
-    ])
+    const [previousImageUrls, campaignTeamSummary, campaignSummary, themeSummary] =
+      await Promise.all([
+        skipPreviousImages
+          ? Promise.resolve([] as Array<{ filename: string; url: string }>)
+          : this.chatDocumentContextService
+              .loadPreviousImageUrls(resolvedConversationId)
+              .catch((err) => {
+                logger.warn(`Failed to load previous image URLs: ${err}`)
+                return [] as Array<{ filename: string; url: string }>
+              }),
+        agentContext.hasCampaignAccess
+          ? this.chatProfileContextService
+              .buildCampaignTeamContext(resolvedCampaignId)
+              .catch((err) => {
+                logger.warn(`Campaign team context failed: ${err}`)
+                return ''
+              })
+          : Promise.resolve(''),
+        agentContext.hasCampaignAccess && resolvedCampaignId
+          ? this.campaignContext
+              .buildCampaignSummary(userId, resolvedCampaignId, orgId)
+              .catch((err) => {
+                logger.warn(`Campaign context failed: ${err}`)
+                return ''
+              })
+          : Promise.resolve(''),
+        agentContext.hasCampaignAccess && resolvedCampaignId
+          ? this.campaignContext
+              .buildThemeSummary(userId, resolvedCampaignId, orgId)
+              .catch((err) => {
+                logger.warn(`Theme context failed: ${err}`)
+                return ''
+              })
+          : Promise.resolve(''),
+      ])
 
     return {
       agentPrewarm,
@@ -479,6 +494,7 @@ export class ChatPrewarmContextService {
         ...agentContext,
         previousImageUrls,
         campaignTeamSummary,
+        campaignSummary,
         themeSummary,
       },
     }
@@ -487,7 +503,7 @@ export class ChatPrewarmContextService {
   private serializeStablePrewarmContext(context: ChatStablePrewarmContext): string {
     return JSON.stringify({
       ...context,
-      resolvedPolicy: this.serializePolicy(context.resolvedPolicy),
+      resolvedPolicy: serializeResolvedAgentPolicy(context.resolvedPolicy),
     })
   }
 
@@ -497,14 +513,16 @@ export class ChatPrewarmContextService {
     }
     return {
       ...parsed,
-      resolvedPolicy: parsed.resolvedPolicy ? this.deserializePolicy(parsed.resolvedPolicy) : null,
+      resolvedPolicy: parsed.resolvedPolicy
+        ? deserializeResolvedAgentPolicy(parsed.resolvedPolicy)
+        : null,
     }
   }
 
   private serializeAgentPrewarmContext(context: ChatAgentPrewarmContext): string {
     return JSON.stringify({
       ...context,
-      resolvedPolicy: this.serializePolicy(context.resolvedPolicy),
+      resolvedPolicy: serializeResolvedAgentPolicy(context.resolvedPolicy),
     })
   }
 
@@ -514,25 +532,9 @@ export class ChatPrewarmContextService {
     }
     return {
       ...parsed,
-      resolvedPolicy: parsed.resolvedPolicy ? this.deserializePolicy(parsed.resolvedPolicy) : null,
-    }
-  }
-
-  private serializePolicy(policy: ResolvedAgentPolicy | null) {
-    return policy
-      ? {
-          ...policy,
-          effective: Array.from(policy.effective),
-        }
-      : null
-  }
-
-  private deserializePolicy(
-    policy: Omit<ResolvedAgentPolicy, 'effective'> & { effective?: string[] },
-  ): ResolvedAgentPolicy {
-    return {
-      ...policy,
-      effective: new Set(policy.effective ?? []),
+      resolvedPolicy: parsed.resolvedPolicy
+        ? deserializeResolvedAgentPolicy(parsed.resolvedPolicy)
+        : null,
     }
   }
 

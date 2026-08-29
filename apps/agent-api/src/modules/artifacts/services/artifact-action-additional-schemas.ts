@@ -395,11 +395,27 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     ['agent_key', ...campaignScope],
     stringType(['agent_key', ...campaignScope]),
   ),
-  update_campaign_context: schema([], ['context', 'notes', ...campaignScope], {
-    context: 'object',
-    notes: 'string',
-    ...stringType(campaignScope),
-  }),
+  update_campaign_context: schema(
+    [],
+    [
+      'result',
+      'purpose',
+      'strategy',
+      'off_limits',
+      'selected_offer_ids',
+      'selected_avatar_ids',
+      ...campaignScope,
+    ],
+    {
+      result: 'string',
+      purpose: 'string',
+      strategy: 'string',
+      off_limits: 'string_array',
+      selected_offer_ids: 'string_array',
+      selected_avatar_ids: 'string_array',
+      ...stringType(campaignScope),
+    },
+  ),
   create_awareness_point: schema(
     [],
     ['title', 'body', ...campaignScope],

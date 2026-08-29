@@ -14,6 +14,28 @@ type OpenClawInputMessage = {
   content: string | unknown[]
 }
 
+function extractMissionRetrievalQuery(body: Record<string, unknown>): string | undefined {
+  const messages = Array.isArray(body.input) ? (body.input as OpenClawInputMessage[]) : []
+  for (const message of [...messages].reverse()) {
+    if (message?.role !== 'user') continue
+    if (typeof message.content === 'string' && message.content.trim()) {
+      return message.content.trim()
+    }
+    if (!Array.isArray(message.content)) continue
+    const text = message.content
+      .map((part) => {
+        if (!part || typeof part !== 'object') return ''
+        const record = part as Record<string, unknown>
+        return typeof record.text === 'string' ? record.text : ''
+      })
+      .filter(Boolean)
+      .join('\n')
+      .trim()
+    if (text) return text
+  }
+  return undefined
+}
+
 /**
  * Mission worker already prepends rich campaign graph/offers context via MissionContextService.
  * We omit buildCampaignSummary here to avoid duplicating that block; theme + brain + pulse + integrations + MCP align with chat parity gaps.
@@ -80,8 +102,18 @@ export class MissionContextEnricherService {
         })
     }
 
+    const retrievalQuery = extractMissionRetrievalQuery(body)
     const userBrainSummary = await this.brainContext
-      .buildFullContext(userId, agentKey, undefined, orgId)
+      .buildFullContext(
+        userId,
+        agentKey,
+        retrievalQuery,
+        orgId,
+        undefined,
+        undefined,
+        undefined,
+        campaignId,
+      )
       .catch((err) => {
         this.logger.warn(`Mission brain context failed: ${err}`)
         return ''

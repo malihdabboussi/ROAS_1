@@ -39,6 +39,7 @@ describe('mission-track-actions', () => {
     expect(
       options.filter((option) => option.kind === 'playbook').map((option) => option.id),
     ).toEqual([
+      'client-lifecycle',
       'task-cleanup',
       'webinar-fulfillment',
       'static-ad-production',

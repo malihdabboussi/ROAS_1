@@ -91,11 +91,11 @@ export class ChatContextRepository {
     return error
   }
 
-  async findCampaignName(
+  async findCampaignContext(
     supabase: SupabaseClient,
     input: { userId: string; campaignId: string; orgId?: string | null },
   ): Promise<Record<string, unknown> | null> {
-    let query = this.table(supabase, 'campaigns').select('name').eq('id', input.campaignId)
+    let query = this.table(supabase, 'campaigns').select('name, context').eq('id', input.campaignId)
     query = input.orgId ? query.eq('org_id', input.orgId) : query.eq('user_id', input.userId)
     const { data } = await query.maybeSingle()
     return data
@@ -103,12 +103,18 @@ export class ChatContextRepository {
 
   async listOffers(
     supabase: SupabaseClient,
-    input: { userId: string; campaignId: string; orgId?: string | null },
+    input: {
+      userId: string
+      campaignId: string
+      orgId?: string | null
+      selectedIds?: readonly string[]
+    },
   ): Promise<Array<Record<string, unknown>>> {
     let query = this.table(supabase, 'offers')
       .select('id, name, processing_status')
       .eq('campaign_id', input.campaignId)
     if (!input.orgId) query = query.eq('user_id', input.userId)
+    if (input.selectedIds?.length) query = query.in('id', [...input.selectedIds])
     const { data } = await query.order('created_at', { ascending: false }).limit(10)
     return data ?? []
   }
@@ -163,12 +169,18 @@ export class ChatContextRepository {
 
   async listAvatars(
     supabase: SupabaseClient,
-    input: { userId: string; campaignId: string; orgId?: string | null },
+    input: {
+      userId: string
+      campaignId: string
+      orgId?: string | null
+      selectedIds?: readonly string[]
+    },
   ): Promise<Array<Record<string, unknown>>> {
     let query = this.table(supabase, 'avatars')
       .select('id, name, avatar_type')
       .eq('campaign_id', input.campaignId)
     if (!input.orgId) query = query.eq('user_id', input.userId)
+    if (input.selectedIds?.length) query = query.in('id', [...input.selectedIds])
     const { data } = await query.order('created_at', { ascending: false }).limit(10)
     return data ?? []
   }
@@ -255,12 +267,11 @@ export class ChatContextRepository {
     return data
   }
 
-  async findUserProfile(
-    supabase: SupabaseClient,
-    userId: string,
-  ): Promise<SingleResult> {
+  async findUserProfile(supabase: SupabaseClient, userId: string): Promise<SingleResult> {
     return this.table(supabase, 'profiles')
-      .select('full_name, email, company_name, industry, website, plan, onboarding_data, preferences')
+      .select(
+        'full_name, email, company_name, industry, website, plan, onboarding_data, preferences',
+      )
       .eq('id', userId)
       .maybeSingle()
   }
@@ -279,10 +290,7 @@ export class ChatContextRepository {
     return query
   }
 
-  async listCampaignAgents(
-    supabase: SupabaseClient,
-    campaignId: string,
-  ): Promise<ListResult> {
+  async listCampaignAgents(supabase: SupabaseClient, campaignId: string): Promise<ListResult> {
     return this.table(supabase, 'campaign_agents')
       .select('agent_key, name, config')
       .eq('campaign_id', campaignId)

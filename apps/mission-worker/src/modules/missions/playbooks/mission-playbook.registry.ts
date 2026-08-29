@@ -1,5 +1,9 @@
 import { ADS_RESEARCH_PLAYBOOK_ID, expandAdsResearchPlaybook } from './ads-research.playbook'
 import {
+  CLIENT_LIFECYCLE_PLAYBOOK_ID,
+  expandClientLifecyclePlaybook,
+} from './client-lifecycle.playbook'
+import {
   CLIENT_STRATEGY_PLAYBOOK_ID,
   expandClientStrategyPlaybook,
 } from './client-strategy.playbook'
@@ -45,6 +49,7 @@ export function resolveMissionPlaybookId(
 export function expandMissionPlaybook(
   input: MissionPlaybookExpandInput,
 ): MissionPlaybookPlanResult | null {
+  if (input.playbookId === CLIENT_LIFECYCLE_PLAYBOOK_ID) return expandClientLifecyclePlaybook(input)
   if (input.playbookId === CLIENT_STRATEGY_PLAYBOOK_ID) return expandClientStrategyPlaybook(input)
   if (input.playbookId === WEBINAR_FULFILLMENT_PLAYBOOK_ID)
     return expandWebinarFulfillmentPlaybook(input)

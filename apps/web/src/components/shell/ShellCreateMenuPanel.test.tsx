@@ -57,4 +57,23 @@ describe('ShellCreateMenuPanel', () => {
     )
     expect(onCloseMenu).toHaveBeenCalledOnce()
   })
+
+  it('starts Client Lifecycle directly from Create More through the shared Mission launcher', () => {
+    const onCloseMenu = vi.fn()
+    const onSelectMissionPlaybook = vi.fn()
+
+    render(
+      <ShellCreateMenuPanel
+        onSelectCreateItem={vi.fn()}
+        onSelectMissionPlaybook={onSelectMissionPlaybook}
+        onCloseMenu={onCloseMenu}
+      />,
+    )
+
+    fireEvent.click(screen.getByRole('button', { name: /More/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Client Lifecycle/i }))
+
+    expect(onSelectMissionPlaybook).toHaveBeenCalledWith('client-lifecycle')
+    expect(onCloseMenu).toHaveBeenCalledOnce()
+  })
 })

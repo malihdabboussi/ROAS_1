@@ -128,3 +128,63 @@ Why: Signed-in browser traces showed a fresh daily-focus request spending about 
 Impact: “What is on top today?”, My Tasks, calendar, schedule, and meeting-list questions can start directly with canonical tools. Questions that need conversational or client knowledge still use Brain, preserving the source-of-truth boundary instead of treating Brain as the task or calendar database.
 
 Files: `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## 2026-08-28 15:00 - [FEATURE]
+
+What: Added a deterministic Client Lifecycle Mission to the shared Chat and Create catalog, including Client Brain review, Avatar and Offer confirmation, strategy, production selection, launch readiness, explicit approval gates, and ongoing optimization.
+
+Why: Agency operators need one guided client path that can be started visually or conversationally without rebuilding existing strategy and production playbooks or losing source-of-truth boundaries.
+
+Impact: Users can select Client Lifecycle from Create > Mission and launch a client-scoped Mission that reuses approved records, pauses at meaningful decisions, and prepares linked production work without automatically publishing, spending, or messaging.
+
+Files: `apps/web/src/lib/spaces/quick-missions-catalog.ts`, `apps/web/src/features/spaces/components/playbooks/client-lifecycle.ts`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/mission-worker/src/modules/missions/playbooks/client-lifecycle.playbook.ts`, `documentation/features/missions.md`
+
+## 2026-08-28 15:15 - [FEATURE]
+
+What: Expanded Mission Details into a single Manage mission menu with visual entry points for continuing, changing or removing plan steps, retrying from a step, branching into a child Mission, deterministic track extensions, and existing playbooks.
+
+Why: Users need the same lifecycle controls whether they begin in chat or click through the Mission, without maintaining a second mutation path or losing the Mission's conversation history.
+
+Impact: A visual management choice reopens the Mission's source conversation and prefills a precise request. Pixel can inspect the live plan, explain downstream effects, and request confirmation before using the existing mission manager actions.
+
+Files: `apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.test.tsx`, `apps/web/src/features/mission-control/config/messages.config.ts`, `documentation/features/missions.md`
+
+## 2026-08-28 15:25 - [FIX]
+
+What: Added Client Lifecycle to the agent-facing `create_mission` schema and generated Vibey action guidance, with source-drift coverage.
+
+Why: The visual catalog and Mission Worker recognized the playbook, but Pixel's chat-facing action vocabulary did not yet name it and could choose a freeform Mission for a lifecycle request.
+
+Impact: Requests to onboard, plan, produce, launch, and optimize a client through one guided lifecycle now direct Pixel to pass `playbook_id: client-lifecycle` through the same deterministic path used by Create.
+
+Files: `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/agent-api/src/modules/agent-sync/services/agent-capability-source-drift.test.ts`
+
+## 2026-08-28 15:05 - [FEATURE]
+
+What: Added a direct Create > More entry for Client Lifecycle, persisted approved Offer and Avatar ids into campaign context, filtered Mission context to those records, scoped Mission Brain retrieval to the active campaign and step request, and required explicit intent for Mission-manager mutations.
+
+Why: Chat and visual launches need to produce the same grounded lifecycle, and later steps must consume the exact marketing fundamentals the user approved instead of generic Brain context or whichever records happen to load first.
+
+Impact: Users can start the lifecycle from chat, Create > Mission, or Create > More; approved fundamentals become canonical across later Mission work; and reads remain immediate while extend, edit, cancel, retry, reassign, replan, and approval actions require a deliberate user request.
+
+Files: `apps/web/src/components/shell/ShellCreateMenuPanel.tsx`, `apps/mission-worker/src/modules/missions/playbooks/client-lifecycle.playbook.ts`, `apps/mission-worker/src/modules/missions/services/context/mission-context.service.ts`, `apps/agent-api/src/modules/artifacts/services/mission-context-enricher.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-north-star.service.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-action-additional-schemas.ts`, `apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts`, `apps/api/src/modules/campaigns/controllers/campaigns.controller.ts`, `apps/api/src/modules/campaigns/services/campaigns-service-02.base.ts`, `packages/agent-policy/src/action-contracts.ts`, `documentation/features/missions.md`
+
+## 2026-08-28 15:15 - [FEATURE]
+
+What: Added a post-approval Client Lifecycle stage that synchronizes the approved campaign roadmap to the campaign Canvas, strengthened launch readiness to reconcile native tasks and Page Grader Work Requests as distinct records, and added adapter proof for branch, remove, retry, and replan controls.
+
+Why: The lifecycle named Canvas and Work Requests but did not deterministically place the approved plan on Canvas, and several existing durable Mission-manager routes lacked explicit Agent API contract coverage.
+
+Impact: The lifecycle now carries one approved plan from strategy into editable Canvas stages, resource cards, and placeholders before launch review. Automated tests prove parent-scoped branch creation and the manager endpoints used for remove, retry-from-stage, and restart/replan.
+
+Files: `apps/mission-worker/src/modules/missions/playbooks/client-lifecycle.playbook.ts`, `apps/mission-worker/src/modules/missions/playbooks/__tests__/client-lifecycle.playbook.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.test.ts`, `documentation/features/missions.md`
+
+## 2026-08-28 15:18 - [FIX]
+
+What: Added opt-in Vercel deployment-protection authentication to the web platform proxy for preview-to-preview API requests.
+
+Why: Signed-in branch QA previously mixed preview UI with the production API because protected API previews could not be reached server-to-server. That hid branch backend changes from real browser verification.
+
+Impact: A branch can now set `BACKEND_URL` to its exact protected API deployment and provide `VERCEL_AUTOMATION_BYPASS_SECRET`; production and non-Vercel targets remain unchanged when the variable is absent.
+
+Files: `apps/web/src/app/api/proxy/[...path]/route.ts`, `apps/web/src/app/api/proxy/[...path]/proxy-upstream-headers.ts`, `apps/web/src/app/api/proxy/[...path]/proxy-upstream-headers.test.ts`

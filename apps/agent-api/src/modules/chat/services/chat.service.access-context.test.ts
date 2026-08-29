@@ -704,6 +704,7 @@ function makePrewarmHarness() {
     })),
   }
   const campaignContext = {
+    buildCampaignSummary: vi.fn(async () => 'CAMPAIGN CONTEXT'),
     buildThemeSummary: vi.fn(async () => 'THEME CONTEXT'),
   }
   const integrationContext = {
@@ -828,6 +829,7 @@ describe('ChatService prewarm context', () => {
     expect(harness.integrationContext.buildIntegrationContext).toHaveBeenCalled()
     expect(harness.brainContext.resolveAgentBrainPresence).toHaveBeenCalled()
     expect(harness.campaignContext.buildThemeSummary).not.toHaveBeenCalled()
+    expect(harness.campaignContext.buildCampaignSummary).not.toHaveBeenCalled()
   })
 
   it('reuses page-load agent prewarm when building conversation context', async () => {
@@ -871,6 +873,7 @@ describe('ChatService prewarm context', () => {
     expect(harness.integrationContext.buildIntegrationContext).not.toHaveBeenCalled()
     expect(harness.brainContext.resolveAgentBrainPresence).not.toHaveBeenCalled()
     expect(harness.campaignContext.buildThemeSummary).toHaveBeenCalled()
+    expect(harness.campaignContext.buildCampaignSummary).toHaveBeenCalled()
   })
 
   it('prewarms stable context without creating messages or opening OpenClaw', async () => {
@@ -901,6 +904,7 @@ describe('ChatService prewarm context', () => {
     )
     expect(harness.agentRuntime.resolveConversationRuntime).toHaveBeenCalled()
     expect(harness.campaignContext.buildThemeSummary).toHaveBeenCalled()
+    expect(harness.campaignContext.buildCampaignSummary).toHaveBeenCalled()
     expect(harness.integrationContext.buildIntegrationContext).toHaveBeenCalled()
     expect(harness.brainContext.resolveAgentBrainPresence).toHaveBeenCalled()
     expect(harness.brainContext.buildFullContext).not.toHaveBeenCalled()
@@ -924,6 +928,7 @@ describe('ChatService prewarm context', () => {
     harness.runtimeReadiness.ensureRuntimeReady.mockClear()
     harness.agentRuntime.resolveConversationRuntime.mockClear()
     harness.campaignContext.buildThemeSummary.mockClear()
+    harness.campaignContext.buildCampaignSummary.mockClear()
     harness.integrationContext.buildIntegrationContext.mockClear()
     harness.brainContext.resolveAgentBrainPresence.mockClear()
     harness.brainContext.buildFullContext.mockClear()
@@ -949,6 +954,7 @@ describe('ChatService prewarm context', () => {
     expect(harness.agentRuntime.resolveConversationRuntime).not.toHaveBeenCalled()
     expect(harness.runtimeReadiness.ensureRuntimeReady).not.toHaveBeenCalled()
     expect(harness.campaignContext.buildThemeSummary).not.toHaveBeenCalled()
+    expect(harness.campaignContext.buildCampaignSummary).not.toHaveBeenCalled()
     expect(harness.integrationContext.buildIntegrationContext).not.toHaveBeenCalled()
     expect(harness.brainContext.resolveAgentBrainPresence).not.toHaveBeenCalled()
 
@@ -961,6 +967,7 @@ describe('ChatService prewarm context', () => {
       true,
       false,
       'campaign-1',
+      expect.objectContaining({ extraCampaignIds: [] }),
     )
     expect(harness.runtimeSkillScope.resolveRuntimeSkillScope).toHaveBeenCalledWith(
       expect.objectContaining({ skillKeys: ['launch'] }),
@@ -973,6 +980,7 @@ describe('ChatService prewarm context', () => {
     expect(JSON.stringify(streamCall.input)).toContain('USER @ REFERENCES')
     expect(JSON.stringify(streamCall.input)).toContain('Launch skill instructions')
     expect(JSON.stringify(streamCall.input)).toContain('MESSAGE BRAIN CONTEXT')
+    expect(JSON.stringify(streamCall.input)).toContain('CAMPAIGN CONTEXT')
   })
 
   it('joins an in-flight stable prewarm when a send starts before prewarm finishes', async () => {

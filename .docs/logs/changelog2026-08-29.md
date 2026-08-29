@@ -79,3 +79,63 @@ Files: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.t
 **Impact:** Follow-up turns now consistently show Today's meetings, Tomorrow's meetings, or Upcoming meetings from the same deterministic temporal contract.
 
 **Files:** `apps/agent-api/src/modules/chat/services/chat-operational-agenda.util.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts`, `apps/agent-api/src/modules/chat/services/chat-operational-agenda-format.util.test.ts`, `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.test.ts`, `documentation/features/meeting-follow-up-slack.md`, `.docs/logs/changelog2026-08-29.md`
+
+## [2026-08-29 05:26] - [FIX]
+
+What: Kept the Work Summary Create catalog available before a first chat message exists.
+
+Why: Signed-in lifecycle QA showed that a fresh client-scoped chat exposed only Tasks, forcing the user to send a message before the visual Create > More > Client Lifecycle path became reachable.
+
+Impact: Users can now launch Client Lifecycle or seed another Create flow immediately from a fresh client chat; the shared Mission launcher creates and binds the source conversation when the Mission starts.
+
+Files: `apps/web/src/components/shell/ShellRightPanel.tsx`, `apps/web/src/components/shell/ShellRightPanel.test.tsx`, `documentation/features/claude-chatgpt-shell.md`
+
+## [2026-08-29 05:52] - [FIX]
+
+What: Scoped normal Quick Mission launch choices and defaults to the active global client, and kept the portaled campaign selector inside the Mission dialog interaction boundary.
+
+Why: Signed-in Client Lifecycle QA under Claude Club inherited an unrelated Living Trust campaign from stale chat state, and selecting the dedicated TEST Space dismissed and reset the launcher.
+
+Impact: A client-filtered launch can only target that client's mapped campaign and Spaces, its primary mapped Space is preselected, dropdown choices persist, and explicit parent-Mission extensions retain their supplied Space.
+
+Files: `apps/web/src/components/global-chat/components/QuickMissionsHubHost.tsx`, `apps/web/src/components/global-chat/components/QuickMissionsHubHost.test.ts`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.test.tsx`, `documentation/features/missions.md`, `.docs/plans/agent-follow-up-work.md`
+
+## [2026-08-29 06:27] - [FIX]
+
+What: Mounted the Quick Missions campaign-and-Space menu inside its owning dialog portal and added a regression test for owner-scoped option selection.
+
+Why: Exact deployed browser QA proved that preventing dialog dismissal was insufficient: selecting Claude Club's second Space still reset the controlled picker to its initial `General` value because the menu remained outside the Radix dialog tree.
+
+Impact: Campaign selection now remains an internal dialog interaction, updates the controlled Space value, and can proceed to lifecycle context without snapping back to the initial Space.
+
+Files: `apps/web/src/features/spaces/components/automations/AutomationCategorizedSelect.tsx`, `apps/web/src/features/spaces/components/automations/AutomationCategorizedSelect.test.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionCampaignSpaceSelect.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx`, `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.test.tsx`, `documentation/features/missions.md`
+
+## [2026-08-29 07:11] - [FEATURE]
+
+What: Split the generic Mission plan-change chat action into explicit Extend, Restart from a stage, Skip or remove a step, and Replace a step controls, each with a confirmation-gated source-chat prompt.
+
+Why: Lifecycle operators should be able to choose the exact Mission operation visually without translating several materially different actions through one vague plan-change entry point.
+
+Impact: Manage mission now exposes the complete lifecycle vocabulary directly, preserves chat-first review and confirmation, and keeps the expanded action set reachable in a bounded scrollable menu.
+
+Files: `apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.tsx`, `apps/web/src/features/mission-control/components/dialogs/MissionTrackActions.test.tsx`, `documentation/features/missions.md`
+
+## [2026-08-29 07:35] - [FIX]
+
+What: Added the canonical campaign asset summary to normal client chat and made campaign-selected Offer and Avatar ids control which records Pixel receives.
+
+Why: Client Lifecycle Missions already used approved campaign fundamentals, but normal chat did not inject its campaign asset summary and could therefore reason without the approved Offer/Avatar records.
+
+Impact: Chat and Missions now share the same client strategy records. Selected ids filter the injected records, missing approved ids are surfaced without fallback, and chat context accounting measures the campaign block separately.
+
+Files: `apps/agent-api/src/modules/chat/repositories/chat-context.repository.ts`, `apps/agent-api/src/modules/chat/services/campaign-context.service.ts`, `apps/agent-api/src/modules/chat/services/campaign-context.service.test.ts`, `apps/agent-api/src/modules/chat/services/chat-prewarm-context.types.ts`, `apps/agent-api/src/modules/chat/services/chat-prewarm-context.service.ts`, `apps/agent-api/src/modules/chat/services/chat-prewarm-policy-codec.ts`, `apps/agent-api/src/modules/chat/services/chat-turn-gateway-preparation.service.ts`, `apps/agent-api/src/modules/chat/services/public-agent-quick-context.ts`, `apps/agent-api/src/modules/chat/services/chat-gateway-input.service.ts`, `apps/agent-api/src/modules/chat/services/chat.service.access-context.test.ts`, `documentation/features/missions.md`
+
+## [2026-08-29 08:18] - [FIX]
+
+What: Made Mission execution explicitly report campaign-selected Offer and Avatar ids that no longer resolve, with an instruction to stop instead of substituting another record.
+
+Why: Signed-in lifecycle QA and the final context audit found that client chat surfaced unresolved approved ids, while the Mission worker filtered to the ids but silently omitted a missing record.
+
+Impact: Client chat and Mission execution now apply the same fail-closed fundamentals contract for the selected client campaign.
+
+Files: `apps/mission-worker/src/modules/missions/services/context/mission-context.service.ts`, `apps/mission-worker/src/modules/missions/services/__tests__/hybrid-context.test.ts`, `.docs/logs/changelog2026-08-29.md`

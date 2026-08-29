@@ -77,6 +77,37 @@ describe('MissionsService hybrid context helpers', () => {
     ])
   })
 
+  it('deduplicates canonical selected Offer and Avatar ids from campaign context', () => {
+    const service = createContextService()
+
+    expect(
+      service['extractSelectedContextIds'](
+        { selected_offer_ids: ['offer-1', '', 'offer-1', 'offer-2'] },
+        'selected_offer_ids',
+      ),
+    ).toEqual(['offer-1', 'offer-2'])
+    expect(
+      service['extractSelectedContextIds'](
+        { selected_avatar_ids: 'avatar-1' },
+        'selected_avatar_ids',
+      ),
+    ).toEqual([])
+  })
+
+  it('reports canonical selected Offer and Avatar ids that no longer resolve', () => {
+    const service = createContextService()
+
+    expect(
+      service['unresolvedSelectedContextIds'](
+        ['offer-approved', 'offer-missing'],
+        [{ id: 'offer-approved' }],
+      ),
+    ).toEqual(['offer-missing'])
+    expect(service['unresolvedSelectedContextIds'](['avatar-missing'], null)).toEqual([
+      'avatar-missing',
+    ])
+  })
+
   it('evaluateSubtaskOutputAlignment fails when latest intent is missing', () => {
     const result = evaluateSubtaskOutputAlignment(
       { title: 'Design PDF', status: 'pending' },

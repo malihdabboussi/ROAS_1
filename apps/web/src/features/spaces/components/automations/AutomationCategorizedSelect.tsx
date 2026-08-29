@@ -37,6 +37,8 @@ interface AutomationCategorizedSelectProps {
   searchPlaceholder?: string
   className?: string
   disabled?: boolean
+  /** Keeps the menu inside an owning overlay such as a dialog. */
+  portalContainer?: Element | DocumentFragment | null
 }
 
 export function AutomationCategorizedSelect({
@@ -49,6 +51,7 @@ export function AutomationCategorizedSelect({
   searchPlaceholder = 'Search…',
   className = '',
   disabled = false,
+  portalContainer,
 }: AutomationCategorizedSelectProps) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -323,7 +326,7 @@ export function AutomationCategorizedSelect({
               </div>
             </div>
           </div>,
-          document.body,
+          portalContainer ?? document.body,
         )}
     </>
   )

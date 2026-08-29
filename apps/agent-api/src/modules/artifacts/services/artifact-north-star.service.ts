@@ -81,6 +81,9 @@ export class ArtifactNorthStarService {
     if (data.purpose !== undefined) payload.purpose = data.purpose
     if (data.strategy !== undefined) payload.strategy = data.strategy
     if (data.off_limits !== undefined) payload.off_limits = data.off_limits
+    if (data.selected_offer_ids !== undefined) payload.selected_offer_ids = data.selected_offer_ids
+    if (data.selected_avatar_ids !== undefined)
+      payload.selected_avatar_ids = data.selected_avatar_ids
 
     return target.mainApiCall('PATCH', `/api/campaigns/${campaignId}/context`, sessionKey, payload)
   }

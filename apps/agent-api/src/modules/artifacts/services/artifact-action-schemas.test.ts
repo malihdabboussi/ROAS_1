@@ -2476,6 +2476,24 @@ describe('validateActionData', () => {
     })
   })
 
+  describe('campaign fundamentals context', () => {
+    it('accepts only arrays for selected Offer and Avatar ids', () => {
+      expect(
+        validateActionData('update_campaign_context', {
+          campaign_id: 'campaign-1',
+          selected_offer_ids: ['offer-1'],
+          selected_avatar_ids: ['avatar-1'],
+        }),
+      ).toBeNull()
+      expect(
+        validateActionData('update_campaign_context', {
+          campaign_id: 'campaign-1',
+          selected_offer_ids: 'offer-1',
+        }),
+      ).toMatch(/selected_offer_ids.*array/i)
+    })
+  })
+
   describe('resolvable field metadata', () => {
     it('marks presentation edits as resolvable by presentation_id', () => {
       expect(getResolvableFieldsForAction('patch_presentation')).toEqual([

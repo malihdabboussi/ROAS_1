@@ -16,11 +16,8 @@ import { ChannelInstructionsService } from './channel-instructions.service'
 import { ChatContextAccountingService } from './chat-context-accounting.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatModelInputService } from './chat-model-input.service'
+import type { OpenClawInputContentPart, OpenClawInputMessage } from './openclaw-proxy.service'
 import { buildStaticAdChatRoutingInstruction } from './static-ad-chat-routing'
-import type {
-  OpenClawInputContentPart,
-  OpenClawInputMessage,
-} from './openclaw-proxy.service'
 
 type ChatGatewayChannel = 'telegram' | 'slack' | 'studio'
 
@@ -43,6 +40,7 @@ interface BuildContextInput {
   agentReg: Record<string, unknown> | null | undefined
   agentToken: string
   callerContext: string
+  campaignSummary: string
   campaignTeamSummary: string
   channelUser?: ChatGatewayChannelUser
   combinedDocumentContext: string
@@ -147,7 +145,10 @@ export class ChatGatewayInputService {
     await input.sendSetupStatus('Preparing your request')
     const effectiveImageParts = input.modelInputService.buildChatImageParts(input.documents)
     const effectiveFileParts = input.modelInputService.buildChatFileParts(input.documents)
-    const channelUserContext = this.buildChannelUserContext(input.resolvedChannel, input.channelUser)
+    const channelUserContext = this.buildChannelUserContext(
+      input.resolvedChannel,
+      input.channelUser,
+    )
     const organizationDataAccessContext = this.buildOrganizationDataAccessContext(
       input.resolvedChannel,
       input.organizationWideDataAccess,
@@ -177,6 +178,7 @@ export class ChatGatewayInputService {
     const dynamicContextParts = [
       `CURRENT_DATETIME=${new Date().toISOString()}`,
       accessSummary,
+      input.campaignSummary,
       input.themeSummary,
       input.userBrainSummary,
       input.integrationSummary,
@@ -401,6 +403,11 @@ export class ChatGatewayInputService {
     return [
       accounting.buildMeasuredSlice('brain', 'Brain', [
         accounting.countTextEntry('brain_context', 'Brain context', input.userBrainSummary),
+        accounting.countTextEntry(
+          'campaign_context',
+          'Campaign assets and approved fundamentals',
+          input.campaignSummary,
+        ),
         accounting.countTextEntry('theme_context', 'Campaign theme', input.themeSummary),
       ]),
       accounting.buildMeasuredSlice('integrations', 'Integrations', [
@@ -413,11 +420,7 @@ export class ChatGatewayInputService {
       accounting.buildMeasuredSlice('user_team', 'User/Team', [
         accounting.countTextEntry('user_profile', 'User profile', input.userProfileSummary),
         accounting.countTextEntry('team_roster', 'Team roster', input.teamRosterSummary),
-        accounting.countTextEntry(
-          'campaign_team',
-          'Campaign team',
-          input.campaignTeamSummary,
-        ),
+        accounting.countTextEntry('campaign_team', 'Campaign team', input.campaignTeamSummary),
         accounting.countTextEntry('channel_user', 'Channel user', computed.channelUserContext),
       ]),
       accounting.buildMeasuredSlice('artifacts_files', 'Artifacts/Files', [

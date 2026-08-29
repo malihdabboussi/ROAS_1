@@ -22,6 +22,7 @@ import { BRAIN_CONTEXT_TOOL, CONTEXT_READY_STATUS_LABELS } from './chat-turn-gat
 import type { RecordChatTurnTimingSpan } from './chat-turn-session.service'
 import { IntegrationContextService } from './integration-context.service'
 import type { OpenClawInputMessage, OpenClawSkillCatalog } from './openclaw-proxy.service'
+import { buildPublicAgentQuickContext } from './public-agent-quick-context'
 
 type ChatGatewayChannel = 'telegram' | 'slack' | 'studio'
 interface ChatPreparationDocument {
@@ -113,15 +114,6 @@ export interface PreparedGatewayTurn {
   inputArray: OpenClawInputMessage[]
   retrievalReceipts: BrainRetrievalReceipt[]
 }
-
-const PUBLIC_AGENT_META_PROMPTS = [
-  'how do you work',
-  'what can you do',
-  'what do you do',
-  'what can you help',
-  'how can you help',
-  'who are you',
-] as const
 
 @Injectable()
 export class ChatTurnGatewayPreparationService {
@@ -228,9 +220,12 @@ export class ChatTurnGatewayPreparationService {
     const skipPreviousImages = resolvedChannel !== 'studio'
     const cortexMaxEnabled = modelSettings?.cortex_max !== false
     const brainContextSeed = `${conversationId}:${resolvedAgentId ?? 'agent'}:${lastUserMessage}`
-    const publicAgentQuickContext = this.shouldUsePublicAgentQuickContext(source, lastUserMessage)
-      ? this.buildPublicAgentQuickContext(agentReg, resolvedAgentId)
-      : ''
+    const publicAgentQuickContext = buildPublicAgentQuickContext(
+      source,
+      lastUserMessage,
+      agentReg,
+      resolvedAgentId,
+    )
     const operationalAgendaQuickPath = shouldSkipBrainContextForOperationalAgenda(lastUserMessage)
     const shouldBuildBrainContext =
       cortexMaxEnabled && !publicAgentQuickContext && !operationalAgendaQuickPath
@@ -273,7 +268,7 @@ export class ChatTurnGatewayPreparationService {
           ? 'public_agent_low_context'
           : operationalAgendaQuickPath
             ? 'canonical_operational_agenda'
-          : null,
+            : null,
       brain_context_chars: userBrainSummary.length,
       quick_context_chars: publicAgentQuickContext.length,
       user_brain_access: userBrainAccess,
@@ -342,6 +337,7 @@ export class ChatTurnGatewayPreparationService {
       user_profile_chars: runtimeContext.userProfileSummary.length,
       team_roster_chars: runtimeContext.teamRosterSummary.length,
       campaign_team_chars: runtimeContext.campaignTeamSummary.length,
+      campaign_context_chars: runtimeContext.campaignSummary.length,
       theme_chars: runtimeContext.themeSummary.length,
       integration_chars: runtimeContext.integrationSummary.length,
       agent_brain_present: runtimeContext.agentBrainPresence.hasAgentBrain,
@@ -357,6 +353,7 @@ export class ChatTurnGatewayPreparationService {
         .filter(Boolean)
         .join('\n\n'),
       campaignTeamSummary: runtimeContext.campaignTeamSummary,
+      campaignSummary: runtimeContext.campaignSummary,
       channelUser,
       combinedDocumentContext,
       contextAccountingService: this.contextAccountingService,
@@ -480,6 +477,7 @@ export class ChatTurnGatewayPreparationService {
     userProfileSummary: string
     teamRosterSummary: string
     campaignTeamSummary: string
+    campaignSummary: string
     themeSummary: string
     integrationSummary: string
     agentBrainPresence: { hasAgentBrain: boolean; brainId: string | null }
@@ -490,6 +488,7 @@ export class ChatTurnGatewayPreparationService {
         userProfileSummary: input.prewarmedStableContext.userProfileSummary,
         teamRosterSummary: input.prewarmedStableContext.teamRosterSummary,
         campaignTeamSummary: input.prewarmedStableContext.campaignTeamSummary,
+        campaignSummary: input.prewarmedStableContext.campaignSummary,
         themeSummary: input.prewarmedStableContext.themeSummary,
         integrationSummary: input.prewarmedStableContext.integrationSummary,
         agentBrainPresence: input.prewarmedStableContext.agentBrainPresence,
@@ -500,6 +499,7 @@ export class ChatTurnGatewayPreparationService {
       userProfileSummary,
       teamRosterSummary,
       campaignTeamSummary,
+      campaignSummary,
       themeSummary,
       integrationSummary,
       agentBrainPresence,
@@ -536,6 +536,14 @@ export class ChatTurnGatewayPreparationService {
         : Promise.resolve(''),
       input.hasCampaignAccess && input.resolvedCampaignId
         ? this.campaignContext
+            .buildCampaignSummary(input.userId, input.resolvedCampaignId, input.orgId)
+            .catch((err) => {
+              input.logger.warn(`Campaign context failed: ${err}`)
+              return ''
+            })
+        : Promise.resolve(''),
+      input.hasCampaignAccess && input.resolvedCampaignId
+        ? this.campaignContext
             .buildThemeSummary(input.userId, input.resolvedCampaignId, input.orgId)
             .catch((err) => {
               input.logger.warn(`Theme context failed: ${err}`)
@@ -563,38 +571,10 @@ export class ChatTurnGatewayPreparationService {
       userProfileSummary,
       teamRosterSummary,
       campaignTeamSummary,
+      campaignSummary,
       themeSummary,
       integrationSummary,
       agentBrainPresence,
     }
-  }
-
-  private shouldUsePublicAgentQuickContext(source: string | undefined, content: string): boolean {
-    if (source !== 'public_agent') return false
-    const normalized = content
-      .trim()
-      .toLowerCase()
-      .replace(/[!?.,]+$/g, '')
-    if (!normalized || normalized.length > 180) return false
-    if (/^(hi|hello|hey|yo|sup|gm|good morning|good afternoon|good evening)$/.test(normalized)) {
-      return true
-    }
-    return PUBLIC_AGENT_META_PROMPTS.some((prompt) => normalized.includes(prompt))
-  }
-
-  private buildPublicAgentQuickContext(
-    agentReg: Record<string, unknown> | null,
-    resolvedAgentId: string,
-  ): string {
-    const config = (agentReg?.config as Record<string, unknown> | null) ?? {}
-    const capabilityDomain =
-      typeof config.capability_domain === 'string' ? config.capability_domain : ''
-    const profile = [
-      'PUBLIC AGENT FAST CONTEXT:',
-      `- Agent key: ${resolvedAgentId}`,
-      capabilityDomain ? `- Capability domain: ${capabilityDomain}` : '',
-      '- For greetings or meta questions, briefly explain how this agent helps and invite a specific question.',
-    ].filter(Boolean)
-    return profile.join('\n')
   }
 }

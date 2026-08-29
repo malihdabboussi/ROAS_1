@@ -3,6 +3,7 @@ import { act, cleanup, render } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
+import { useGlobalChatStore } from '../store/use-global-chat-store'
 import { QuickMissionsLauncherProvider, useQuickMissionsLauncher } from '@/lib/missions'
 import {
   buildQuickMissionReceipt,
@@ -17,6 +18,12 @@ const mocks = vi.hoisted(() => ({
   pathname: '/home',
   routeConversationId: null as string | null,
   modalProps: null as Record<string, unknown> | null,
+  clientScope: null as {
+    clientId: string
+    clientName: string
+    campaignId: string | null
+    spaceIds: string[]
+  } | null,
 }))
 
 vi.mock('next/navigation', () => ({
@@ -29,6 +36,10 @@ vi.mock('next/navigation', () => ({
 vi.mock('@/lib/conversations', () => ({
   createNewConversation: mocks.createNewConversation,
   persistQuickMissionReceipt: mocks.persistQuickMissionReceipt,
+}))
+
+vi.mock('@/lib/client-scope', () => ({
+  useClientScope: () => ({ scope: mocks.clientScope }),
 }))
 
 vi.mock('@/features/spaces/components/playbooks/QuickMissionsHubModal', () => ({
@@ -76,6 +87,8 @@ describe('QuickMissionsHubHost', () => {
     mocks.pathname = '/home'
     mocks.routeConversationId = null
     mocks.modalProps = null
+    mocks.clientScope = null
+    useGlobalChatStore.setState({ workContext: { surface: 'general' } })
   })
 
   it('prefers attached Space context and falls back to attached conversation campaign', () => {
@@ -133,6 +146,47 @@ describe('QuickMissionsHubHost', () => {
 
     expect(loadSpaces).toHaveBeenCalledOnce()
     expect(mocks.modalProps).toMatchObject({ open: true, initialPlaybookKey: null })
+  })
+
+  it('limits and defaults the launcher to the active client instead of stale chat context', () => {
+    mocks.clientScope = {
+      clientId: 'client-2',
+      clientName: 'Claude Club',
+      campaignId: 'campaign-2',
+      spaceIds: ['space-2'],
+    }
+    useGlobalChatStore.setState({
+      workContext: {
+        surface: 'spaces',
+        campaignId: 'campaign-1',
+        spaceId: 'space-1',
+      },
+    })
+    useSpacesStore.setState({
+      spaces: [
+        {
+          id: 'space-1',
+          campaign_id: 'campaign-1',
+          title: 'Living Trust DTC Funnel',
+          space_kind: 'campaign',
+        } as never,
+        {
+          id: 'space-2',
+          campaign_id: 'campaign-2',
+          title: 'General',
+          space_kind: 'campaign',
+        } as never,
+      ],
+      activeSpaceId: 'space-1',
+      loadSpaces: vi.fn(),
+    })
+
+    renderHost()
+
+    expect(mocks.modalProps).toMatchObject({
+      clients: [{ spaceId: 'space-2', campaignId: 'campaign-2', title: 'General' }],
+      initialClientSpaceId: 'space-2',
+    })
   })
 
   it('prefills the launcher space and skips a new chat when extending a mission', async () => {

@@ -7,6 +7,7 @@ import { QUICK_MISSIONS_MESSAGES } from '@/features/spaces/config/quick-missions
 import { useSpacesStore } from '@/features/spaces/store/use-spaces-store'
 import { useChatStore } from '@/features/studio/store/use-chat-store'
 import { createNewConversation, persistQuickMissionReceipt } from '@/lib/conversations'
+import { useClientScope } from '@/lib/client-scope'
 import { useQuickMissionsLauncher } from '@/lib/missions'
 import { useGlobalChatStore } from '../store/use-global-chat-store'
 
@@ -115,6 +116,7 @@ export function QuickMissionsHubHost({
   const addMessage = useChatStore((s) => s.addMessage)
   const addConversation = useChatStore((s) => s.addConversation)
   const setActiveConversationId = useChatStore((s) => s.setActiveConversationId)
+  const { scope: clientScope } = useClientScope()
   const launcher = useQuickMissionsLauncher()
   const open = controlledOpen ?? launcher.open
   const initialPlaybookKey = controlledPlaybookKey ?? launcher.playbookKey
@@ -131,27 +133,37 @@ export function QuickMissionsHubHost({
           (space) =>
             typeof space.campaign_id === 'string' &&
             space.campaign_id.length > 0 &&
-            space.space_kind !== 'personal_dashboard',
+            space.space_kind !== 'personal_dashboard' &&
+            (launcher.spaceId || parentMissionId || !clientScope
+              ? true
+              : space.campaign_id === clientScope.campaignId ||
+                clientScope.spaceIds.includes(space.id)),
         )
         .map((space) => ({
           spaceId: space.id,
           campaignId: space.campaign_id as string,
           title: space.title,
         })),
-    [spaces],
+    [clientScope, launcher.spaceId, parentMissionId, spaces],
+  )
+  const clientScopeSpaceId = clientScope?.spaceIds.find((spaceId) =>
+    clients.some((client) => client.spaceId === spaceId),
   )
   const initialClientSpaceId = useMemo(
     () =>
       resolveQuickMissionDefaultSpaceId({
         clients,
-        contextSpaceId: launcher.spaceId ?? workContext.spaceId,
-        contextCampaignId: workContext.campaignId,
+        contextSpaceId:
+          launcher.spaceId ?? (clientScope ? clientScopeSpaceId : workContext.spaceId),
+        contextCampaignId: clientScope?.campaignId ?? workContext.campaignId,
         conversationCampaignId,
         activeSpaceId,
       }),
     [
       activeSpaceId,
       clients,
+      clientScope,
+      clientScopeSpaceId,
       conversationCampaignId,
       launcher.spaceId,
       workContext.campaignId,

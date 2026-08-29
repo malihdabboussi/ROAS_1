@@ -2582,7 +2582,7 @@ const BASE_ACTION_SCHEMAS: Record<string, ActionSchema> = {
     },
     descriptions: {
       playbook_id:
-        'Canonical mission playbook id such as task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, or meta-ads-audit. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
+        'Canonical mission playbook id such as client-lifecycle, task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, or meta-ads-audit. Use client-lifecycle when the user asks to onboard, plan, produce, launch, and optimize a client through one guided lifecycle. When the user names a playbook, pass it here instead of only mentioning it in the brief.',
       input:
         'Additional mission context. Playbook kickoff fields belong under input.playbook_kickoff.',
     },

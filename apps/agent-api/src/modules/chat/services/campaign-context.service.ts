@@ -8,6 +8,11 @@ interface CampaignTextCacheEntry {
   text: string
 }
 
+interface CampaignAssetSummary {
+  items: string[]
+  unresolvedIds: string[]
+}
+
 const CAMPAIGN_CONTEXT_CACHE_TTL_MS = 5 * 60_000
 
 /**
@@ -43,16 +48,18 @@ export class CampaignContextService {
     }
 
     try {
-      const [campaign, offers, funnels, leadMagnets, sequences, adCampaigns, avatars] =
-        await Promise.all([
-          this.getCampaign(campaignId, userId, orgId),
-          this.getOffersSummary(campaignId, userId, orgId),
-          this.getFunnelsSummary(campaignId, userId, orgId),
-          this.getLeadMagnetsSummary(campaignId, userId, orgId),
-          this.getSequencesSummary(campaignId, userId, orgId),
-          this.getAdCampaignsSummary(campaignId, userId, orgId),
-          this.getAvatarsSummary(campaignId, userId, orgId),
-        ])
+      const campaign = await this.getCampaign(campaignId, userId, orgId)
+      const context = this.recordValue(campaign?.context)
+      const selectedOfferIds = this.stringArray(context.selected_offer_ids)
+      const selectedAvatarIds = this.stringArray(context.selected_avatar_ids)
+      const [offers, funnels, leadMagnets, sequences, adCampaigns, avatars] = await Promise.all([
+        this.getOffersSummary(campaignId, userId, orgId, selectedOfferIds),
+        this.getFunnelsSummary(campaignId, userId, orgId),
+        this.getLeadMagnetsSummary(campaignId, userId, orgId),
+        this.getSequencesSummary(campaignId, userId, orgId),
+        this.getAdCampaignsSummary(campaignId, userId, orgId),
+        this.getAvatarsSummary(campaignId, userId, orgId, selectedAvatarIds),
+      ])
 
       const lines: string[] = []
 
@@ -62,12 +69,12 @@ export class CampaignContextService {
 
       lines.push('')
       lines.push('CAMPAIGN ASSETS:')
-      lines.push(`- Offers: ${offers.length === 0 ? '0' : offers.join('; ')}`)
+      lines.push(this.formatAssetSummary('Offer', offers, selectedOfferIds))
       lines.push(`- Funnels: ${funnels.length === 0 ? '0' : funnels.join('; ')}`)
       lines.push(`- Lead Magnets: ${leadMagnets.length === 0 ? '0' : leadMagnets.join('; ')}`)
       lines.push(`- Email Sequences: ${sequences.length === 0 ? '0' : sequences.join('; ')}`)
       lines.push(`- Ad Campaigns: ${adCampaigns.length === 0 ? '0' : adCampaigns.join('; ')}`)
-      lines.push(`- Avatars: ${avatars.length === 0 ? '0' : avatars.join('; ')}`)
+      lines.push(this.formatAssetSummary('Avatar', avatars, selectedAvatarIds))
 
       const summary = lines.join('\n')
       this.textCache.set(cacheKey, { resolvedAt: Date.now(), text: summary })
@@ -332,17 +339,27 @@ export class CampaignContextService {
   }
 
   private async getCampaign(campaignId: string, userId: string, orgId?: string | null) {
-    return this.repository.findCampaignName(this.supabase, { userId, campaignId, orgId })
+    return this.repository.findCampaignContext(this.supabase, { userId, campaignId, orgId })
   }
 
   private async getOffersSummary(
     campaignId: string,
     userId: string,
     orgId?: string | null,
-  ): Promise<string[]> {
-    const data = await this.repository.listOffers(this.supabase, { userId, campaignId, orgId })
-    if (!data || data.length === 0) return []
-    return data.map((o) => `${o.name} (id: ${o.id}, status: ${o.processing_status ?? 'draft'})`)
+    selectedIds: readonly string[] = [],
+  ): Promise<CampaignAssetSummary> {
+    const data = await this.repository.listOffers(this.supabase, {
+      userId,
+      campaignId,
+      orgId,
+      selectedIds,
+    })
+    return {
+      items: data.map(
+        (offer) => `${offer.name} (id: ${offer.id}, status: ${offer.processing_status ?? 'draft'})`,
+      ),
+      unresolvedIds: this.unresolvedIds(selectedIds, data),
+    }
   }
 
   private async getFunnelsSummary(
@@ -416,9 +433,55 @@ export class CampaignContextService {
     campaignId: string,
     userId: string,
     orgId?: string | null,
-  ): Promise<string[]> {
-    const data = await this.repository.listAvatars(this.supabase, { userId, campaignId, orgId })
-    if (!data || data.length === 0) return []
-    return data.map((a) => `${a.name} (id: ${a.id}, type: ${a.avatar_type ?? 'unknown'})`)
+    selectedIds: readonly string[] = [],
+  ): Promise<CampaignAssetSummary> {
+    const data = await this.repository.listAvatars(this.supabase, {
+      userId,
+      campaignId,
+      orgId,
+      selectedIds,
+    })
+    return {
+      items: data.map(
+        (avatar) => `${avatar.name} (id: ${avatar.id}, type: ${avatar.avatar_type ?? 'unknown'})`,
+      ),
+      unresolvedIds: this.unresolvedIds(selectedIds, data),
+    }
+  }
+
+  private formatAssetSummary(
+    singularLabel: 'Offer' | 'Avatar',
+    summary: CampaignAssetSummary,
+    selectedIds: readonly string[],
+  ): string {
+    const label = selectedIds.length > 0 ? `Selected ${singularLabel}s` : `${singularLabel}s`
+    const resolved = summary.items.length > 0 ? summary.items.join('; ') : '0'
+    const unresolved =
+      summary.unresolvedIds.length > 0
+        ? `; approved ids unresolved: ${summary.unresolvedIds.join(', ')}`
+        : ''
+    return `- ${label}: ${resolved}${unresolved}`
+  }
+
+  private unresolvedIds(
+    selectedIds: readonly string[],
+    rows: Array<Record<string, unknown>>,
+  ): string[] {
+    if (selectedIds.length === 0) return []
+    const resolvedIds = new Set(rows.map((row) => String(row.id ?? '')).filter(Boolean))
+    return selectedIds.filter((id) => !resolvedIds.has(id))
+  }
+
+  private stringArray(value: unknown): string[] {
+    if (!Array.isArray(value)) return []
+    return [...new Set(value.filter((item): item is string => typeof item === 'string'))]
+      .map((item) => item.trim())
+      .filter(Boolean)
+  }
+
+  private recordValue(value: unknown): Record<string, unknown> {
+    return value && typeof value === 'object' && !Array.isArray(value)
+      ? (value as Record<string, unknown>)
+      : {}
   }
 }

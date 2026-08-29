@@ -143,7 +143,15 @@ export class CampaignsController {
     @Supabase() supabase: SupabaseClient,
     @OrgContext() scope: RequestScope,
     @Param('id') id: string,
-    @Body() body: { result?: string; purpose?: string; strategy?: string; off_limits?: string[] },
+    @Body()
+    body: {
+      result?: string
+      purpose?: string
+      strategy?: string
+      off_limits?: string[]
+      selected_offer_ids?: string[]
+      selected_avatar_ids?: string[]
+    },
   ) {
     if (!isCampaignUuid(id)) throw new NotFoundException('Campaign not found')
     return this.campaignsService.updateCampaignContext(supabase, user.id, id, body)

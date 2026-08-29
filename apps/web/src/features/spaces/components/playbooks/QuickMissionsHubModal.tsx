@@ -11,6 +11,10 @@ import {
   EMPTY_STATIC_AD_FIELDS,
   isAdProductionPlaybookValid,
 } from '../StartAdProductionPlaybookFields'
+import {
+  buildClientLifecycleMissionPayload,
+  CLIENT_LIFECYCLE_PLAYBOOK_ID,
+} from './client-lifecycle'
 import { buildClientStrategyMissionPayload } from './client-strategy'
 import {
   buildIgOrganicVideoMissionPayload,
@@ -121,6 +125,7 @@ export function QuickMissionsHubModal({
   const [meta, setMeta] = useState(EMPTY_META)
   const [audit, setAudit] = useState(EMPTY_AUDIT)
   const [cleanup, setCleanup] = useState(EMPTY_TASK_CLEANUP_FIELDS)
+  const [portalContainer, setPortalContainer] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
     if (!open) return
@@ -213,7 +218,10 @@ export function QuickMissionsHubModal({
     >
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="z-modal-backdrop bg-modal-overlay fixed inset-0" />
-        <DialogPrimitive.Content className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex items-center justify-center">
+        <DialogPrimitive.Content
+          ref={setPortalContainer}
+          className="z-modal-layer-3 p-spacing-4 fixed inset-0 flex items-center justify-center"
+        >
           <div className="surface-card wizard-container-border rounded-spacing-4 flex max-h-full w-full max-w-2xl flex-col overflow-hidden border shadow-2xl">
             <div className="px-spacing-6 pt-spacing-5 pb-spacing-3 shrink-0">
               <div className="gap-spacing-3 flex items-start justify-between">
@@ -272,6 +280,7 @@ export function QuickMissionsHubModal({
                     clients={clients}
                     value={clientSpaceId}
                     onChange={setClientSpaceId}
+                    portalContainer={portalContainer}
                   />
                 </div>
               ) : null}
@@ -352,6 +361,9 @@ function buildPayload(
 ) {
   if (playbookId === TASK_CLEANUP_PLAYBOOK_ID) {
     return buildTaskCleanupMissionPayload(fields.cleanup)
+  }
+  if (playbookId === CLIENT_LIFECYCLE_PLAYBOOK_ID) {
+    return buildClientLifecycleMissionPayload(fields.webinar)
   }
   if (playbookId === CLIENT_STRATEGY_PLAYBOOK_ID) {
     return buildClientStrategyMissionPayload(fields.webinar)

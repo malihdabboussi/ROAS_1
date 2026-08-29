@@ -1100,7 +1100,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_mission: {
     section: 'Missions',
     description:
-      'Creates a mission. User sees: mission card in Mission Control. When: delegating work to team agents or tracking a multi-step objective. Fields: title (required), brief, description, priority (low/medium/high/urgent), campaign_id, assigned_agent_key, playbook_id, input (arbitrary context object), idempotency_key, parent_mission_id. When the user names a playbook, always pass its id in playbook_id (task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, meta-ads-audit); put playbook-specific kickoff values under input.playbook_kickoff. For task-cleanup, kickoff.window is this_week, last_7d, or today.',
+      'Creates a mission. User sees: mission card in Mission Control. When: delegating work to team agents or tracking a multi-step objective. Fields: title (required), brief, description, priority (low/medium/high/urgent), campaign_id, assigned_agent_key, playbook_id, input (arbitrary context object), idempotency_key, parent_mission_id. When the user names a playbook, always pass its id in playbook_id (client-lifecycle, task-cleanup, client-strategy, webinar-fulfillment, static-ad-production, ig-organic-video-ad, meta-ads-launch, meta-ads-audit); put playbook-specific kickoff values under input.playbook_kickoff. Use client-lifecycle when the user asks to onboard, plan, produce, launch, and optimize a client through one guided lifecycle. For task-cleanup, kickoff.window is this_week, last_7d, or today.',
     parameters:
       '```json\n{"action":"create_mission","label":"Creating mission brief","data":{"title":"IG Organic Story Ad","brief":"Render one approved story ad","priority":"medium","campaign_id":"UUID","playbook_id":"ig-organic-video-ad","input":{"playbook_kickoff":{"output_count":1}}}}\n```\n\nMinimal:\n```json\n{"action":"create_mission","label":"Creating mission","data":{"title":"Mission title"}}\n```',
   },
@@ -1204,7 +1204,7 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   attach_mission_context: {
     section: 'Mission Manager',
     description:
-      'Vibey-only. Adds user-provided context to a mission so future planning/execution can use it.',
+      'Vibey-only. Adds user-provided context to a mission so future planning/execution can use it. Ask for a brief confirmation unless the latest user message explicitly requests this exact change.',
     parameters:
       '```json\n{"action":"attach_mission_context","label":"Adding mission context","data":{"mission_id":"UUID","message":"Use this transcript as the test input."}}\n```',
   },
@@ -1218,45 +1218,49 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   create_mission_subtask: {
     section: 'Mission Manager',
     description:
-      'Vibey-only. Creates a new subtask inside an existing mission. Set publishToTaskList true for concrete build work that should also appear as a linked Space Task.',
+      'Vibey-only. Creates a new subtask inside an existing mission. Ask for a brief confirmation unless the latest user message explicitly requests this exact extension. Set publishToTaskList true for concrete build work that should also appear as a linked Space Task.',
     parameters:
       '```json\n{"action":"create_mission_subtask","label":"Creating mission subtask","data":{"mission_id":"UUID","title":"Register the skill","assignTo":"tessa","publishToTaskList":true,"dependsOn":["UUID"],"intent":{"why":"...","story":"...","sensory":"...","endState":"...","ecology":"..."}}}\n```',
   },
   edit_mission_subtask: {
     section: 'Mission Manager',
     description:
-      'Vibey-only. Edits a subtask title, assigned agent, dependency list, or intent packet.',
+      'Vibey-only. Edits a subtask title, assigned agent, dependency list, or intent packet. Ask for a brief confirmation unless the latest user message explicitly requests this exact change.',
     parameters:
       '```json\n{"action":"edit_mission_subtask","label":"Editing mission subtask","data":{"mission_id":"UUID","subtask_id":"UUID","dependsOn":["UUID"],"assigned_agent_key":"zane"}}\n```',
   },
   cancel_mission_subtask: {
     section: 'Mission Manager',
-    description: 'Vibey-only. Cancels a mission subtask and its dependent subtasks.',
+    description:
+      'Vibey-only. Cancels a mission subtask and its dependent subtasks. Ask for explicit confirmation immediately before this destructive change.',
     parameters:
       '```json\n{"action":"cancel_mission_subtask","label":"Cancelling subtask","data":{"mission_id":"UUID","subtask_id":"UUID"}}\n```',
   },
   retry_mission_subtask: {
     section: 'Mission Manager',
-    description: 'Vibey-only. Retries a mission subtask after feedback, failure, or correction.',
+    description:
+      'Vibey-only. Retries a mission subtask after feedback, failure, or correction. Ask for a brief confirmation unless the latest user message explicitly requests this exact retry.',
     parameters:
       '```json\n{"action":"retry_mission_subtask","label":"Retrying subtask","data":{"mission_id":"UUID","subtask_id":"UUID"}}\n```',
   },
   reassign_mission_subtask: {
     section: 'Mission Manager',
-    description: 'Vibey-only. Reassigns a mission subtask to another agent.',
+    description:
+      'Vibey-only. Reassigns a mission subtask to another agent. Ask for a brief confirmation unless the latest user message explicitly requests this exact reassignment.',
     parameters:
       '```json\n{"action":"reassign_mission_subtask","label":"Reassigning subtask","data":{"mission_id":"UUID","subtask_id":"UUID","assigned_agent_key":"zane"}}\n```',
   },
   prepare_mission_replan: {
     section: 'Mission Manager',
-    description: 'Vibey-only. Cancels incomplete work and sends the mission back through planning.',
+    description:
+      'Vibey-only. Cancels incomplete work and sends the mission back through planning. Ask for explicit confirmation immediately before this destructive replan.',
     parameters:
       '```json\n{"action":"prepare_mission_replan","label":"Replanning mission","data":{"mission_id":"UUID","reason":"Assigned agent cannot create the required skill."}}\n```',
   },
   approve_mission: {
     section: 'Mission Manager',
     description:
-      'Vibey-only. Marks a mission approved/done after verifying the requested work exists.',
+      'Vibey-only. Marks a mission approved/done after verifying the requested work exists. Ask for a brief confirmation unless the latest user message explicitly approves this exact mission.',
     parameters:
       '```json\n{"action":"approve_mission","label":"Approving mission","data":{"mission_id":"UUID","feedback":"Approved."}}\n```',
   },
@@ -2597,9 +2601,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   update_campaign_context: {
     section: 'Campaign',
     description:
-      'Updates stored campaign context / brief fields used by downstream tools. User sees: updated brief in campaign Settings. When: user provides new business context, changes positioning, or refines target market.',
+      'Updates canonical campaign context used by downstream tools. Fields: result, purpose, strategy, off_limits, selected_offer_ids, selected_avatar_ids, and campaign_id. Use selected Offer/Avatar ids only after the user approves existing campaign records; never copy those records into Brain or create duplicates.',
     parameters:
-      '```json\n{"action":"update_campaign_context","label":"Updating campaign context","data":{"summary":"..."}}\n```',
+      '```json\n{"action":"update_campaign_context","label":"Binding approved campaign fundamentals","data":{"campaign_id":"UUID","selected_offer_ids":["UUID"],"selected_avatar_ids":["UUID"]}}\n```',
   },
   create_awareness_point: {
     section: 'Campaign',

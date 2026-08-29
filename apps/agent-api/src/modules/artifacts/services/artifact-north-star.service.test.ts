@@ -94,3 +94,27 @@ describe('ArtifactNorthStarService create_campaign', () => {
     })
   })
 })
+
+describe('ArtifactNorthStarService update_campaign_context', () => {
+  it('forwards approved Offer and Avatar ids to canonical campaign context', async () => {
+    const service = new ArtifactNorthStarService()
+    const target = { mainApiCall: vi.fn(async () => ({ success: true })) }
+    const campaignId = '11111111-1111-4111-8111-111111111111'
+
+    await service.getHandlers(target).update_campaign_context(
+      {
+        campaign_id: campaignId,
+        selected_offer_ids: ['offer-1'],
+        selected_avatar_ids: ['avatar-1'],
+      },
+      'agent:vibey:stub',
+    )
+
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'PATCH',
+      `/api/campaigns/${campaignId}/context`,
+      'agent:vibey:stub',
+      { selected_offer_ids: ['offer-1'], selected_avatar_ids: ['avatar-1'] },
+    )
+  })
+})

@@ -173,9 +173,10 @@ describe('artifact helper data access', () => {
       input: [{ type: 'message', role: 'user', content: 'Start' }],
       instructions: 'Base instructions',
     }
+    const buildFullContext = vi.fn(async () => '<brain />')
     const enricher = new MissionContextEnricherService(
       { buildIntegrationContext: vi.fn(async () => '<integrations />') } as any,
-      { buildFullContext: vi.fn(async () => '<brain />') } as any,
+      { buildFullContext } as any,
       { buildThemeSummary: vi.fn(async () => '<theme />') } as any,
       { buildPulse: vi.fn(async () => '<pulse />') } as any,
       { client: supabase } as any,
@@ -188,6 +189,16 @@ describe('artifact helper data access', () => {
 
     await enricher.enrichMissionBody(body, 'user-1', 'agent-1', 'campaign-1', 'org-1')
 
+    expect(buildFullContext).toHaveBeenCalledWith(
+      'user-1',
+      'agent-1',
+      'Start',
+      'org-1',
+      undefined,
+      undefined,
+      undefined,
+      'campaign-1',
+    )
     expect(body.instructions).toContain('Base instructions')
     expect(body.instructions).toContain('<integrations />')
     expect(body.instructions).toContain('<available_mcp_servers>')

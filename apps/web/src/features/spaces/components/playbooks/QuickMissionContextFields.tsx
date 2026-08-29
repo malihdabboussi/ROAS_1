@@ -53,7 +53,7 @@ export function QuickMissionContextFields({
       />
     )
   }
-  if (selection === 'strategy' || selection === 'webinar') {
+  if (selection === 'lifecycle' || selection === 'strategy' || selection === 'webinar') {
     return (
       <>
         <Field

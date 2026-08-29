@@ -82,6 +82,37 @@ describe('ArtifactMissionsService', () => {
     )
   })
 
+  it('creates a branch mission with the parent and client scope preserved', async () => {
+    const { supabase } = makeSupabase({})
+    const target = makeMissionTarget(supabase)
+    target.mainApiCall.mockResolvedValueOnce({ success: true })
+    const handlers = new ArtifactMissionsService().getHandlers(target)
+
+    await handlers.create_mission(
+      {
+        title: 'Client Lifecycle — Alternative launch path',
+        parent_mission_id: 'mission-parent',
+        campaign_id: 'campaign-1',
+        space_id: 'space-1',
+        brief: 'Branch from the approved strategy stage.',
+      },
+      'mission-session',
+    )
+
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'POST',
+      '/api/missions',
+      'mission-session',
+      expect.objectContaining({
+        title: 'Client Lifecycle — Alternative launch path',
+        parent_mission_id: 'mission-parent',
+        campaign_id: 'campaign-1',
+        space_id: 'space-1',
+        brief: 'Branch from the approved strategy stage.',
+      }),
+    )
+  })
+
   it('lists mission-session missions with manager visibility and subtask-assignee matches', async () => {
     const { supabase, queries } = makeSupabase({
       agents_registry: [
@@ -356,6 +387,47 @@ describe('ArtifactMissionsService', () => {
         subtask_id: 'subtask-1',
         dependsOn: ['dependency-1', 'dependency-2'],
       }),
+    )
+  })
+
+  it.each([
+    {
+      action: 'cancel_mission_subtask',
+      input: { mission_id: 'mission-1', subtask_id: 'subtask-1' },
+      path: 'cancel-subtask',
+      payload: { subtask_id: 'subtask-1' },
+    },
+    {
+      action: 'retry_mission_subtask',
+      input: { mission_id: 'mission-1', subtask_id: 'subtask-1' },
+      path: 'retry-subtask',
+      payload: { subtask_id: 'subtask-1' },
+    },
+    {
+      action: 'prepare_mission_replan',
+      input: { mission_id: 'mission-1', reason: 'Restart from approved strategy.' },
+      path: 'prepare-replan',
+      payload: { reason: 'Restart from approved strategy.' },
+    },
+  ])('routes $action through the durable manager endpoint', async ({ action, input, path, payload }) => {
+    const { supabase } = makeSupabase({})
+    const target = makeMissionTarget(supabase)
+    target.mainApiCall.mockResolvedValueOnce({ success: true })
+    const handlers = new ArtifactMissionsService().getHandlers(target)
+
+    await handlers[action]({ ...input, idempotency_key: `proof-${path}` }, 'mission-session')
+
+    expect(target.mainApiCall).toHaveBeenCalledWith(
+      'POST',
+      `/api/internal/missions/manager/${path}`,
+      'mission-session',
+      {
+        mission_id: 'mission-1',
+        user_id: 'user-1',
+        org_id: 'org-1',
+        ...payload,
+        idempotency_key: `proof-${path}`,
+      },
     )
   })
 

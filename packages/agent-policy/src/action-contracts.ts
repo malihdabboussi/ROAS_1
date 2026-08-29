@@ -360,13 +360,14 @@ function vibeyMissionManagerContract(
   action: Action,
   operation: ActionOperation = 'manage',
 ): ExplicitActionContract {
+  const isRead = operation === 'read'
   return {
     family: 'mission.manager',
     operation,
     exclusiveOwner: 'vibey',
     userPolicyAddable: false,
-    requiresExplicitUserIntent: false,
-    forbiddenUnlessExplicit: false,
+    requiresExplicitUserIntent: !isRead,
+    forbiddenUnlessExplicit: !isRead,
     hideFromArtifactTurns: true,
     delegateResolution: 'exact_system_agent',
     delegateTargetAction: action,

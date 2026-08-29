@@ -234,13 +234,11 @@ export function ShellRightPanel({
         aria-label="Work summary"
         aria-hidden={!visible}
       >
-        {conversationId ? (
-          <ShellRightPanelCreateHeader
-            createOpen={createOpen}
-            onOpenCreate={() => setCreateOpen(true)}
-            onBack={() => setCreateOpen(false)}
-          />
-        ) : null}
+        <ShellRightPanelCreateHeader
+          createOpen={createOpen}
+          onOpenCreate={() => setCreateOpen(true)}
+          onBack={() => setCreateOpen(false)}
+        />
         {createOpen ? (
           <div className="scrollbar-thin py-spacing-1 min-h-0 flex-1 overflow-y-auto">
             <ShellCreateMenuPanel

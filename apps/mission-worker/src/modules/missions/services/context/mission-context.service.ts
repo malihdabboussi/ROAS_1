@@ -72,53 +72,61 @@ export class MissionContextService {
       Array.isArray(agentConfig.knowledge_domains) ? agentConfig.knowledge_domains : null
     ) as string[] | null
 
-    const [
-      { data: campaign },
-      { data: offers },
-      { data: avatarRows },
-      { data: recentDeliverables },
-      graphContext,
-    ] = await Promise.all([
-      supabase
-        .from('campaigns')
-        .select('name, context, resources, current_priorities, config')
-        .eq('id', mission.campaign_id)
-        .single(),
-      agentLevel === 'employee'
-        ? Promise.resolve({ data: null })
-        : supabase
-            .from('offers')
-            .select('name, step1_data, step2_data')
-            .eq('campaign_id', mission.campaign_id)
-            .limit(3),
-      supabase
-        .from('avatars')
-        .select('name, persona_data')
-        .eq('campaign_id', mission.campaign_id)
-        .limit(3),
-      agentLevel === 'employee'
-        ? Promise.resolve({ data: null })
-        : supabase
-            .from('mission_deliverables')
-            .select('title, type, created_at')
-            .eq('campaign_id', mission.campaign_id)
-            .order('created_at', { ascending: false })
-            .limit(10),
-      this.getCampaignGraphContext(
-        supabase,
-        mission.campaign_id,
-        mission.user_id,
-        graphQuery,
-        agentLevel,
-        missionOrgId,
-        agentDomains ?? undefined,
-      ),
-    ])
-    const agentMemory = agentRecord
-
+    const { data: campaign } = await supabase
+      .from('campaigns')
+      .select('name, context, resources, current_priorities, config')
+      .eq('id', mission.campaign_id)
+      .single()
     if (!campaign) return identityParts
 
-    const ctx = (campaign.context || {}) as Record<string, string>
+    const campaignContext = (campaign.context || {}) as Record<string, unknown>
+    const selectedOfferIds = this.extractSelectedContextIds(campaignContext, 'selected_offer_ids')
+    const selectedAvatarIds = this.extractSelectedContextIds(campaignContext, 'selected_avatar_ids')
+    const offerQuery = supabase
+      .from('offers')
+      .select('id, name, step1_data, step2_data')
+      .eq('campaign_id', mission.campaign_id)
+    const avatarQuery = supabase
+      .from('avatars')
+      .select('id, name, persona_data')
+      .eq('campaign_id', mission.campaign_id)
+
+    const [{ data: offers }, { data: avatarRows }, { data: recentDeliverables }, graphContext] =
+      await Promise.all([
+        agentLevel === 'employee'
+          ? Promise.resolve({ data: null })
+          : selectedOfferIds.length > 0
+            ? offerQuery.in('id', selectedOfferIds).limit(3)
+            : offerQuery.limit(3),
+        selectedAvatarIds.length > 0
+          ? avatarQuery.in('id', selectedAvatarIds).limit(3)
+          : avatarQuery.limit(3),
+        agentLevel === 'employee'
+          ? Promise.resolve({ data: null })
+          : supabase
+              .from('mission_deliverables')
+              .select('title, type, created_at')
+              .eq('campaign_id', mission.campaign_id)
+              .order('created_at', { ascending: false })
+              .limit(10),
+        this.getCampaignGraphContext(
+          supabase,
+          mission.campaign_id,
+          mission.user_id,
+          graphQuery,
+          agentLevel,
+          missionOrgId,
+          agentDomains ?? undefined,
+        ),
+      ])
+    const agentMemory = agentRecord
+    const unresolvedOfferIds =
+      agentLevel === 'employee'
+        ? []
+        : this.unresolvedSelectedContextIds(selectedOfferIds, offers)
+    const unresolvedAvatarIds = this.unresolvedSelectedContextIds(selectedAvatarIds, avatarRows)
+
+    const ctx = campaignContext as Record<string, string>
     const res = (campaign.resources || {}) as Record<string, string | null>
     const priorities = (campaign.current_priorities || []) as string[]
     const learned = ((agentMemory.memory as any)?.learned || []) as Array<{ note: string }>
@@ -148,6 +156,17 @@ export class MissionContextService {
       }
     }
 
+    if (unresolvedOfferIds.length > 0 || unresolvedAvatarIds.length > 0) {
+      parts.push('\nCANONICAL FUNDAMENTALS STATUS:')
+      if (unresolvedOfferIds.length > 0) {
+        parts.push(`- Approved Offer ids unresolved: ${unresolvedOfferIds.join(', ')}`)
+      }
+      if (unresolvedAvatarIds.length > 0) {
+        parts.push(`- Approved Avatar ids unresolved: ${unresolvedAvatarIds.join(', ')}`)
+      }
+      parts.push('- Do not substitute another Offer or Avatar. Stop and resolve the campaign ids.')
+    }
+
     if (agentLevel !== 'employee' && offers && offers.length > 0) {
       parts.push('\nOFFER INTELLIGENCE:')
       for (const offer of offers) {
@@ -173,7 +192,10 @@ export class MissionContextService {
         const majorBenefit = this.extractFirstString(s2, ['step2_major_benefit'])
         const vehicle = this.extractFirstString(s2, ['step2_vehicle'])
 
-        if (offer.name) parts.push(`\nOffer: ${offer.name}`)
+        if (offer.name)
+          parts.push(
+            `\n${selectedOfferIds.includes(String(offer.id)) ? 'SELECTED OFFER' : 'Offer'}: ${offer.name} (${offer.id})`,
+          )
         if (whatWeSell) parts.push(`- What We Sell: ${whatWeSell}`)
         if (whoWeSellTo) parts.push(`- Who We Sell To: ${whoWeSellTo}`)
         if (product) parts.push(`- Product: ${product.slice(0, 300)}`)
@@ -191,7 +213,10 @@ export class MissionContextService {
         const demo = (persona.demographics || {}) as Record<string, any>
         const name = demo.name || persona.buyerPersona?.name || av.name || ''
         const coreProblem = persona.core_problem || persona.buyerPersona?.description || ''
-        if (name) parts.push(`- Persona: ${name}`)
+        if (name)
+          parts.push(
+            `- ${selectedAvatarIds.includes(String(av.id)) ? 'SELECTED AVATAR' : 'Persona'}: ${name} (${av.id})`,
+          )
         if (demo.age) parts.push(`- Age: ${demo.age}`)
         if (coreProblem) parts.push(`- Core Problem: ${String(coreProblem).slice(0, 200)}`)
         if (Array.isArray(demo.key_frustrations) && demo.key_frustrations.length > 0) {
@@ -261,6 +286,23 @@ export class MissionContextService {
       .map((line) => line.replace(/^\-\s*/, ''))
       .filter((line) => line.length > 0)
     return lines.slice(0, maxItems)
+  }
+
+  private extractSelectedContextIds(context: Record<string, unknown>, key: string): string[] {
+    const value = context[key]
+    if (!Array.isArray(value)) return []
+    return Array.from(
+      new Set(value.filter((id): id is string => typeof id === 'string' && id.trim().length > 0)),
+    )
+  }
+
+  private unresolvedSelectedContextIds(
+    selectedIds: string[],
+    rows: Array<{ id?: unknown }> | null | undefined,
+  ): string[] {
+    if (selectedIds.length === 0) return []
+    const resolvedIds = new Set((rows ?? []).map((row) => String(row.id ?? '')))
+    return selectedIds.filter((id) => !resolvedIds.has(id))
   }
 
   private async getCampaignThemeBrandData(

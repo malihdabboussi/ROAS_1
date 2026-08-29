@@ -23,7 +23,10 @@ export abstract class CampaignsServiceBase02 extends CampaignsServiceBase01 {
     supabase: SupabaseClient,
     userId: string,
     campaignId: string,
-    body: { result?: string; purpose?: string; strategy?: string; off_limits?: string[] },
+    body: {
+      result?: string; purpose?: string; strategy?: string; off_limits?: string[]
+      selected_offer_ids?: string[]; selected_avatar_ids?: string[]
+    },
   ) {
     const campaign = await this.campaignsRepo.findById(supabase, campaignId)
     if (!campaign) throw new Error('Campaign not found')
@@ -37,10 +40,12 @@ export abstract class CampaignsServiceBase02 extends CampaignsServiceBase01 {
     if (body.purpose !== undefined) merged.purpose = body.purpose
     if (body.strategy !== undefined) merged.strategy = body.strategy
     if (body.off_limits !== undefined) merged.off_limits = body.off_limits
+    if (body.selected_offer_ids !== undefined) merged.selected_offer_ids = body.selected_offer_ids
+    if (body.selected_avatar_ids !== undefined)
+      merged.selected_avatar_ids = body.selected_avatar_ids
     if (wasUndefined && anyProvided) merged.north_star_defined_at = new Date().toISOString()
     return this.campaignsRepo.update(supabase, campaignId, { context: merged })
   }
-
   async generateCampaignStrategyContext(
     supabase: SupabaseClient,
     userId: string,

@@ -40070,3 +40070,51 @@ Evidence: `apps/web/src/app/api/proxy/[...path]/route.ts` is 1,307 LOC and `rout
 Needed work: Extract agent runtime selection and its tests into a focused server module while preserving pinned-machine isolation, shared-runtime fail-closed behavior, and proxy observability.
 
 Reason not done now: Decomposing the entire proxy would materially widen the exact-branch QA routing change and its regression surface.
+
+## 2026-08-28 - [ARCH] Quick Missions hub is near the component limit
+
+Status: Open
+
+Found while: Adding Client Lifecycle to the shared Chat and Create Mission catalog and repairing its client-scoped launcher.
+
+Evidence: `apps/web/src/features/spaces/components/playbooks/QuickMissionsHubModal.tsx` is 384 LOC against the 400-line component limit and owns launch state, scope confirmation, playbook-specific validation, submission, and payload routing.
+
+Needed work: Extract playbook payload routing and validation into a focused module while preserving the single shared Chat/Create launch contract.
+
+Reason not done now: The file remains compliant, and restructuring all existing playbook launch behavior would widen this initial Client Lifecycle registration slice.
+
+## 2026-08-28 - [ARCH] Client lifecycle touched shared contract files at or above decomposition limits
+
+Status: Open
+
+Found while: Binding approved Client Lifecycle fundamentals and aligning Mission confirmation contracts.
+
+Evidence: `apps/api/src/modules/campaigns/services/campaigns-service-02.base.ts` is exactly 600 LOC; `apps/mission-worker/src/modules/missions/services/context/mission-context.service.ts` is 547 LOC; `apps/agent-api/src/modules/artifacts/services/artifact-action-additional-schemas.ts` is 688 LOC; `packages/agent-policy/src/action-contracts.ts` is 1,204 LOC; and their existing shared contract tests are also large. The generated Vibey action-doc registry is 2,765 LOC. All predate this focused lifecycle change, which added only the selected-record, scoped-retrieval, and confirmation contracts.
+
+Needed work: Split campaign-context mutation, Mission campaign-context composition, artifact action schemas, agent-policy action families, and generated action documentation into domain-owned modules while preserving the exhaustive schema, preflight, lifecycle, and drift checks.
+
+Reason not done now: A cross-cutting decomposition of mature shared registries is separate behavior-neutral architecture work and would materially widen this end-to-end Client Lifecycle feature.
+
+## 2026-08-28 - [ARCH] Mission action adapter test is near the file limit
+
+Status: Open
+
+Found while: Adding explicit branch, remove, retry, and replan contract coverage for Client Lifecycle controls.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-missions.service.test.ts` is 531 LOC against the 600-line hard file limit and covers mission creation, visibility, deliverables, manager actions, comments, subtask updates, and deletion.
+
+Needed work: Split Mission-manager action routing coverage from general mission artifact API coverage using shared target and Supabase query fixtures.
+
+Reason not done now: The file remains compliant, and extracting the existing shared harness would widen this focused completion-proof change.
+
+## 2026-08-29 - [ARCH] Shared campaign-chat context services remain near decomposition thresholds
+
+Status: Open
+
+Found while: Making approved Client Lifecycle Offer and Avatar selections authoritative in normal client chat.
+
+Evidence: `apps/agent-api/src/modules/chat/services/chat-prewarm-context.service.ts` is 595 LOC against the 600-line service limit; `apps/agent-api/src/modules/chat/services/campaign-context.service.ts` is 487 LOC and has crossed the 480-line decomposition threshold; and `apps/agent-api/src/modules/chat/repositories/chat-context.repository.ts` is 326 LOC against the 400-line repository limit and has crossed its 320-line threshold. This change extracted the reusable policy codec and public-agent quick-context logic so the touched orchestrators remain within their hard limits.
+
+Needed work: Split campaign asset summaries from Theme resolution, separate campaign-asset queries from general chat-context persistence, and extract stable prewarm campaign-context assembly while preserving scoped access, cache behavior, and context accounting.
+
+Reason not done now: The requested parity gap is fixed and tested; decomposing the remaining mature chat-context surfaces would be a broader behavior-neutral refactor.

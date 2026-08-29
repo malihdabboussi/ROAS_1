@@ -376,6 +376,33 @@ describe('CampaignsService', () => {
     })
   })
 
+  describe('updateCampaignContext', () => {
+    it('merges approved Offer and Avatar ids without replacing other client context', async () => {
+      mockRepo.findById.mockResolvedValue({
+        id: 'campaign-1',
+        context: { purpose: 'Acquire qualified buyers', source: 'onboarding' },
+      })
+      mockRepo.update.mockImplementation(async (_client, _id, patch) => ({
+        id: 'campaign-1',
+        ...patch,
+      }))
+
+      await service.updateCampaignContext(mockSupabase, 'user-1', 'campaign-1', {
+        selected_offer_ids: ['offer-1'],
+        selected_avatar_ids: ['avatar-1'],
+      })
+
+      expect(mockRepo.update).toHaveBeenCalledWith(mockSupabase, 'campaign-1', {
+        context: {
+          purpose: 'Acquire qualified buyers',
+          source: 'onboarding',
+          selected_offer_ids: ['offer-1'],
+          selected_avatar_ids: ['avatar-1'],
+        },
+      })
+    })
+  })
+
   describe('deleteCampaign', () => {
     it('should delete if exists', async () => {
       mockRepo.findById.mockResolvedValue({ id: '1' })

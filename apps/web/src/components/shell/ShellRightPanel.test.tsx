@@ -149,7 +149,7 @@ describe('ShellRightPanel', () => {
     vi.clearAllMocks()
   })
 
-  it('shows only the Tasks section when no chat is active', async () => {
+  it('keeps Create available before a chat is active and otherwise shows only Tasks', async () => {
     render(<ShellRightPanel conversationId={null} />)
 
     expect(await screen.findByRole('heading', { name: 'Tasks' })).toBeInTheDocument()
@@ -159,7 +159,8 @@ describe('ShellRightPanel', () => {
     expect(screen.getByTestId('tasks-context')).toHaveTextContent('home')
     // No card chrome of its own — the top-bar summary toggle owns open/close.
     expect(screen.queryByRole('button', { name: 'Close work summary' })).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Create' })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Create' }))
+    expect(screen.getByTestId('create-catalog')).toBeInTheDocument()
   })
 
   it('stacks Connections, Outputs, Sources, and Tasks sections for an active conversation', async () => {

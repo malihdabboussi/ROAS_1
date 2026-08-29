@@ -53,6 +53,7 @@ export interface ChatStablePrewarmContext extends ChatAgentPrewarmContext {
   resolvedCampaignId: string | undefined
   previousImageUrls: Array<{ filename: string; url: string }>
   campaignTeamSummary: string
+  campaignSummary: string
   themeSummary: string
 }
 

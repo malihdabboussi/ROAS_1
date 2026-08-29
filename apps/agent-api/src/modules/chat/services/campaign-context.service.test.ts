@@ -7,7 +7,7 @@ function makeCampaignRepository(overrides?: Record<string, unknown>) {
       data: { config: { agent_settings: {} } },
       error: null,
     })),
-    findCampaignName: vi.fn(async () => ({ name: 'Launch' })),
+    findCampaignContext: vi.fn(async () => ({ name: 'Launch', context: {} })),
     listOffers: vi.fn(async () => []),
     listFunnels: vi.fn(async () => []),
     listLeadMagnets: vi.fn(async () => []),
@@ -69,10 +69,43 @@ describe('CampaignContextService', () => {
       'Ad Campaign (id: ad-1, meta_defaults: account=account-1, page=page-1, instagram=ig-1, published_campaign=meta-campaign)',
     )
     expect(summary).toContain('Avatar (id: avatar-1, type: buyer)')
-    expect(repository.findCampaignName).toHaveBeenCalledWith(client, {
+    expect(repository.findCampaignContext).toHaveBeenCalledWith(client, {
       userId: 'user-1',
       campaignId: 'campaign-1',
       orgId: 'org-1',
     })
+  })
+
+  it('injects only approved Offer and Avatar records and fails closed on unresolved ids', async () => {
+    const repository = makeCampaignRepository({
+      findCampaignContext: vi.fn(async () => ({
+        name: 'Launch',
+        context: {
+          selected_offer_ids: ['offer-approved', 'offer-missing'],
+          selected_avatar_ids: ['avatar-approved'],
+        },
+      })),
+      listOffers: vi.fn(async () => [
+        { id: 'offer-approved', name: 'Approved Offer', processing_status: 'ready' },
+      ]),
+      listAvatars: vi.fn(async () => [
+        { id: 'avatar-approved', name: 'Approved Avatar', avatar_type: 'buyer' },
+      ]),
+    })
+    const service = new CampaignContextService({ client: {} } as any, repository as any)
+
+    const summary = await service.buildCampaignSummary('user-1', 'campaign-1', 'org-1')
+
+    expect(summary).toContain('Selected Offers: Approved Offer')
+    expect(summary).toContain('approved ids unresolved: offer-missing')
+    expect(summary).toContain('Selected Avatars: Approved Avatar')
+    expect(repository.listOffers).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ selectedIds: ['offer-approved', 'offer-missing'] }),
+    )
+    expect(repository.listAvatars).toHaveBeenCalledWith(
+      {},
+      expect.objectContaining({ selectedIds: ['avatar-approved'] }),
+    )
   })
 })

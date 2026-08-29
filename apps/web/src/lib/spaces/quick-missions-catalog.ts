@@ -1,4 +1,5 @@
 export const WEBINAR_FULFILLMENT_PLAYBOOK_ID = 'webinar-fulfillment' as const
+export const CLIENT_LIFECYCLE_PLAYBOOK_ID = 'client-lifecycle' as const
 export const CLIENT_STRATEGY_PLAYBOOK_ID = 'client-strategy' as const
 export const STATIC_AD_PRODUCTION_PLAYBOOK_ID = 'static-ad-production' as const
 export const IG_ORGANIC_VIDEO_PLAYBOOK_ID = 'ig-organic-video-ad' as const
@@ -7,6 +8,7 @@ export const META_ADS_AUDIT_PLAYBOOK_ID = 'meta-ads-audit' as const
 export const TASK_CLEANUP_PLAYBOOK_ID = 'task-cleanup' as const
 
 export type QuickMissionPlaybookId =
+  | typeof CLIENT_LIFECYCLE_PLAYBOOK_ID
   | typeof WEBINAR_FULFILLMENT_PLAYBOOK_ID
   | typeof CLIENT_STRATEGY_PLAYBOOK_ID
   | typeof STATIC_AD_PRODUCTION_PLAYBOOK_ID
@@ -20,11 +22,26 @@ export interface QuickMissionCatalogEntry {
   key: string
   name: string
   description: string
-  selection: 'strategy' | 'webinar' | 'static' | 'video' | 'meta' | 'audit' | 'cleanup'
+  selection:
+    | 'lifecycle'
+    | 'strategy'
+    | 'webinar'
+    | 'static'
+    | 'video'
+    | 'meta'
+    | 'audit'
+    | 'cleanup'
 }
 
 /** Central Quick Missions catalog — also drives `/` slash playbook entries. */
 export const QUICK_MISSION_PLAYBOOKS: readonly QuickMissionCatalogEntry[] = [
+  {
+    id: CLIENT_LIFECYCLE_PLAYBOOK_ID,
+    key: 'client-lifecycle',
+    name: 'Client Lifecycle',
+    description: 'Onboarding through strategy, production, launch, and optimization',
+    selection: 'lifecycle',
+  },
   {
     id: TASK_CLEANUP_PLAYBOOK_ID,
     key: 'task-cleanup',
