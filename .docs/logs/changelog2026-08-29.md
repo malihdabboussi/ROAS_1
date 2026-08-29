@@ -299,3 +299,13 @@ Why: Signed-in production QA showed that passing the whole question reached the 
 Impact: Named campaign resolution now finds the canonical campaign directly regardless of its age, while unresolved or ambiguous requests continue to fail closed before reporting is read.
 
 Files: `apps/agent-api/src/modules/artifacts/services/campaign-name-match.ts`, `apps/agent-api/src/modules/artifacts/services/campaign-name-match.test.ts`, `apps/agent-api/src/modules/artifacts/services/artifact-campaign-name-resolver.test.ts`, `documentation/features/meeting-follow-up-slack.md`
+
+## [2026-08-29 14:42] - [FIX]
+
+What: Aligned campaign-name lookup with the existing campaign access boundary when runtime organization context is absent.
+
+Why: Production receipts and a direct production-data resolver check proved that the chat runtime lacked organization context and name lookup incorrectly required the signed-in user's campaign to also have a null `org_id`.
+
+Impact: Pixel can resolve user-owned organization campaigns from a named chat request even when runtime org context is unavailable. Explicit organization context remains organization-scoped, and duplicate names still fail closed.
+
+Files: `apps/agent-api/src/modules/artifacts/repositories/artifact-legacy-session-campaign.repository.ts`, `apps/agent-api/src/modules/artifacts/repositories/artifact-legacy-session-campaign.repository.test.ts`, `documentation/features/meeting-follow-up-slack.md`
