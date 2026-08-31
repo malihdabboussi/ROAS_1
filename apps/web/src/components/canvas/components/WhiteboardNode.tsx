@@ -15,6 +15,7 @@ const VISUAL_ROLE_CLASS = {
   band: 'canvas-card-band',
   frame: 'canvas-frame-spec',
   heading: 'canvas-heading-spec',
+  annotation: 'border-transparent bg-transparent text-destructive italic shadow-none',
 } as const
 
 export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeType>) {
@@ -103,6 +104,16 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
           onChange={(event) => data.onContentChange(id, { text: event.target.value })}
         />
       )}
+      {!isExternalUrl && data.source?.url ? (
+        <a
+          className="body-4 text-primary nodrag mt-spacing-2 block break-all underline"
+          href={data.source.url}
+          target="_blank"
+          rel="noreferrer"
+        >
+          {data.source.url}
+        </a>
+      ) : null}
       {data.metric ? <p className="canvas-metric-spec">{data.metric}</p> : null}
       {isPlaceholder ? (
         <CanvasPlaceholderActions

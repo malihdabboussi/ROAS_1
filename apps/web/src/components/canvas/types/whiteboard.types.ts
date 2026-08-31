@@ -28,6 +28,7 @@ export type CanvasVisualRole =
   | 'band'
   | 'frame'
   | 'heading'
+  | 'annotation'
 
 export interface CampaignBlueprintSource {
   kind: 'campaign_resource' | 'url' | 'drive' | 'user_input'
