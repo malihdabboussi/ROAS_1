@@ -40,9 +40,19 @@ export class ArtifactStrategyService {
     if (access.error || access.data !== true) {
       return { error: 'You do not have access to this campaign Canvas.' }
     }
-    const result = await this.repository.getOrCreateCanvas(supabase, { campaignId, userId })
+    const requestedBoardId = typeof data.canvas_id === 'string' ? data.canvas_id.trim() : ''
+    const result = requestedBoardId
+      ? await this.repository.getCanvasById(supabase, {
+          campaignId,
+          boardId: requestedBoardId,
+        })
+      : await this.repository.getOrCreateCanvas(supabase, { campaignId, userId })
     if (result.error || !result.data) {
-      return { error: result.error?.message ?? 'Canvas could not be loaded.' }
+      return {
+        error:
+          result.error?.message ??
+          (requestedBoardId ? 'Canvas not found.' : 'Canvas could not be loaded.'),
+      }
     }
     return { supabase, board: result.data, userId, campaignId }
   }

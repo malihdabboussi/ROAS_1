@@ -13,18 +13,20 @@ import '@xyflow/react/dist/style.css'
 import { AlertCircle, Redo2, Undo2 } from 'lucide-react'
 import { VibeyLoadingOrb } from '@/components/vibey/vibey-loading-orb'
 import { CANVAS_VIEW_MESSAGES } from './canvas-view.messages.config'
+import { CanvasBoardSwitcher } from './components/CanvasBoardSwitcher'
 import { CanvasPixelPanel } from './components/CanvasPixelPanel'
 import { CanvasResourcePicker } from './components/CanvasResourcePicker'
 import { WhiteboardNode } from './components/WhiteboardNode'
 import { WhiteboardSelectionToolbar } from './components/WhiteboardSelectionToolbar'
 import { WhiteboardToolbar } from './components/WhiteboardToolbar'
 import { useCampaignWhiteboard } from './hooks/useCampaignWhiteboard'
-import type { WhiteboardTool } from './types/whiteboard.types'
+import { createCampaignWhiteboard, listCampaignWhiteboards } from './services/whiteboard.service'
+import type { CampaignWhiteboard, WhiteboardTool } from './types/whiteboard.types'
 
 const nodeTypes = { whiteboard: WhiteboardNode }
 
-function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
-  const whiteboard = useCampaignWhiteboard(campaignId)
+function WhiteboardCanvasInner({ campaignId, boardId }: { campaignId: string; boardId: string }) {
+  const whiteboard = useCampaignWhiteboard(campaignId, boardId)
   const [activeTool, setActiveTool] = useState<WhiteboardTool>('select')
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [pixelOpen, setPixelOpen] = useState(false)
@@ -264,9 +266,67 @@ function WhiteboardCanvasInner({ campaignId }: { campaignId: string }) {
 }
 
 export function WhiteboardCanvas({ campaignId }: { campaignId: string }) {
+  const [boards, setBoards] = useState<CampaignWhiteboard[]>([])
+  const [selectedBoardId, setSelectedBoardId] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    let active = true
+    setLoading(true)
+    void listCampaignWhiteboards(campaignId)
+      .then(({ boards: nextBoards }) => {
+        if (!active) return
+        setBoards(nextBoards)
+        setSelectedBoardId((current) =>
+          nextBoards.some((board) => board.id === current) ? current : (nextBoards[0]?.id ?? ''),
+        )
+        setError(null)
+      })
+      .catch(() => active && setError(CANVAS_VIEW_MESSAGES.listError))
+      .finally(() => active && setLoading(false))
+    return () => {
+      active = false
+    }
+  }, [campaignId])
+
+  const createBoard = useCallback(
+    (title: string) => {
+      setCreating(true)
+      void createCampaignWhiteboard(campaignId, title)
+        .then(({ board }) => {
+          setBoards((current) => [...current, board])
+          setSelectedBoardId(board.id)
+          setError(null)
+        })
+        .catch(() => setError(CANVAS_VIEW_MESSAGES.createError))
+        .finally(() => setCreating(false))
+    },
+    [campaignId],
+  )
+
+  if (loading || !selectedBoardId) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <VibeyLoadingOrb text={CANVAS_VIEW_MESSAGES.loading} state="processing" size="lg" />
+      </div>
+    )
+  }
+
   return (
-    <ReactFlowProvider>
-      <WhiteboardCanvasInner campaignId={campaignId} />
-    </ReactFlowProvider>
+    <div className="flex h-full min-h-0 flex-col">
+      <CanvasBoardSwitcher
+        boards={boards}
+        selectedBoardId={selectedBoardId}
+        creating={creating}
+        error={error}
+        onSelect={setSelectedBoardId}
+        onCreate={createBoard}
+      />
+      <ReactFlowProvider key={selectedBoardId}>
+        <WhiteboardCanvasInner campaignId={campaignId} boardId={selectedBoardId} />
+      </ReactFlowProvider>
+    </div>
   )
 }

@@ -11,11 +11,13 @@ import type { CampaignWhiteboardResponse, CanvasOperation } from '../types/white
 
 interface UseCanvasOperationCommitInput {
   campaignId: string
+  boardId: string
   onUndoLoaded: (response: CampaignWhiteboardResponse) => void
 }
 
 export function useCanvasOperationCommit({
   campaignId,
+  boardId,
   onUndoLoaded,
 }: UseCanvasOperationCommitInput) {
   const [error, setError] = useState<string | null>(null)
@@ -43,6 +45,7 @@ export function useCanvasOperationCommit({
         .then(async () => {
           const result = await applyCampaignCanvasOperations(
             campaignId,
+            boardId,
             revisionRef.current,
             operations,
           )
@@ -55,9 +58,10 @@ export function useCanvasOperationCommit({
             setError(CANVAS_VIEW_MESSAGES.saveError)
             return
           }
-          const latest = await fetchCampaignWhiteboard(campaignId)
+          const latest = await fetchCampaignWhiteboard(campaignId, boardId)
           const result = await applyCampaignCanvasOperations(
             campaignId,
+            boardId,
             latest.board.revision,
             operations,
           )
@@ -65,7 +69,7 @@ export function useCanvasOperationCommit({
         })
         .finally(() => setSaveState('saved'))
     },
-    [acknowledge, campaignId],
+    [acknowledge, boardId, campaignId],
   )
 
   const undo = useCallback(async () => {
@@ -73,8 +77,8 @@ export function useCanvasOperationCommit({
     if (!operationId) return
     setSaveState('saving')
     try {
-      const result = await undoCampaignCanvasOperation(campaignId, operationId)
-      const response = await fetchCampaignWhiteboard(campaignId)
+      const result = await undoCampaignCanvasOperation(campaignId, boardId, operationId)
+      const response = await fetchCampaignWhiteboard(campaignId, boardId)
       revisionRef.current = response.board.revision
       lastOperationIdRef.current = null
       redoOperationIdRef.current = result.operation_id
@@ -87,15 +91,15 @@ export function useCanvasOperationCommit({
     } finally {
       setSaveState('saved')
     }
-  }, [campaignId, onUndoLoaded])
+  }, [boardId, campaignId, onUndoLoaded])
 
   const redo = useCallback(async () => {
     const operationId = redoOperationIdRef.current
     if (!operationId) return
     setSaveState('saving')
     try {
-      const result = await undoCampaignCanvasOperation(campaignId, operationId)
-      const response = await fetchCampaignWhiteboard(campaignId)
+      const result = await undoCampaignCanvasOperation(campaignId, boardId, operationId)
+      const response = await fetchCampaignWhiteboard(campaignId, boardId)
       revisionRef.current = response.board.revision
       lastOperationIdRef.current = result.operation_id
       redoOperationIdRef.current = null
@@ -108,7 +112,7 @@ export function useCanvasOperationCommit({
     } finally {
       setSaveState('saved')
     }
-  }, [campaignId, onUndoLoaded])
+  }, [boardId, campaignId, onUndoLoaded])
 
   return { canRedo, canUndo, commit, error, redo, revisionRef, saveState, setError, undo }
 }

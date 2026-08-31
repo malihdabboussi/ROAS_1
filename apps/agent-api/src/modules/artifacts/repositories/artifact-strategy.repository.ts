@@ -24,13 +24,26 @@ export class ArtifactStrategyRepository {
       .from('campaign_canvases')
       .select('*')
       .eq('campaign_id', input.campaignId)
+      .eq('is_default', true)
       .maybeSingle()) as { data: Record<string, unknown> | null; error: QueryError | null }
     if (existing.error || existing.data) return existing
     return (await supabase
       .from('campaign_canvases')
-      .insert({ campaign_id: input.campaignId, user_id: input.userId })
+      .insert({ campaign_id: input.campaignId, user_id: input.userId, is_default: true })
       .select('*')
       .single()) as { data: Record<string, unknown> | null; error: QueryError | null }
+  }
+
+  async getCanvasById(
+    supabase: SupabaseClient,
+    input: { campaignId: string; boardId: string },
+  ): Promise<{ data: Record<string, unknown> | null; error: QueryError | null }> {
+    return (await supabase
+      .from('campaign_canvases')
+      .select('*')
+      .eq('campaign_id', input.campaignId)
+      .eq('id', input.boardId)
+      .maybeSingle()) as { data: Record<string, unknown> | null; error: QueryError | null }
   }
 
   async getCanvasItems(supabase: SupabaseClient, boardId: string) {

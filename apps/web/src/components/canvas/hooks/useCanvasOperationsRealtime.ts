@@ -48,7 +48,7 @@ export function useCanvasOperationsRealtime({
           }
           if (refreshTimer) clearTimeout(refreshTimer)
           refreshTimer = setTimeout(() => {
-            void fetchCampaignWhiteboard(campaignId).then((response) => {
+            void fetchCampaignWhiteboard(campaignId, boardId).then((response) => {
               if (response.board.revision <= revisionRef.current) return
               revisionRef.current = response.board.revision
               onRemoteBoard(response)

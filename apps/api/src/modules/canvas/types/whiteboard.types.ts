@@ -1,6 +1,7 @@
 export interface WhiteboardNodeData {
   kind: 'note' | 'text' | 'card' | 'shape'
   title: string
+  is_default: boolean
   text: string
   resource_type?: string
   resource_id?: string

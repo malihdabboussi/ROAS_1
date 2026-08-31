@@ -37,7 +37,7 @@ const ITEM_KIND: Record<WhiteboardNodeKind, CanvasItemKind> = {
   shape: 'shape',
   frame: 'frame',
 }
-export function useCampaignWhiteboard(campaignId: string) {
+export function useCampaignWhiteboard(campaignId: string, selectedBoardId: string) {
   const [nodes, setNodes, onNodesChangeBase] = useNodesState<WhiteboardNode>([])
   const [edges, setEdges, onEdgesChangeBase] = useEdgesState<WhiteboardEdge>([])
   const [loading, setLoading] = useState(true)
@@ -49,6 +49,7 @@ export function useCampaignWhiteboard(campaignId: string) {
   const { getViewport, setViewport: setFlowViewport, screenToFlowPosition } = useReactFlow()
   const operationCommit = useCanvasOperationCommit({
     campaignId,
+    boardId: selectedBoardId,
     onUndoLoaded: (response) => hydrateBoardRef.current(response),
   })
   const { commit, revisionRef, setError } = operationCommit
@@ -133,7 +134,7 @@ export function useCampaignWhiteboard(campaignId: string) {
   useEffect(() => {
     let active = true
     setLoading(true)
-    void fetchCampaignWhiteboard(campaignId)
+    void fetchCampaignWhiteboard(campaignId, selectedBoardId)
       .then((response) => {
         if (!active) return
         revisionRef.current = response.board.revision
@@ -150,7 +151,7 @@ export function useCampaignWhiteboard(campaignId: string) {
       for (const timer of timers.values()) clearTimeout(timer)
       timers.clear()
     }
-  }, [campaignId, hydrateBoard, revisionRef, setError, setFlowViewport])
+  }, [campaignId, hydrateBoard, revisionRef, selectedBoardId, setError, setFlowViewport])
   useCanvasOperationsRealtime({ boardId, campaignId, revisionRef, onRemoteBoard: hydrateBoard })
 
   const addNode = useCallback(

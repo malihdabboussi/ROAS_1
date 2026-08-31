@@ -7,6 +7,15 @@ import type {
   WhiteboardNodeData,
 } from '../types/whiteboard.types'
 
+const CONNECTOR_STYLES = {
+  spine: { stroke: '#54626F', strokeWidth: 3 },
+  complete: { stroke: '#2E6B4F', strokeWidth: 2.5 },
+  dead_end: { stroke: '#A8402F', strokeWidth: 2.5 },
+  to_build: { stroke: '#A8730F', strokeWidth: 2.5, strokeDasharray: '10 8' },
+  loop: { stroke: '#A8730F', strokeWidth: 2.5, strokeDasharray: '10 8' },
+  calling: { stroke: '#A8402F', strokeWidth: 2, strokeDasharray: '10 8' },
+} as const
+
 function toWhiteboardKind(kind: CanvasItem['kind']): PersistedWhiteboardNodeData['kind'] {
   if (kind === 'sticky_note') return 'note'
   if (kind === 'text') return 'text'
@@ -47,14 +56,21 @@ export function hydrateWhiteboardItems(
         onPlaceholderAction,
       },
     })),
-    edges: connectors.map((connector) => ({
-      id: connector.id,
-      source: connector.source_item_id,
-      target: connector.target_item_id,
-      sourceHandle: connector.source_handle,
-      targetHandle: connector.target_handle,
-      label: connector.label,
-    })),
+    edges: connectors.map((connector) => {
+      const role = connector.style.role as keyof typeof CONNECTOR_STYLES | undefined
+      return {
+        id: connector.id,
+        source: connector.source_item_id,
+        target: connector.target_item_id,
+        sourceHandle: connector.source_handle,
+        targetHandle: connector.target_handle,
+        label: connector.label,
+        // React Flow requires connector paint values through its JS style contract.
+        style: role ? CONNECTOR_STYLES[role] : undefined,
+        labelStyle: { fontFamily: 'monospace', fontSize: 16, fill: '#54626F' },
+        animated: role === 'loop',
+      }
+    }),
   }
 }
 

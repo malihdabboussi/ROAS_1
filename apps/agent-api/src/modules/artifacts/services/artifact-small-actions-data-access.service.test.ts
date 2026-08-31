@@ -11,6 +11,10 @@ describe('small artifact action data access', () => {
         data: { id: 'board-1', revision: boardRevision },
         error: null,
       })),
+      getCanvasById: vi.fn(async () => ({
+        data: { id: 'board-2', revision: boardRevision },
+        error: null,
+      })),
       getCanvasItems: vi.fn(async () => ({ data: [{ id: 'item-1' }], error: null })),
       getCanvasConnectors: vi.fn(async () => ({ data: [], error: null })),
       applyCanvasOperations: vi.fn(async () => {
@@ -34,6 +38,16 @@ describe('small artifact action data access', () => {
       board: { id: 'board-1', revision: 4 },
       items: [{ id: 'item-1' }],
     })
+    await expect(
+      handlers.get_canvas_board({ canvas_id: 'board-2' }, 'session'),
+    ).resolves.toMatchObject({ success: true, board: { id: 'board-2', revision: 4 } })
+    expect(repository.getCanvasById).toHaveBeenCalledWith(
+      {},
+      {
+        campaignId: 'campaign-1',
+        boardId: 'board-2',
+      },
+    )
     await expect(
       handlers.apply_canvas_operations(
         {

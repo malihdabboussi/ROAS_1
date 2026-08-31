@@ -1738,9 +1738,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   get_canvas_board: {
     section: 'Canvas',
     description:
-      'Loads the current campaign Canvas revision, editable items, and connectors. Call this immediately before applying Canvas operations.',
+      'Loads a campaign Canvas revision, editable items, and connectors. Pass canvas_id when the user is on a named Canvas; omit it only for the default Canvas. Call this immediately before applying Canvas operations.',
     parameters:
-      '```json\n{"action":"get_canvas_board","label":"Reading the campaign canvas","data":{}}\n```',
+      '```json\n{"action":"get_canvas_board","label":"Reading the campaign canvas","data":{"canvas_id":"UUID"}}\n```',
   },
   build_campaign_blueprint: {
     section: 'Canvas',
@@ -1759,9 +1759,9 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
   apply_canvas_operations: {
     section: 'Canvas',
     description:
-      'Creates or edits normalized, editable objects on the campaign Canvas. Use the revision returned by get_canvas_board. Items support sticky_note, text, shape, frame, card, and resource_card; connectors reference item UUIDs.',
+      'Creates or edits normalized, editable objects on the campaign Canvas. Pass the same canvas_id used with get_canvas_board and use its returned revision. Items support sticky_note, text, shape, frame, card, and resource_card; connectors reference item UUIDs.',
     parameters:
-      '```json\n{"action":"apply_canvas_operations","label":"Building the campaign canvas","data":{"base_revision":0,"operations":[{"op":"create_item","item":{"id":"UUID","kind":"sticky_note","position_x":120,"position_y":160,"content":{"title":"Awareness","text":"Lead magnet traffic"}}}]}}\n```',
+      '```json\n{"action":"apply_canvas_operations","label":"Building the campaign canvas","data":{"canvas_id":"UUID","base_revision":0,"operations":[{"op":"create_item","item":{"id":"UUID","kind":"sticky_note","position_x":120,"position_y":160,"content":{"title":"Awareness","text":"Lead magnet traffic"}}}]}}\n```',
   },
   list_custom_fields: {
     section: 'Offers',

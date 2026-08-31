@@ -462,7 +462,11 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
     [...campaignScope, 'node_type'],
     stringType([...campaignScope, 'node_type']),
   ),
-  get_canvas_board: schema([], campaignScope, stringType(campaignScope)),
+  get_canvas_board: schema(
+    [],
+    ['canvas_id', ...campaignScope],
+    stringType(['canvas_id', ...campaignScope]),
+  ),
   build_campaign_blueprint: schema(
     ['campaign_label', 'blueprint_id', 'stages'],
     [
@@ -475,6 +479,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       'origin_x',
       'origin_y',
       'idempotency_key',
+      'canvas_id',
       ...campaignScope,
     ],
     {
@@ -487,6 +492,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       origin_x: 'number',
       origin_y: 'number',
       idempotency_key: 'string',
+      canvas_id: 'string',
       ...stringType(campaignScope),
     },
     ['Build a confirmed, chat-derived campaign journey on Canvas.'],
@@ -501,6 +507,7 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       'url',
       'source_label',
       'idempotency_key',
+      'canvas_id',
       ...campaignScope,
     ],
     {
@@ -511,17 +518,19 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
       url: 'string',
       source_label: 'string',
       idempotency_key: 'string',
+      canvas_id: 'string',
       ...stringType(campaignScope),
     },
     ['Replace a completed campaign Canvas placeholder with its canonical created asset.'],
   ),
   apply_canvas_operations: schema(
     ['base_revision', 'operations'],
-    ['base_revision', 'operations', 'idempotency_key', ...campaignScope],
+    ['base_revision', 'operations', 'idempotency_key', 'canvas_id', ...campaignScope],
     {
       base_revision: 'number',
       operations: 'object_array',
       idempotency_key: 'string',
+      canvas_id: 'string',
       ...stringType(campaignScope),
     },
   ),

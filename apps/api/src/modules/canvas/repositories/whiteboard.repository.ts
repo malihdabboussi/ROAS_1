@@ -1,4 +1,9 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type {
   CampaignWhiteboardRow,
@@ -8,10 +13,7 @@ import type {
 
 @Injectable()
 export class WhiteboardRepository {
-  async assertCampaignAccessible(
-    supabase: SupabaseClient,
-    campaignId: string,
-  ): Promise<void> {
+  async assertCampaignAccessible(supabase: SupabaseClient, campaignId: string): Promise<void> {
     const { data, error } = await supabase
       .from('campaigns')
       .select('id')
@@ -29,13 +31,56 @@ export class WhiteboardRepository {
       .from('campaign_canvases')
       .select('*')
       .eq('campaign_id', campaignId)
+      .eq('is_default', true)
       .maybeSingle()
     if (readError) throw new BadRequestException(readError.message)
     if (existing) return existing as CampaignWhiteboardRow
 
     const { data, error } = await supabase
       .from('campaign_canvases')
-      .insert({ campaign_id: campaignId, user_id: userId })
+      .insert({ campaign_id: campaignId, user_id: userId, is_default: true })
+      .select('*')
+      .single()
+    if (error) throw new BadRequestException(error.message)
+    return data as CampaignWhiteboardRow
+  }
+
+  async listBoards(supabase: SupabaseClient, campaignId: string): Promise<CampaignWhiteboardRow[]> {
+    const { data, error } = await supabase
+      .from('campaign_canvases')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .order('is_default', { ascending: false })
+      .order('created_at', { ascending: true })
+    if (error) throw new BadRequestException(error.message)
+    return (data ?? []) as CampaignWhiteboardRow[]
+  }
+
+  async getBoard(
+    supabase: SupabaseClient,
+    campaignId: string,
+    boardId: string,
+  ): Promise<CampaignWhiteboardRow> {
+    const { data, error } = await supabase
+      .from('campaign_canvases')
+      .select('*')
+      .eq('campaign_id', campaignId)
+      .eq('id', boardId)
+      .maybeSingle()
+    if (error) throw new BadRequestException(error.message)
+    if (!data) throw new NotFoundException('Canvas not found')
+    return data as CampaignWhiteboardRow
+  }
+
+  async createBoard(
+    supabase: SupabaseClient,
+    campaignId: string,
+    userId: string,
+    title: string,
+  ): Promise<CampaignWhiteboardRow> {
+    const { data, error } = await supabase
+      .from('campaign_canvases')
+      .insert({ campaign_id: campaignId, user_id: userId, title })
       .select('*')
       .single()
     if (error) throw new BadRequestException(error.message)
@@ -53,10 +98,7 @@ export class WhiteboardRepository {
     return (data ?? []) as CanvasItemRow[]
   }
 
-  async listConnectors(
-    supabase: SupabaseClient,
-    boardId: string,
-  ): Promise<CanvasConnectorRow[]> {
+  async listConnectors(supabase: SupabaseClient, boardId: string): Promise<CanvasConnectorRow[]> {
     const { data, error } = await supabase
       .from('canvas_connectors')
       .select('*')

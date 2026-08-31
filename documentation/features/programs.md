@@ -1,6 +1,6 @@
 # Programs
 
-Last Modified: August 12, 2026 (card-first Program navigation)
+Last Modified: August 31, 2026 (named campaign canvases)
 
 ## Overview
 
@@ -24,7 +24,7 @@ ROAS org-first system programs: **Clients**, **ROAS Ops**. Personal-account prog
 - `program_shares` — ACL rows (`entity_type=user`, `level` `view`|`edit`)
 - `program_user_state` — per-user Program favorites
 - `campaigns.program_id` — nullable FK; null = **General** (UI folder; internal key `__ungrouped__`)
-- `campaign_canvases` — one free-form board identity and viewport per Campaign; normalized items, connectors, and operation history inherit campaign access
+- `campaign_canvases` — multiple named free-form boards per Campaign; each board owns its viewport, normalized items, connectors, revision, and operation history while inheriting campaign access
 - System kinds: `clients`, `roas_ops`, `personal` (unique per scope when set)
 
 Migrations:
@@ -44,7 +44,7 @@ API:
 - Move space: `PATCH /api/spaces/:id` with `{ campaign_id }` (requires Program `edit` on both the source and destination campaign's Program — see `assertSpaceCampaignMoveAccess`)
 - Reorder programs: `PATCH /api/programs/:id` with `{ sort_order }`
 - Reorder spaces within a campaign: `PATCH /api/spaces/:id` with `{ sort_order }` (`spaces.sort_order`; migration `20260725074000_spaces_sort_order.sql`)
-- Whiteboard: `GET /api/canvas/campaigns/:campaignId/whiteboard`; versioned mutations use `POST /api/canvas/campaigns/:campaignId/whiteboard/operations`
+- Whiteboards: `GET/POST /api/canvas/campaigns/:campaignId/whiteboards`; board reads and versioned mutations use `/api/canvas/campaigns/:campaignId/whiteboards/:boardId`. The singular `/whiteboard` endpoints remain default-board compatibility for existing callers.
 - Share compat report: `GET /api/programs/share-conflicts` (org admin) — read-only list of space shares overridden by Program privacy
 
 ## Permissions (MVP)
@@ -84,7 +84,7 @@ Roles (API `view`/`edit`, UI Viewer/Editor):
 - Top **New campaign** creates into that program
 - Link back to **All campaigns**
 - Uses the same configurable work-view model as Campaigns: Overview, List, Board, Calendar, and Canvas.
-- **Canvas** opens the selected campaign's persistent free-form whiteboard. Programs with multiple campaigns use the existing campaign filter; an empty Program prompts the user to add a campaign first.
+- **Canvas** opens the selected campaign's named free-form whiteboards. Users can create and switch boards without replacing the campaign's original default board. Programs with multiple campaigns use the existing campaign filter; an empty Program prompts the user to add a campaign first.
 - Canvas uses versioned item/connector operations, revision-conflict recovery, realtime operation refresh, and batch Undo/Redo. Its Miro-style shell provides Select/Hand modes, sticky notes, text, shapes, cards, frames, connectors, resizing, locking, duplication, multi-select alignment/distribution, keyboard shortcuts, minimap, pan, and zoom. The resource library places funnels, email sequences, ads, presentations, offers, and avatars as editable linked resource cards without copying their source records.
 - Canvas embeds the canonical Pixel chat panel and attaches campaign ID, board ID, revision, viewport, and selected item IDs to every prompt. Pixel uses `get_canvas_board` followed by `apply_canvas_operations`, so prompted funnels, email sequences, and campaign maps are created as the same editable objects humans manipulate. Agent batches refresh in realtime and focus the viewport on their affected bounds. The legacy `create_strategy_node` action remains specific to Workflow and is not a Canvas write path.
 
@@ -128,6 +128,7 @@ campaign/program is expanded.
 
 ## Decision Log
 
+- **2026-08-31:** Campaign Canvas supports multiple named boards. Existing single boards are retained as defaults; each named board has independent items, connectors, revision, viewport, realtime updates, and Undo/Redo history. Pixel receives and must pass the selected `canvas_id` so actions cannot write to a sibling board.
 - **2026-08-17:** All Tasks is the only tasks screen. Default scope is every open task; **Assigned to me** is a filter. `/home/my-tasks` redirects to `/all-tasks`. Expanding the Home My Tasks card opens `/all-tasks?scope=my` instead of the old overlay.
 - **2026-08-17:** All Tasks is the primary task destination in Simple and Advanced nav. Opening a rollup row keeps the list mounted and shows canonical task detail in a right-side card. `/home/my-tasks` redirects to `/all-tasks`; the Home My Tasks card stays.
 - **2026-08-17:** All Tasks uses the shell breadcrumb **All Tasks** and no longer repeats the H1/subtitle in the page body.

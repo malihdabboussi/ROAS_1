@@ -6,6 +6,16 @@ import type { WhiteboardNode as WhiteboardNodeType } from '../types/whiteboard.t
 import { CanvasPlaceholderActions } from './CanvasPlaceholderActions'
 
 const HANDLE_POSITIONS = [Position.Top, Position.Right, Position.Bottom, Position.Left]
+const VISUAL_ROLE_CLASS = {
+  live: 'canvas-card-live',
+  complete: 'canvas-card-complete',
+  dead_end: 'canvas-card-dead-end',
+  changed: 'canvas-card-changed',
+  to_build: 'canvas-card-to-build',
+  band: 'canvas-card-band',
+  frame: 'canvas-frame-spec',
+  heading: 'canvas-heading-spec',
+} as const
 
 export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeType>) {
   const isText = data.kind === 'text'
@@ -24,6 +34,7 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
         isFrame && 'border-primary bg-transparent shadow-none',
         selected && 'border-primary shadow-md',
         isPlaceholder && 'border-primary',
+        data.visual_role && VISUAL_ROLE_CLASS[data.visual_role],
       )}
     >
       <NodeResizer
@@ -41,9 +52,12 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
         />
       ))}
 
-      {!isText && (
+      {(!isText || isFrame) && (
         <input
-          className="nodrag input-glass body-2 mb-spacing-1 w-full border-0 bg-transparent p-0 font-medium"
+          className={cn(
+            'nodrag input-glass body-2 mb-spacing-1 w-full border-0 bg-transparent p-0 font-medium',
+            isFrame && 'canvas-frame-title-spec',
+          )}
           value={data.title}
           aria-label="Board item title"
           onChange={(event) => data.onContentChange(id, { title: event.target.value })}
@@ -89,6 +103,7 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
           onChange={(event) => data.onContentChange(id, { text: event.target.value })}
         />
       )}
+      {data.metric ? <p className="canvas-metric-spec">{data.metric}</p> : null}
       {isPlaceholder ? (
         <CanvasPlaceholderActions
           nodeId={id}

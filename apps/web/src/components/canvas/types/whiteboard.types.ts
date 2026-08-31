@@ -19,6 +19,15 @@ export type CampaignBlueprintStatus =
   | 'dismissed'
   | 'blocked'
 export type CanvasPlaceholderAction = 'create' | 'attach' | 'assign' | 'dismiss'
+export type CanvasVisualRole =
+  | 'live'
+  | 'complete'
+  | 'dead_end'
+  | 'changed'
+  | 'to_build'
+  | 'band'
+  | 'frame'
+  | 'heading'
 
 export interface CampaignBlueprintSource {
   kind: 'campaign_resource' | 'url' | 'drive' | 'user_input'
@@ -43,6 +52,8 @@ export interface CampaignBlueprintContent {
   status?: CampaignBlueprintStatus
   source?: CampaignBlueprintSource
   placeholder?: CampaignBlueprintPlaceholder
+  visual_role?: CanvasVisualRole
+  metric?: string
 }
 
 export interface PersistedWhiteboardNodeData extends Record<string, unknown> {
@@ -101,15 +112,22 @@ export interface CanvasConnector {
 }
 
 export interface CampaignWhiteboardResponse {
-  board: {
-    id: string
-    campaign_id: string
-    title: string
-    revision: number
-    viewport: Viewport
-  }
+  board: CampaignWhiteboard
   items: CanvasItem[]
   connectors: CanvasConnector[]
+}
+
+export interface CampaignWhiteboard {
+  id: string
+  campaign_id: string
+  title: string
+  revision: number
+  viewport: Viewport
+  is_default: boolean
+}
+
+export interface CampaignWhiteboardListResponse {
+  boards: CampaignWhiteboard[]
 }
 
 export type CanvasOperation =

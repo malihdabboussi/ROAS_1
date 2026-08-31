@@ -1,6 +1,10 @@
 export const CANVAS_VIEW_MESSAGES = {
   loading: 'Opening your canvas...',
   loadError: "Couldn't open this canvas. Try again.",
+  listError: "Couldn't load this campaign's canvases. Try again.",
+  createError: "Couldn't create that canvas. Try a different name.",
+  createLabel: 'New canvas',
+  createPlaceholder: 'Canvas name',
   saveError: "Couldn't save the latest canvas changes. Try again.",
   campaignRequired: 'Link this space to a campaign to use Canvas.',
   programCampaignRequired: 'Choose a campaign to open its Canvas.',

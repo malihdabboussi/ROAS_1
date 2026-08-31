@@ -11588,3 +11588,15 @@ html.dark .agenda-card-header {
   flex-direction: column;
   overflow: hidden;
 }
+/* Fixed visual language for user-authored whiteboard diagrams. */
+.canvas-card-live { background: #FFFFFF; border: 1.5px solid #C3CBC5; }
+.canvas-card-complete { background: #EDF4F0; border: 2px solid #2E6B4F; }
+.canvas-card-dead-end { background: #FBF1EF; border: 2px solid #A8402F; }
+.canvas-card-changed { background: #F6EFDF; border: 2px solid #A8730F; }
+.canvas-card-to-build { background: #F6EFDF; border: 2px dashed #A8730F; }
+.canvas-card-band { background: #EDEFEC; border: 1px solid #C3CBC5; }
+.canvas-frame-spec { background: transparent; border: 2px solid #C3CBC5; box-shadow: none; }
+.canvas-heading-spec { background: transparent; border-color: transparent; box-shadow: none; }
+.canvas-frame-title-spec { color: #182430; font-size: 44px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; }
+.canvas-metric-spec { color: #8A5E0B; font-family: monospace; font-size: 18px; font-weight: 700; }
+.canvas-card-dead-end .canvas-metric-spec { color: #A8402F; }

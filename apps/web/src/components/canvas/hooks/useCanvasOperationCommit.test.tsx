@@ -18,6 +18,7 @@ const boardResponse = {
     id: 'board-1',
     campaign_id: 'campaign-1',
     title: 'Canvas',
+    is_default: true,
     revision: 3,
     viewport: { x: 0, y: 0, zoom: 1 },
   },
@@ -38,14 +39,18 @@ describe('useCanvasOperationCommit', () => {
       })
     vi.mocked(fetchCampaignWhiteboard).mockResolvedValue(boardResponse)
     const { result } = renderHook(() =>
-      useCanvasOperationCommit({ campaignId: 'campaign-1', onUndoLoaded: vi.fn() }),
+      useCanvasOperationCommit({
+        campaignId: 'campaign-1',
+        boardId: 'board-1',
+        onUndoLoaded: vi.fn(),
+      }),
     )
 
     act(() => result.current.commit([{ op: 'delete_item', item_id: 'item-1' }]))
 
     await waitFor(() => expect(applyCampaignCanvasOperations).toHaveBeenCalledTimes(2))
     expect(result.current.saveState).toBe('saved')
-    expect(applyCampaignCanvasOperations).toHaveBeenNthCalledWith(2, 'campaign-1', 3, [
+    expect(applyCampaignCanvasOperations).toHaveBeenNthCalledWith(2, 'campaign-1', 'board-1', 3, [
       { op: 'delete_item', item_id: 'item-1' },
     ])
     expect(result.current.canUndo).toBe(true)
@@ -72,21 +77,25 @@ describe('useCanvasOperationCommit', () => {
       })
     vi.mocked(fetchCampaignWhiteboard).mockResolvedValue(boardResponse)
     const { result } = renderHook(() =>
-      useCanvasOperationCommit({ campaignId: 'campaign-1', onUndoLoaded }),
+      useCanvasOperationCommit({ campaignId: 'campaign-1', boardId: 'board-1', onUndoLoaded }),
     )
     act(() => result.current.commit([{ op: 'delete_item', item_id: 'item-1' }]))
     await waitFor(() => expect(result.current.canUndo).toBe(true))
 
     await act(async () => result.current.undo())
 
-    expect(undoCampaignCanvasOperation).toHaveBeenCalledWith('campaign-1', 'operation-1')
+    expect(undoCampaignCanvasOperation).toHaveBeenCalledWith('campaign-1', 'board-1', 'operation-1')
     expect(onUndoLoaded).toHaveBeenCalledWith(boardResponse)
     expect(result.current.canUndo).toBe(false)
     expect(result.current.canRedo).toBe(true)
 
     await act(async () => result.current.redo())
 
-    expect(undoCampaignCanvasOperation).toHaveBeenLastCalledWith('campaign-1', 'operation-2')
+    expect(undoCampaignCanvasOperation).toHaveBeenLastCalledWith(
+      'campaign-1',
+      'board-1',
+      'operation-2',
+    )
     expect(result.current.canUndo).toBe(true)
     expect(result.current.canRedo).toBe(false)
   })

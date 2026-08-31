@@ -55,6 +55,14 @@ export const WhiteboardCampaignParamSchema = z.object({
   campaignId: z.string().uuid(),
 })
 
+export const WhiteboardBoardParamSchema = WhiteboardCampaignParamSchema.extend({
+  boardId: z.string().uuid(),
+})
+
+export const CreateWhiteboardSchema = z.object({
+  title: z.string().trim().min(1).max(120),
+})
+
 const canvasItemKindSchema = z.enum([
   'sticky_note',
   'text',
@@ -180,5 +188,7 @@ export type UpdateCanvasNodeDto = z.infer<typeof UpdateCanvasNodeSchema>
 export type DelegateToAgentDto = z.infer<typeof DelegateToAgentSchema>
 export type CanvasNodeActionDto = z.infer<typeof CanvasNodeActionSchema>
 export type WhiteboardCampaignParam = z.infer<typeof WhiteboardCampaignParamSchema>
+export type WhiteboardBoardParam = z.infer<typeof WhiteboardBoardParamSchema>
+export type CreateWhiteboardDto = z.infer<typeof CreateWhiteboardSchema>
 export type ApplyWhiteboardOperationsDto = z.infer<typeof ApplyWhiteboardOperationsSchema>
 export type UndoWhiteboardOperationDto = z.infer<typeof UndoWhiteboardOperationSchema>
