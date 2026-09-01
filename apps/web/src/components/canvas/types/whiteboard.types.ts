@@ -73,6 +73,8 @@ export interface PersistedWhiteboardNodeData extends Record<string, unknown> {
   status?: CampaignBlueprintStatus
   source?: CampaignBlueprintSource
   placeholder?: CampaignBlueprintPlaceholder
+  visual_role?: CanvasVisualRole
+  metric?: string
 }
 
 export interface WhiteboardNodeData extends PersistedWhiteboardNodeData {

@@ -19,3 +19,13 @@ Why: The MFS board specification requires every displayed URL to remain a live h
 Impact: Canvas cards can retain their normal title, body, metric, and semantic styling while offering a directly usable source link, and annotations can render without being misclassified as dead ends.
 
 Files: `apps/web/src/components/canvas/components/WhiteboardNode.tsx`, `apps/web/src/components/canvas/types/whiteboard.types.ts`.
+
+## 2026-08-31 09:27 - [FIX]
+
+What: Added the persisted Canvas visual-role and metric fields to the hydrated node contract.
+
+Why: Production typechecking correctly rejected semantic-role lookup while those persisted fields were still inferred as unknown.
+
+Impact: Miro-style card roles and metric lines hydrate with explicit types and the web deployment can compile safely.
+
+Files: `apps/web/src/components/canvas/types/whiteboard.types.ts`.
