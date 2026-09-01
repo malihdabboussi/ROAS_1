@@ -39,3 +39,13 @@ Why: The MFS visual audit showed valid connectors fanning diagonally because per
 Impact: Main paths, outcomes, retargeting feeds, and calling-layer connectors bind to their intended sides; ascension/reactivation loops retain curved routing.
 
 Files: `apps/web/src/components/canvas/components/WhiteboardNode.tsx`, `apps/web/src/components/canvas/lib/whiteboard-graph.ts`.
+
+## 2026-08-31 10:02 - [FIX]
+
+What: Exposed separate source and target handles on every Canvas node side.
+
+Why: A directional side can legitimately start one semantic route and end another; single-purpose side handles suppressed upward calling stubs and return loops.
+
+Impact: All labeled MFS connectors—including calling-layer stubs, ascension, and reactivation—render while retaining their specified direction and routing.
+
+Files: `apps/web/src/components/canvas/components/WhiteboardNode.tsx`.

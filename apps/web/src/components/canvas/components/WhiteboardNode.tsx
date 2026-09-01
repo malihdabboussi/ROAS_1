@@ -44,15 +44,17 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
         minHeight={80}
         onResizeEnd={(_, params) => data.onSizeChange(id, params.width, params.height)}
       />
-      {HANDLE_POSITIONS.map((position) => (
-        <Handle
-          key={position}
-          id={position}
-          type={position === Position.Left || position === Position.Top ? 'target' : 'source'}
-          position={position}
-          className="border-background bg-primary"
-        />
-      ))}
+      {HANDLE_POSITIONS.flatMap((position) =>
+        (['target', 'source'] as const).map((type) => (
+          <Handle
+            key={`${position}-${type}`}
+            id={`${position}-${type}`}
+            type={type}
+            position={position}
+            className="border-background bg-primary"
+          />
+        )),
+      )}
 
       {(!isText || isFrame) && (
         <input
