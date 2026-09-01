@@ -40229,3 +40229,13 @@ Evidence: The scoped dashboard `scope_override` contract change leaves these pre
 Needed work: Split the artifact schemas and their tests by domain while preserving the aggregate schema, lifecycle, preflight, action-contract, and drift checks.
 
 Reason not done now: Catalog decomposition is unrelated to the requested production campaign-status correction and would materially broaden deployment risk.
+
+## 2026-09-01 - Pixel digest identity fallback
+
+Feature/app: Pixel Slack proactive digests
+
+Evidence: Production Pixel messages render actionable items as `Someone in #unknown` when sender and channel identity are absent from the digest evidence supplied to the writer.
+
+Needed work: Trace the digest evidence source through person and channel resolution, fail closed on unresolved attribution, and add regression coverage that preserves the real person and Slack channel label.
+
+Reason not done now: The current release fixes the independently reproduced post-call command misrouting. Digest identity resolution is a separate automation data path and requires its own production evidence audit.

@@ -63,6 +63,10 @@ const TEAM_PATTERNS: Array<[RegExp, string]> = [
 ]
 
 const CLIENT_PATTERNS: Array<[RegExp, string]> = [
+  [
+    /\b(run|start|open|review) (the )?(post[- ]call|post[- ]meeting) (flow|review|follow[- ]up)\b/i,
+    'post-call flow',
+  ],
   [/#roas-[a-z0-9-]+/i, '#roas- channel named'],
   // Slack renders channel references as <#C0B5MKP7Y30> or <#C0B5MKP7Y30|roas-yasir…>.
   [/<#C[A-Z0-9]+(?:\|[^>]*)?>/, 'Slack channel referenced'],
@@ -206,6 +210,12 @@ const KIND_GUIDANCE: Record<SlackAskKind, string> = {
 export function formatSlackAskKindContext(result: SlackAskKindResult): string {
   const lines = [SLACK_ASK_KIND_HEADER, `Kind: ${result.kind}`]
   if (result.signals.length > 0) lines.push(`Signals: ${result.signals.join('; ')}`)
+  if (result.signals.includes('post-call flow')) {
+    lines.push(
+      'This is an explicit meeting post-call workflow request. Resolve the named completed meeting and run request_slack_follow_up_confirm in active DM mode. Do not route this to task creation, canonical task lookup, or the Service Request flow. Do not ask whether to create a task.',
+    )
+    return lines.join('\n')
+  }
   lines.push(KIND_GUIDANCE[result.kind])
   return lines.join('\n')
 }

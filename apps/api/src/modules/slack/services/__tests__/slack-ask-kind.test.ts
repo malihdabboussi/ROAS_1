@@ -81,6 +81,22 @@ describe('classifySlackAskKind — client asks', () => {
     expect(result.signals).toContain('client call memory')
   })
 
+  it('routes an explicit post-call flow request to the meeting workflow, never task creation', () => {
+    const result = classifySlackAskKind({
+      ...base,
+      text: 'Run post-call flow for the completed Dwell Alliance meeting',
+    })
+
+    expect(result).toMatchObject({
+      kind: 'client',
+      signals: expect.arrayContaining(['post-call flow']),
+    })
+    const context = formatSlackAskKindContext(result)
+    expect(context).toContain('run request_slack_follow_up_confirm in active DM mode')
+    expect(context).toContain('Do not route this to task creation')
+    expect(context).not.toContain('Did you want me to create a task for this?')
+  })
+
   it('mixed ask (client facts, my voice) resolves to client with voice-only signal', () => {
     const result = classifySlackAskKind({
       ...base,
