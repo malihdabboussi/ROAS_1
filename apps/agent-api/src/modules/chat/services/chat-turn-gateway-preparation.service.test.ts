@@ -49,6 +49,14 @@ describe('isOperationalPriorityRecommendationRequest', () => {
 })
 
 describe('extractCanonicalTaskLookupTitle', () => {
+  it('does not intercept explicit post-call flow requests as task-source lookups', () => {
+    expect(
+      extractCanonicalTaskLookupTitle(
+        'Run post-call flow for the completed meeting “Dwell Alliance webinar engine onboarding”.',
+      ),
+    ).toBeNull()
+  })
+
   it('extracts a curly-quoted task title from an assignment and provenance follow-up', () => {
     expect(
       extractCanonicalTaskLookupTitle(

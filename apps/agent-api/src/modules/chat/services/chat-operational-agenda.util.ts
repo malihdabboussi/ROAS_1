@@ -12,6 +12,8 @@ const AFTER_TODAY_CALENDAR_REQUEST =
 const TOMORROW_CALENDAR_REQUEST = /\btomorrow\b/i
 const TASK_LOOKUP_CONTEXT =
   /\b(?:assign(?:ed|ment)?|source|origin|came from|come from|meeting|call|slack|transcript|provenance)\b/i
+const POST_CALL_WORKFLOW_REQUEST =
+  /\b(?:run|start|open|review) (?:the )?(?:post[- ]call|post[- ]meeting) (?:flow|review|follow[- ]up)\b/i
 const QUOTED_TASK_TITLE = /[\u201c"]([^\u201d"]{3,240})[\u201d"]/u
 const OPERATIONAL_PRIORITY_RECOMMENDATION =
   /\b(?:what should i do first|what should i start with(?: first)?|which (?:task|action|item) should i (?:do|start with|prioritize) first|what should i prioritize first|where should i start)\b/i
@@ -26,6 +28,7 @@ export function shouldSkipBrainContextForOperationalAgenda(content: string): boo
 }
 
 export function extractCanonicalTaskLookupTitle(content: string): string | null {
+  if (POST_CALL_WORKFLOW_REQUEST.test(content)) return null
   if (!TASK_LOOKUP_CONTEXT.test(content)) return null
   return content.match(QUOTED_TASK_TITLE)?.[1]?.trim() || null
 }
