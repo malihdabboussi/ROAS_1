@@ -131,7 +131,12 @@ export class ArtifactPresentationBundleService {
         },
       },
     })
-    return { success: true, file }
+    return {
+      success: true,
+      presentation_id: resolved.presentationId,
+      name: String(resolved.presentation.name ?? 'Untitled Presentation'),
+      file,
+    }
   }
 
   async patchPresentationFile(
@@ -176,7 +181,12 @@ export class ArtifactPresentationBundleService {
       path,
     })
     if (error) throw error
-    return { success: true, presentation_id: resolved.presentationId, path }
+    return {
+      success: true,
+      presentation_id: resolved.presentationId,
+      name: String(resolved.presentation.name ?? 'Untitled Presentation'),
+      path,
+    }
   }
 
   async listPresentationAssets(

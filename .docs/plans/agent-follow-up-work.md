@@ -40251,3 +40251,15 @@ Evidence: `apps/agent-api/src/modules/shared/ui-block-extractor.ts` is 1,090 LOC
 Needed work: Split durable artifact receipt extraction from integration/meta/clarification block extraction, and move post-action verification dispatch cases into a focused test module while retaining the aggregate capability-drift coverage.
 
 Reason not done now: The requested repair changes three bounded contract points with focused regression coverage; decomposing the mature extractor and registry harness would materially widen this production fix.
+
+## 2026-09-01 - [ARCH] Presentation service test is near the file limit
+
+Status: Open
+
+Found while: Preserving the exact deck name across presentation source-file mutations.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-presentations.service.test.ts` is 548 LOC after adding focused write and patch result-contract assertions, above the 480 LOC proactive decomposition threshold and below the 600 LOC hard limit.
+
+Needed work: Split presentation bundle-file tests from create/update presentation tests while retaining the shared fake Supabase query harness.
+
+Reason not done now: The requested production regression is fixed with two bounded assertions; restructuring the mature presentation fixture is behavior-neutral work outside this correction.

@@ -25,7 +25,7 @@ The history list has its own persisted drag width and collapse state. Dragging i
 
 ### Durable output verification
 
-When creation succeeds but post-action verification requires repair, the successful handler's durable receipt remains attached to the structured failure so the saved draft still appears in chat and Outputs. Failed-before-effect actions never synthesize an output. Presentation source-file writes, patches, and deletions also reaffirm the owning deck output.
+When creation succeeds but post-action verification requires repair, the successful handler's durable receipt remains attached to the structured failure so the saved draft still appears in chat and Outputs. Failed-before-effect actions never synthesize an output. Presentation source-file writes, patches, and deletions also reaffirm the owning deck output using the persisted deck id and name, so later repairs do not replace the exact Output label with a generic presentation label.
 
 ## Key files
 

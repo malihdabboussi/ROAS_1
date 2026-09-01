@@ -289,7 +289,12 @@ describe('ArtifactPresentationsService', () => {
     const { client, records } = makeQueryClient((record) => {
       if (record.table === 'presentations' && record.operation === null) {
         return {
-          data: { id: 'presentation-1', user_id: 'user-1', org_id: null },
+          data: {
+            id: 'presentation-1',
+            name: 'Launch Deck',
+            user_id: 'user-1',
+            org_id: null,
+          },
           error: null,
         }
       }
@@ -310,6 +315,8 @@ describe('ArtifactPresentationsService', () => {
 
     expect(result).toEqual({
       success: true,
+      presentation_id: 'presentation-1',
+      name: 'Launch Deck',
       file: { presentation_id: 'presentation-1', path: 'styles.css', role: 'source' },
     })
     expect(records.find((record) => record.table === 'presentation_files')).toMatchObject({
@@ -380,7 +387,12 @@ describe('ArtifactPresentationsService', () => {
     const { client, records } = makeQueryClient((record) => {
       if (record.table === 'presentations') {
         return {
-          data: { id: 'presentation-1', user_id: 'user-1', org_id: null },
+          data: {
+            id: 'presentation-1',
+            name: 'Launch Deck',
+            user_id: 'user-1',
+            org_id: null,
+          },
           error: null,
         }
       }
@@ -416,6 +428,8 @@ describe('ArtifactPresentationsService', () => {
 
     expect(result).toEqual({
       success: true,
+      presentation_id: 'presentation-1',
+      name: 'Launch Deck',
       file: { presentation_id: 'presentation-1', path: 'index.html', role: 'entry' },
     })
     expect(

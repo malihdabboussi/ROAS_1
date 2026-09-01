@@ -933,6 +933,35 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
     ).toEqual([])
   })
 
+  it('uses the persisted presentation name returned by a file mutation', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'patch_presentation_file',
+      toolArgs: {
+        data: {
+          presentation_id: 'presentation-1',
+          path: 'index.html',
+        },
+      },
+      result: {
+        success: true,
+        presentation_id: 'presentation-1',
+        name: 'Titan Medical Strategy Deck',
+      },
+      status: 'completed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        artifactType: 'presentation',
+        artifactId: 'presentation-1',
+        name: 'Titan Medical Strategy Deck',
+      }),
+    ])
+  })
+
   it.each([
     'create_project',
     'create_file',
