@@ -845,6 +845,94 @@ describe('resolveUiBlocksFromToolResult integration repair blocks', () => {
     ])
   })
 
+  it('keeps a saved presentation receipt when source verification requires repair', () => {
+    const blocks = resolveUiBlocksFromToolResult({
+      name: 'vibey_backend',
+      action: 'create_presentation',
+      toolArgs: {
+        data: { name: 'Titan Medical Strategy Deck' },
+      },
+      result: {
+        details: {
+          success: false,
+          effect_state: 'partial_effect',
+          error_code: 'ARTIFACT_PRESENTATION_CONTRACT_REPAIR_REQUIRED',
+          ui_blocks: [
+            {
+              type: 'artifact_preview',
+              id: 'artifact-presentation-presentation-1',
+              artifactType: 'presentation',
+              artifactId: 'presentation-1',
+              name: 'Titan Medical Strategy Deck',
+              status: 'draft',
+            },
+          ],
+        },
+      },
+      status: 'failed',
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    })
+
+    expect(blocks).toEqual([
+      expect.objectContaining({
+        type: 'artifact_preview',
+        artifactType: 'presentation',
+        artifactId: 'presentation-1',
+        name: 'Titan Medical Strategy Deck',
+      }),
+    ])
+  })
+
+  it('synthesizes a receipt only when a failed action reports a persisted effect', () => {
+    const base = {
+      name: 'vibey_backend',
+      action: 'write_presentation_file',
+      toolArgs: {
+        data: {
+          presentation_id: 'presentation-1',
+          name: 'Titan Medical Strategy Deck',
+        },
+      },
+      status: 'failed' as const,
+      cachedMetaAdAccounts: [],
+      cachedMetaPages: [],
+    }
+
+    expect(
+      resolveUiBlocksFromToolResult({
+        ...base,
+        result: {
+          details: {
+            success: false,
+            effect_state: 'partial_effect',
+            presentation_id: 'presentation-1',
+          },
+        },
+      }),
+    ).toEqual([
+      expect.objectContaining({
+        type: 'artifact_preview',
+        artifactType: 'presentation',
+        artifactId: 'presentation-1',
+        name: 'Titan Medical Strategy Deck',
+      }),
+    ])
+
+    expect(
+      resolveUiBlocksFromToolResult({
+        ...base,
+        result: {
+          details: {
+            success: false,
+            effect_state: 'failed_before_effect',
+            presentation_id: 'presentation-1',
+          },
+        },
+      }),
+    ).toEqual([])
+  })
+
   it.each([
     'create_project',
     'create_file',

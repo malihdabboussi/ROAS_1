@@ -736,6 +736,48 @@ describe('ArtifactsService action registry characterization', () => {
     })
   })
 
+  it('preserves durable output receipts when post-action verification fails after creation', async () => {
+    const receipt = {
+      type: 'artifact_preview',
+      id: 'artifact-presentation-presentation-1',
+      artifactType: 'presentation',
+      artifactId: 'presentation-1',
+      name: 'Titan Medical Strategy Deck',
+      status: 'draft',
+    }
+    const verifier: ArtifactPostActionVerifier = {
+      verify: vi.fn(async () => ({
+        status: 'failed',
+        checks: [],
+        failureResult: {
+          success: false,
+          error: 'Presentation requires source repair.',
+          error_code: 'ARTIFACT_PRESENTATION_CONTRACT_REPAIR_REQUIRED',
+          effect_state: 'partial_effect',
+        },
+      })),
+    }
+    const service = makeService({ postActionVerifier: verifier })
+    service.authorizeAction = vi.fn(async () => ({ allowed: true }))
+    service.createPresentation = vi.fn(async () => ({
+      success: true,
+      id: 'presentation-1',
+      ui_blocks: [receipt],
+    }))
+
+    const result = await service.executeAction(
+      'create_presentation',
+      { ...VALID_PRESENTATION_DATA, name: 'Titan Medical Strategy Deck' },
+      TEST_SESSION_KEY,
+    )
+
+    expect(result).toMatchObject({
+      success: false,
+      effect_state: 'partial_effect',
+      ui_blocks: [receipt],
+    })
+  })
+
   it('fills a missing presentation_id before schema validation and dispatch', async () => {
     vi.stubEnv('ARTIFACT_RESOLVER_V1', 'true')
     const service = makeService({

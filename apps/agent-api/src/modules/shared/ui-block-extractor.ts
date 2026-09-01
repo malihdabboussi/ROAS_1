@@ -257,6 +257,7 @@ function collectCandidateRecords(result: unknown): Array<Record<string, unknown>
     for (const key of [
       'result',
       'data',
+      'details',
       'draft',
       'asset',
       'asset_ref',
@@ -806,6 +807,14 @@ function withActionOutputReceipt(input: {
   return outputBlocks.length > 0 ? [...input.blocks, ...outputBlocks] : input.blocks
 }
 
+function hasPersistedFailedEffect(result: unknown): boolean {
+  return collectCandidateRecords(result).some(
+    (record) =>
+      record.effect_state === 'partial_effect' ||
+      record.effect_state === 'succeeded_delivery_failed',
+  )
+}
+
 export function resolveUiBlocksFromToolResult(params: {
   name: string
   action?: string
@@ -820,20 +829,14 @@ export function resolveUiBlocksFromToolResult(params: {
   }>
 }): Array<Record<string, unknown>> {
   const { name, action, toolArgs, result, status, cachedMetaAdAccounts, cachedMetaPages } = params
-  if (status !== 'completed') return []
+  const canContainOutputReceipt = status === 'completed' || hasPersistedFailedEffect(result)
 
-  if (isRecord(result)) {
-    const genericBlocks = normalizeUiBlocks(result.ui_blocks)
-    if (genericBlocks.length > 0) {
-      return withActionOutputReceipt({ blocks: genericBlocks, name, action, toolArgs, result })
-    }
-    if (isRecord(result.result)) {
-      const nestedResultBlocks = normalizeUiBlocks(
-        (result.result as Record<string, unknown>).ui_blocks,
-      )
-      if (nestedResultBlocks.length > 0) {
+  if (canContainOutputReceipt) {
+    for (const record of collectCandidateRecords(result)) {
+      const explicitBlocks = normalizeUiBlocks(record.ui_blocks)
+      if (explicitBlocks.length > 0) {
         return withActionOutputReceipt({
-          blocks: nestedResultBlocks,
+          blocks: explicitBlocks,
           name,
           action,
           toolArgs,
@@ -841,62 +844,27 @@ export function resolveUiBlocksFromToolResult(params: {
         })
       }
     }
-    if (isRecord(result.data)) {
-      const nestedDataBlocks = normalizeUiBlocks((result.data as Record<string, unknown>).ui_blocks)
-      if (nestedDataBlocks.length > 0) {
-        return withActionOutputReceipt({ blocks: nestedDataBlocks, name, action, toolArgs, result })
-      }
-    }
-
-    if (isCampaignToolName(name) && Array.isArray(result.content)) {
+    if (isCampaignToolName(name) && isRecord(result) && Array.isArray(result.content)) {
       for (const item of result.content) {
-        if (!isRecord(item) || item.type !== 'text') continue
-        const text = typeof item.text === 'string' ? item.text : ''
-        if (!text.trim()) continue
-        let parsed: Record<string, unknown>
-        try {
-          parsed = JSON.parse(text) as Record<string, unknown>
-        } catch {
-          const uiBlocksFallback = extractUiBlocksFromMalformedJson(text)
-          if (uiBlocksFallback.length > 0) {
-            return withActionOutputReceipt({
-              blocks: uiBlocksFallback,
-              name,
-              action,
-              toolArgs,
-              result,
-            })
-          }
-          continue
-        }
-        if (parsed && Array.isArray(parsed.ui_blocks)) {
-          const blocks = normalizeUiBlocks(parsed.ui_blocks)
-          if (blocks.length > 0) {
-            return withActionOutputReceipt({ blocks, name, action, toolArgs, result })
-          }
-        }
-        if (
-          parsed &&
-          isRecord(parsed.result) &&
-          Array.isArray((parsed.result as Record<string, unknown>).ui_blocks)
-        ) {
-          const blocks = normalizeUiBlocks((parsed.result as Record<string, unknown>).ui_blocks)
-          if (blocks.length > 0) {
-            return withActionOutputReceipt({ blocks, name, action, toolArgs, result })
-          }
-        }
-        if (
-          parsed &&
-          isRecord(parsed.data) &&
-          Array.isArray((parsed.data as Record<string, unknown>).ui_blocks)
-        ) {
-          const blocks = normalizeUiBlocks((parsed.data as Record<string, unknown>).ui_blocks)
-          if (blocks.length > 0) {
-            return withActionOutputReceipt({ blocks, name, action, toolArgs, result })
-          }
+        if (!isRecord(item) || item.type !== 'text' || typeof item.text !== 'string') continue
+        const fallbackBlocks = extractUiBlocksFromMalformedJson(item.text)
+        if (fallbackBlocks.length > 0) {
+          return withActionOutputReceipt({
+            blocks: fallbackBlocks,
+            name,
+            action,
+            toolArgs,
+            result,
+          })
         }
       }
     }
+  }
+
+  if (status !== 'completed') {
+    if (!canContainOutputReceipt || !isCampaignToolName(name) || !action) return []
+    const data = isRecord(toolArgs?.data) ? (toolArgs.data as Record<string, unknown>) : {}
+    return buildActionOutputBlocks(action, result, data)
   }
 
   if (name === 'browser' && status === 'completed') {

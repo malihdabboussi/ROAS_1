@@ -301,6 +301,17 @@ describe('OpenClawProxyService stream tool events', () => {
                 error: 'Raw renderer connection reset',
                 error_code: 'ARTIFACT_DELIVERY_FAILED',
                 error_class: 'platform_data_query_failed',
+                effect_state: 'succeeded_delivery_failed',
+                ui_blocks: [
+                  {
+                    type: 'artifact_preview',
+                    id: 'artifact-presentation-presentation-1',
+                    artifactType: 'presentation',
+                    artifactId: 'presentation-1',
+                    name: 'Titan Medical Strategy Deck',
+                    status: 'draft',
+                  },
+                ],
                 user_explanation: {
                   intent: 'use_alternate_delivery',
                   sentence: 'The slides were saved, so I will show them another way.',
@@ -313,7 +324,7 @@ describe('OpenClawProxyService stream tool events', () => {
     )
     const sent: Array<{ type: string; data: Record<string, unknown> }> = []
 
-    await service.streamCompletion({
+    const result = await service.streamCompletion({
       input: [{ type: 'message', role: 'user', content: 'Build slides' }],
       send: vi.fn(async (type: string, data: Record<string, unknown>) => {
         sent.push({ type, data })
@@ -333,6 +344,14 @@ describe('OpenClawProxyService stream tool events', () => {
         error: 'The slides were saved, so I will show them another way.',
       },
     })
+    const expectedBlock = expect.objectContaining({
+      type: 'artifact_preview',
+      artifactType: 'presentation',
+      artifactId: 'presentation-1',
+      name: 'Titan Medical Strategy Deck',
+    })
+    expect(sent).toContainEqual({ type: 'ui_block', data: { block: expectedBlock } })
+    expect(result.artifactOutputBlocks).toEqual([expectedBlock])
   })
 
   it('converts UI blocks to text content for Telegram and Slack streams', async () => {

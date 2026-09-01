@@ -177,6 +177,15 @@ function normalizeFailedActionResult(
   return { ...result, ...envelope }
 }
 
+function preserveDurableOutputReceipts(
+  failureResult: Record<string, unknown> | undefined,
+  successfulResult: unknown,
+): Record<string, unknown> | undefined {
+  if (!failureResult) return failureResult
+  const uiBlocks = extractUiBlocks(successfulResult)
+  return uiBlocks.length > 0 ? { ...failureResult, ui_blocks: uiBlocks } : failureResult
+}
+
 type ArtifactActionHost = Record<string, any> & {
   errorReporter?: ErrorReporter
   resolveUserId?: (sessionKey?: string) => string | null | undefined
@@ -479,7 +488,7 @@ export class ArtifactActionExecutionService {
         sessionKey,
       })
       if (verification.status === 'failed') {
-        return verification.failureResult
+        return preserveDurableOutputReceipts(verification.failureResult, result)
       }
 
       recordSessionSuccess(sessionKey)

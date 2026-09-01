@@ -40239,3 +40239,15 @@ Evidence: Production Pixel messages render actionable items as `Someone in #unkn
 Needed work: Trace the digest evidence source through person and channel resolution, fail closed on unresolved attribution, and add regression coverage that preserves the real person and Slack channel label.
 
 Reason not done now: The current release fixes the independently reproduced post-call command misrouting. Digest identity resolution is a separate automation data path and requires its own production evidence audit.
+
+## 2026-09-01 - [ARCH] Durable output extractor test decomposition
+
+Status: Open
+
+Found while: Preserving chat output receipts for saved presentation drafts and presentation source-file repairs.
+
+Evidence: `apps/agent-api/src/modules/shared/ui-block-extractor.ts` is 1,090 LOC and `apps/agent-api/src/modules/shared/ui-block-extractor.test.ts` is 1,025 LOC; `apps/agent-api/src/modules/artifacts/services/artifacts.service.dispatch.test.ts` is 879 LOC. These aggregate extractor and action-registry characterization files were already above their architecture limits before this focused regression.
+
+Needed work: Split durable artifact receipt extraction from integration/meta/clarification block extraction, and move post-action verification dispatch cases into a focused test module while retaining the aggregate capability-drift coverage.
+
+Reason not done now: The requested repair changes three bounded contract points with focused regression coverage; decomposing the mature extractor and registry harness would materially widen this production fix.
