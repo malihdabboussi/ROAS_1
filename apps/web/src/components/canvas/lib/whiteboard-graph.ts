@@ -65,6 +65,7 @@ export function hydrateWhiteboardItems(
         sourceHandle: connector.source_handle,
         targetHandle: connector.target_handle,
         label: connector.label,
+        type: role === 'loop' ? 'default' : 'step',
         // React Flow requires connector paint values through its JS style contract.
         style: role ? CONNECTOR_STYLES[role] : undefined,
         labelStyle: { fontFamily: 'monospace', fontSize: 16, fill: '#54626F' },

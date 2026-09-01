@@ -47,6 +47,7 @@ export function WhiteboardNode({ id, data, selected }: NodeProps<WhiteboardNodeT
       {HANDLE_POSITIONS.map((position) => (
         <Handle
           key={position}
+          id={position}
           type={position === Position.Left || position === Position.Top ? 'target' : 'source'}
           position={position}
           className="border-background bg-primary"

@@ -29,3 +29,13 @@ Why: Production typechecking correctly rejected semantic-role lookup while those
 Impact: Miro-style card roles and metric lines hydrate with explicit types and the web deployment can compile safely.
 
 Files: `apps/web/src/components/canvas/types/whiteboard.types.ts`.
+
+## 2026-08-31 09:46 - [FIX]
+
+What: Added stable directional handle IDs to Canvas nodes and routed non-loop semantic connectors as orthogonal step lines.
+
+Why: The MFS visual audit showed valid connectors fanning diagonally because persisted handle directions could not bind to unnamed React Flow handles.
+
+Impact: Main paths, outcomes, retargeting feeds, and calling-layer connectors bind to their intended sides; ascension/reactivation loops retain curved routing.
+
+Files: `apps/web/src/components/canvas/components/WhiteboardNode.tsx`, `apps/web/src/components/canvas/lib/whiteboard-graph.ts`.
