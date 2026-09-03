@@ -58,7 +58,19 @@ package-lock.json
 .cursor/
 
 # Claude
-.claude/
+.claude/*
+!.claude/commands/
+!.claude/rules/
+!.claude/templates/
+!.claude/bin/
+!.claude/hooks/
+!.claude/harness/
+!.claude/README.md
+!.claude/settings.json
+.claude/settings.local.json
+.claude/launch.json
+.claude/worktrees/
+.claude/CLAUDE.md
 
 # Agents
 agents/

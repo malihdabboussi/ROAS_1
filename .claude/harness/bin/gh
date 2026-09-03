@@ -1,0 +1,60 @@
+#!/bin/bash
+
+set -u
+
+ROOT=${HARNESS_ROOT:?HARNESS_ROOT is required}
+printf 'CALL cwd=%s argv=' "$PWD" >> "$ROOT/gh.log"
+printf '%q ' "$@" >> "$ROOT/gh.log"
+printf '\n' >> "$ROOT/gh.log"
+
+if [ "${1:-}" = "--version" ]; then
+  echo "gh version 2.60.0"
+  exit 0
+fi
+if [ "${1:-}" = "auth" ] && [ "${2:-}" = "status" ]; then
+  echo "Logged in to github.com as harness"
+  exit 0
+fi
+if [ "${1:-}" = "pr" ] && [ "${2:-}" = "merge" ]; then
+  echo "gh stub refuses pr merge" >&2
+  exit 1
+fi
+if [ "${1:-}" = "pr" ] && [ "${2:-}" = "create" ]; then
+  echo "https://example.invalid/pr/1"
+  exit 0
+fi
+if [ "${1:-}" = "pr" ] && [ "${2:-}" = "view" ]; then
+  mode=${GH_STUB_PREVIEW:-immediate}
+  case "$mode" in
+    immediate)
+      echo '{"statusCheckRollup":[{"name":"Vercel","status":"COMPLETED","conclusion":"SUCCESS","detailsUrl":"https://preview.example.invalid"}]}'
+      ;;
+    delayed)
+      counter="$ROOT/gh-preview-count"
+      count=0
+      [ ! -f "$counter" ] || count=$(cat "$counter")
+      count=$((count + 1))
+      printf '%s\n' "$count" > "$counter"
+      if [ "$count" -ge 2 ]; then
+        echo '{"statusCheckRollup":[{"name":"Vercel","status":"COMPLETED","conclusion":"SUCCESS","detailsUrl":"https://preview.example.invalid"}]}'
+      else
+        echo '{"statusCheckRollup":[{"name":"Vercel","status":"IN_PROGRESS","conclusion":null,"detailsUrl":null}]}'
+      fi
+      ;;
+    absent)
+      echo '{"statusCheckRollup":[]}'
+      ;;
+    *)
+      echo "Unknown GH_STUB_PREVIEW mode: $mode" >&2
+      exit 2
+      ;;
+  esac
+  exit 0
+fi
+if [ "${1:-}" = "pr" ] && [ "${2:-}" = "checks" ]; then
+  echo "Vercel pass https://preview.example.invalid"
+  exit 0
+fi
+
+echo "Unsupported gh stub invocation: $*" >&2
+exit 2

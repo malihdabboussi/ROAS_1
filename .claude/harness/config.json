@@ -1,0 +1,18 @@
+{
+  "PROJECT_NAME": "Claude Command Harness",
+  "PROJECT_PURPOSE": "An isolated repository for manual acceptance of the portable command set.",
+  "DEFAULT_BRANCH": "main",
+  "DOCS_DIR": "docs/features",
+  "CHANGELOG_DIR": "docs/logs",
+  "DESIGN_GUIDE": "none",
+  "PR_TEMPLATE": "none",
+  "ALLOWED_TEST_HOSTS": [],
+  "PREVIEW_PROVIDER": "vercel",
+  "DEPLOY_MAP": [
+    {
+      "surface": "fixture",
+      "provider": "localhost",
+      "trigger": "human-run acceptance only"
+    }
+  ]
+}

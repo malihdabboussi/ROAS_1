@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Claude command harness fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>Fixture form</h1>
+      <p>This page records a hit only when the form is submitted.</p>
+      <form action="/hit" method="post">
+        <label for="message">Message</label>
+        <input id="message" name="message" value="harness">
+        <button type="submit">Submit fixture</button>
+      </form>
+      <nav>
+        <a href="/redirect">Off-policy redirect</a>
+        <a href="/userinfo">Userinfo redirect</a>
+      </nav>
+    </main>
+  </body>
+</html>

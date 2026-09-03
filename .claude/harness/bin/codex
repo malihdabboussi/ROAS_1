@@ -1,0 +1,88 @@
+#!/bin/bash
+
+set -u
+
+ROOT=${HARNESS_ROOT:?HARNESS_ROOT is required}
+
+if [ "${1:-}" = "--version" ]; then
+  printf 'CALL cwd=%s argv=--version\n' "$PWD" >> "$ROOT/codex.log"
+  echo "codex-cli 0.152.1"
+  exit 0
+fi
+if [ "${1:-}" = "login" ] && [ "${2:-}" = "status" ]; then
+  printf 'CALL cwd=%s argv=login status\n' "$PWD" >> "$ROOT/codex.log"
+  echo "Logged in using ChatGPT"
+  exit 0
+fi
+if [ "${1:-}" != "exec" ]; then
+  echo "Unsupported codex stub invocation: $*" >&2
+  exit 2
+fi
+
+output_file=""
+previous=""
+for argument in "$@"; do
+  if [ "$previous" = "-o" ]; then
+    output_file=$argument
+  fi
+  previous=$argument
+done
+[ -n "$output_file" ] || { echo "codex stub requires -o <file>" >&2; exit 2; }
+
+prompt_file="$ROOT/codex-stdin.$$"
+cat > "$prompt_file"
+is_probe=0
+if grep -Fq 'Reply with exactly: OK' "$prompt_file"; then
+  is_probe=1
+fi
+{
+  printf 'CALL cwd=%s argv=' "$PWD"
+  printf '%q ' "$@"
+  printf '\nSTDIN-BEGIN\n'
+  cat "$prompt_file"
+  printf '\nSTDIN-END\n'
+} >> "$ROOT/codex.log"
+rm -f "$prompt_file"
+
+mode=${CODEX_STUB_VERDICT:-approve}
+if [ "$is_probe" -eq 1 ]; then
+  verdict='OK'
+elif [ "$mode" = "approve" ]; then
+  verdict='VERDICT: APPROVE'
+else
+case "$mode" in
+  clean)
+    verdict='VERDICT: PASS'
+    ;;
+  high-then-clean)
+    counter="$ROOT/codex-review-count"
+    count=0
+    [ ! -f "$counter" ] || count=$(cat "$counter")
+    count=$((count + 1))
+    printf '%s\n' "$count" > "$counter"
+    if [ "$count" -eq 1 ]; then
+      verdict='HIGH: harness finding requires remediation.\nVERDICT: BLOCK'
+    else
+      verdict='VERDICT: PASS'
+    fi
+    ;;
+  block)
+    verdict='HIGH: unresolved harness security finding.\nVERDICT: BLOCK'
+    ;;
+  malformed)
+    verdict='Harness returned a malformed result without a verdict line.'
+    ;;
+  timeout)
+    sleep 700
+    verdict='VERDICT: BLOCK'
+    ;;
+  *)
+    echo "Unknown CODEX_STUB_VERDICT mode: $mode" >&2
+    exit 2
+    ;;
+esac
+fi
+
+printf '%b\n' "$verdict" > "$output_file"
+echo '{"type":"thread.started","thread_id":"stub-thread-1"}'
+exit 0

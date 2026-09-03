@@ -40263,3 +40263,39 @@ Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-presentations.
 Needed work: Split presentation bundle-file tests from create/update presentation tests while retaining the shared fake Supabase query harness.
 
 Reason not done now: The requested production regression is fixed with two bounded assertions; restructuring the mature presentation fixture is behavior-neutral work outside this correction.
+
+## 2026-09-02 - [FIX] Three agent skills lack YAML frontmatter
+
+Status: Open
+
+Found while: Building the portable Claude Code command set and acceptance harness.
+
+Evidence: `.agents/skills/Ralph/SKILL.md`, `.agents/skills/debug-mode/SKILL.md`, and `.agents/skills/mini/SKILL.md` lack YAML frontmatter, causing Codex to log `failed to load skill` on every run.
+
+Needed work: Add valid skill frontmatter to all three files and verify Codex loads them without warnings.
+
+Reason not done now: `.agents/skills/**` is explicitly outside the frozen command-set portability scope.
+
+## 2026-09-02 - [TEST] PTY-driven command harness automation
+
+Status: Open
+
+Found while: Building manual acceptance coverage for `/go`, `/test-improve`, `/ship`, `/end`, and `/findings-to-rules`.
+
+Evidence: The current harness provides deterministic stubs and assertions, but a human must answer the documented `AskUserQuestion` sequences in an interactive Claude Code session.
+
+Needed work: Add a PTY driver or supported answer hook that runs the complete prompt matrix and preserves transcripts without weakening permission gates.
+
+Reason not done now: Fully automated PTY driving is a frozen non-goal; manual transcripts plus scripted assertions are the approved evidence model.
+
+## 2026-09-02 - [ARCH] Optional migration from commands to skills
+
+Status: Open
+
+Found while: Packaging the five user-invoked Claude Code workflows.
+
+Evidence: The workflows currently live in `.claude/commands/*.md`, matching the explicit slash-command requirement; skills could offer reusable auto-triggered behavior but would change invocation and packaging semantics.
+
+Needed work: Evaluate an opt-in migration or shared command/skill core after the command contracts have production usage evidence.
+
+Reason not done now: Skills were considered and rejected by the frozen ADR for this delivery.

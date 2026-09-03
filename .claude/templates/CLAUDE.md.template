@@ -1,0 +1,38 @@
+# {{PROJECT_NAME}}
+
+## Purpose
+
+{{PROJECT_PURPOSE}}
+
+## Apps
+
+Consult the repository's application directories and documentation for the current runtime surfaces.
+
+## Stack
+
+The repository's tracked manifests and imported operating rules are authoritative for tools and versions.
+
+## Deploy map
+
+| Surface | Provider | Trigger |
+|---|---|---|
+{{DEPLOY_MAP}}
+
+## Data
+
+Follow the repository's data documentation and imported operating rules before accessing or changing data.
+
+<!-- claude-command-set:surfaces:start -->
+## Repo surfaces
+
+default_branch: {{DEFAULT_BRANCH}}
+docs_dir: {{DOCS_DIR}}
+changelog_dir: {{CHANGELOG_DIR}}
+design_guide: {{DESIGN_GUIDE}}
+pr_template: {{PR_TEMPLATE}}
+allowed_test_hosts:
+{{ALLOWED_TEST_HOSTS}}
+preview_provider: {{PREVIEW_PROVIDER}}
+<!-- claude-command-set:surfaces:end -->
+
+{{AGENTS_IMPORT}}
