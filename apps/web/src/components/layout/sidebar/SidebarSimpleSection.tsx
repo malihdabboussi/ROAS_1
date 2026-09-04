@@ -2,20 +2,23 @@
 
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
+  Brain,
   BriefcaseBusiness,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
-  Ellipsis,
+  FolderGit2,
   Inbox,
   Layers3,
+  ListChecks,
   ListTodo,
   Rocket,
   Search,
   SquarePen,
   Users,
+  Workflow,
 } from 'lucide-react'
 import { ClientScopeSelector } from '@/components/client-scope'
 import { ConversationHubSectionHeader } from '@/components/conversations/SpaceConversationSections'
@@ -33,14 +36,13 @@ import {
   type Program,
 } from '@/lib/programs'
 import { cn } from '@/lib/utils/cn'
-import { HUB_DOCK_FLYOUT_LEAVE_MS, HubDockFlyout } from './HubDockFlyout'
 import { SidebarFavoritesFlyout } from './SidebarFavoritesFlyout'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
-import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
+import { SidebarProjectsFlyout } from './SidebarProjectsFlyout'
 import { SidebarSimpleRecents } from './SidebarSimpleRecents'
 import type { SidebarControllerReturn } from './useSidebarController'
 
-const SIMPLE_LINKS = [
+const SIMPLE_LINKS_BEFORE_PROJECTS = [
   { href: '/home/inbox', label: 'Inbox', icon: Inbox },
   { href: '/home/meetings', label: 'Meetings', icon: CalendarDays },
   { href: '/all-tasks', label: 'All Tasks', icon: ListTodo },
@@ -48,7 +50,23 @@ const SIMPLE_LINKS = [
   { href: '/client-campaigns', label: 'Client Campaigns', icon: BriefcaseBusiness },
   { href: '/launches', label: 'Launches', icon: Rocket },
   { href: '/artifacts', label: 'Artifacts', icon: Layers3 },
+  { href: '/programs', label: 'Programs', icon: ListChecks },
+  { href: '/team', label: 'Team', icon: Users },
+  { href: '/brain', label: 'Brain', icon: Brain },
 ] as const
+const SIMPLE_FLOWS_LINK = { href: '/flows', label: 'Flows', icon: Workflow } as const
+
+function isSimpleLinkActive(pathname: string, href: string, isActive: (href: string) => boolean) {
+  if (href === '/programs') {
+    return (
+      pathname.startsWith('/programs') ||
+      pathname.startsWith('/campaigns') ||
+      pathname.startsWith('/spaces')
+    )
+  }
+  return isActive(href)
+}
+
 export function SidebarSimpleSection({
   c,
   featureUpdates,
@@ -67,9 +85,7 @@ export function SidebarSimpleSection({
   const spaceUserState = useSpaceUserState()
   const [programs, setPrograms] = useState<Program[]>([])
   const [favoritesOpen, setFavoritesOpen] = useState(true)
-  const [moreAnchor, setMoreAnchor] = useState<DOMRect | null>(null)
-  const [subOpen, setSubOpen] = useState(false)
-  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const [projectsAnchor, setProjectsAnchor] = useState<DOMRect | null>(null)
   useEffect(() => {
     let cancelled = false
     const load = () => {
@@ -99,15 +115,19 @@ export function SidebarSimpleSection({
   )
   const hasFavorites =
     favoritePrograms.length > 0 || favoriteCampaigns.length > 0 || favoriteSpaces.length > 0
-  const clearClose = () => {
-    if (!closeTimer.current) return
-    clearTimeout(closeTimer.current)
-    closeTimer.current = null
-  }
-  const scheduleClose = () => {
-    if (subOpen) return
-    clearClose()
-    closeTimer.current = setTimeout(() => setMoreAnchor(null), HUB_DOCK_FLYOUT_LEAVE_MS)
+  const closeProjects = useCallback(() => {
+    setProjectsAnchor(null)
+    c.setActiveManagePanel(null)
+    c.setIsCreatingProject(false)
+    c.setNewProjectName('')
+  }, [c.setActiveManagePanel, c.setIsCreatingProject, c.setNewProjectName])
+  const toggleProjects = (target: HTMLElement) => {
+    if (projectsAnchor) {
+      closeProjects()
+      return
+    }
+    c.setActiveManagePanel('projects')
+    setProjectsAnchor(target.getBoundingClientRect())
   }
   const newChatSelected =
     c.pathname === '/home' && !searchParams?.get('conv') && searchParams?.get('chat') !== 'starting'
@@ -134,9 +154,9 @@ export function SidebarSimpleSection({
         </button>
       </div>
       <div className="px-spacing-3 py-spacing-1 space-y-0">
-        {SIMPLE_LINKS.map((item) => {
+        {SIMPLE_LINKS_BEFORE_PROJECTS.map((item) => {
           const Icon = item.icon
-          const active = c.isActive(item.href)
+          const active = isSimpleLinkActive(c.pathname, item.href, c.isActive)
           return (
             <Link
               key={item.href}
@@ -152,6 +172,33 @@ export function SidebarSimpleSection({
             </Link>
           )
         })}
+        {c.isAdmin ? (
+          <button
+            type="button"
+            data-hub-rail-trigger="projects"
+            className={cn(
+              'hub-menu-link-row !py-spacing-1 w-full',
+              (projectsAnchor || c.pathname.startsWith('/projects')) && 'nav-glass-selected-purple',
+            )}
+            aria-label="Projects"
+            aria-expanded={Boolean(projectsAnchor)}
+            onClick={(event) => toggleProjects(event.currentTarget)}
+          >
+            <FolderGit2 className="icon-sm" aria-hidden />
+            <span className="body-2">Projects</span>
+          </button>
+        ) : null}
+        <Link
+          href={clientScopeHref(SIMPLE_FLOWS_LINK.href, selectedClientId)}
+          onClick={showScreenOnly}
+          className={cn(
+            'hub-menu-link-row !py-spacing-1',
+            c.isActive(SIMPLE_FLOWS_LINK.href) && 'nav-glass-selected-purple',
+          )}
+        >
+          <Workflow className="icon-sm" aria-hidden />
+          <span className="body-2">Flows</span>
+        </Link>
       </div>
       {hasFavorites ? (
         <div className="px-spacing-3 pb-spacing-1">
@@ -180,21 +227,6 @@ export function SidebarSimpleSection({
           ) : null}
         </div>
       ) : null}
-      <div className="px-spacing-3 pb-spacing-1">
-        <button
-          type="button"
-          className="hub-menu-link-row !py-spacing-1 w-full"
-          aria-expanded={Boolean(moreAnchor)}
-          onClick={(event) => {
-            clearClose()
-            const anchor = event.currentTarget.getBoundingClientRect()
-            setMoreAnchor((current) => (current ? null : anchor))
-          }}
-        >
-          <Ellipsis className="icon-sm" aria-hidden />
-          <span className="body-3">More</span>
-        </button>
-      </div>
     </div>
   )
   const expandedSidebar = (
@@ -247,33 +279,25 @@ export function SidebarSimpleSection({
       </div>
     </div>
   )
-  const moreFlyout = moreAnchor ? (
-    <HubDockFlyout
-      anchor={moreAnchor}
-      title="More"
-      compact
-      onEnter={clearClose}
-      onLeave={scheduleClose}
-      onClose={() => setMoreAnchor(null)}
-      leaveSuspended={subOpen}
-    >
-      <SidebarHqMoreFlyoutBody
-        c={c}
-        showProjects={c.isAdmin}
-        featureUpdates={featureUpdates}
-        onNavigate={() => setMoreAnchor(null)}
-        onHoldParentFlyout={clearClose}
-        onReleaseParentFlyout={scheduleClose}
-        onSubFlyoutOpenChange={setSubOpen}
-        onCloseParentFlyout={() => setMoreAnchor(null)}
-      />
-    </HubDockFlyout>
+  const projectsFlyout = projectsAnchor ? (
+    <SidebarProjectsFlyout
+      c={c}
+      anchor={projectsAnchor}
+      pinned
+      onEnter={() => undefined}
+      onLeave={() => undefined}
+      onClose={closeProjects}
+      onNavigate={() => {
+        showScreenOnly()
+        closeProjects()
+      }}
+    />
   ) : null
   if (!menuCompact) {
     return (
       <>
         {expandedSidebar}
-        {moreFlyout}
+        {projectsFlyout}
       </>
     )
   }
@@ -296,9 +320,9 @@ export function SidebarSimpleSection({
           >
             <SquarePen className="icon-sm nav-glass-text-purple" aria-hidden />
           </button>
-          {SIMPLE_LINKS.map((item) => {
+          {SIMPLE_LINKS_BEFORE_PROJECTS.map((item) => {
             const Icon = item.icon
-            const active = c.isActive(item.href)
+            const active = isSimpleLinkActive(c.pathname, item.href, c.isActive)
             return (
               <Link
                 key={item.href}
@@ -315,23 +339,38 @@ export function SidebarSimpleSection({
               </Link>
             )
           })}
-          <button
-            type="button"
-            className="hub-menu-link-row justify-center"
-            aria-label="More"
-            title="More"
-            aria-expanded={Boolean(moreAnchor)}
-            onClick={(event) => {
-              clearClose()
-              const anchor = event.currentTarget.getBoundingClientRect()
-              setMoreAnchor((current) => (current ? null : anchor))
-            }}
+          {c.isAdmin ? (
+            <button
+              type="button"
+              data-hub-rail-trigger="projects"
+              className={cn(
+                'hub-menu-link-row justify-center',
+                (projectsAnchor || c.pathname.startsWith('/projects')) &&
+                  'nav-glass-selected-purple',
+              )}
+              aria-label="Projects"
+              title="Projects"
+              aria-expanded={Boolean(projectsAnchor)}
+              onClick={(event) => toggleProjects(event.currentTarget)}
+            >
+              <FolderGit2 className="icon-sm" aria-hidden />
+            </button>
+          ) : null}
+          <Link
+            href={clientScopeHref(SIMPLE_FLOWS_LINK.href, selectedClientId)}
+            onClick={showScreenOnly}
+            className={cn(
+              'hub-menu-link-row justify-center',
+              c.isActive(SIMPLE_FLOWS_LINK.href) && 'nav-glass-selected-purple',
+            )}
+            aria-label={SIMPLE_FLOWS_LINK.label}
+            title={SIMPLE_FLOWS_LINK.label}
           >
-            <Ellipsis className="icon-sm" aria-hidden />
-          </button>
+            <Workflow className="icon-sm" aria-hidden />
+          </Link>
         </nav>
       </div>
-      {moreFlyout}
+      {projectsFlyout}
     </div>
   )
 }

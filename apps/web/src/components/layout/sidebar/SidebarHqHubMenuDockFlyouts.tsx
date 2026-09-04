@@ -7,12 +7,12 @@ import type { useSpaceUserState } from '@/features/spaces/hooks/use-space-user-s
 import { HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
 import { SidebarHqHubMenuSpacesSection } from './SidebarHqHubMenuSpacesSection'
-import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { SidebarProgramsCreateMenu, type ProgramsCreateAction } from './SidebarProgramsCreateMenu'
+import { SidebarProjectsFlyout } from './SidebarProjectsFlyout'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
-export type HubMenuDockKey = 'team' | 'spaces' | 'brain' | 'more'
+export type HubMenuDockKey = 'team' | 'spaces' | 'brain' | 'projects'
 
 export function SidebarHqHubMenuDockFlyouts({
   showFlyout,
@@ -23,8 +23,6 @@ export function SidebarHqHubMenuDockFlyouts({
   closeDock,
   pinned,
   setPinned,
-  subOpen,
-  setSubOpen,
   handleNavigate,
   c,
   spacesSearchOpen,
@@ -40,8 +38,6 @@ export function SidebarHqHubMenuDockFlyouts({
   setBrowsePanelBucket,
   setCreateSpaceModalFor,
   spaceUserState,
-  showAdminSections,
-  featureUpdates,
 }: {
   showFlyout: boolean
   dock: HubMenuDockKey | null
@@ -51,8 +47,6 @@ export function SidebarHqHubMenuDockFlyouts({
   closeDock: () => void
   pinned: boolean
   setPinned: Dispatch<SetStateAction<boolean>>
-  subOpen: boolean
-  setSubOpen: Dispatch<SetStateAction<boolean>>
   handleNavigate: () => void
   c: SidebarControllerReturn
   spacesSearchOpen: boolean
@@ -68,8 +62,6 @@ export function SidebarHqHubMenuDockFlyouts({
   setBrowsePanelBucket: Dispatch<SetStateAction<string | null>>
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
-  showAdminSections: boolean
-  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const [createMenuAnchor, setCreateMenuAnchor] = useState<DOMRect | null>(null)
 
@@ -219,26 +211,15 @@ export function SidebarHqHubMenuDockFlyouts({
   }
 
   return (
-    <HubDockFlyout
+    <SidebarProjectsFlyout
+      c={c}
       anchor={anchor}
-      title="More"
       onEnter={clearClose}
       onLeave={scheduleClose}
       onClose={closeDock}
       pinned={pinned}
       onPinnedChange={setPinned}
-      leaveSuspended={subOpen}
-    >
-      <SidebarHqMoreFlyoutBody
-        c={c}
-        showProjects={showAdminSections}
-        featureUpdates={featureUpdates}
-        onNavigate={handleNavigate}
-        onHoldParentFlyout={clearClose}
-        onReleaseParentFlyout={scheduleClose}
-        onSubFlyoutOpenChange={setSubOpen}
-        onCloseParentFlyout={closeDock}
-      />
-    </HubDockFlyout>
+      onNavigate={handleNavigate}
+    />
   )
 }

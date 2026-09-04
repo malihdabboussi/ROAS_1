@@ -223,8 +223,8 @@ describe('SidebarHqSection', () => {
     vi.clearAllMocks()
   })
 
-  it('renders only the requested primary rail destinations before More', () => {
-    const controller = makeSidebarHqController({ mobileDrawerOpen: false })
+  it('renders every authorized destination directly in the primary rail without More', () => {
+    const controller = makeSidebarHqController({ mobileDrawerOpen: false, isAdmin: true })
 
     render(<SidebarHqSection c={controller} />)
 
@@ -240,13 +240,15 @@ describe('SidebarHqSection', () => {
       'Delegation Desk',
       'Favorites',
       'Programs',
-      'More',
+      'Team',
+      'Brain',
+      'Projects',
+      'Flows',
     ]
     for (const label of primaryLabels) {
       expect(screen.getByLabelText(label)).toBeInTheDocument()
     }
-    expect(screen.queryByLabelText('Team')).not.toBeInTheDocument()
-    expect(screen.queryByLabelText('Brain')).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('More')).not.toBeInTheDocument()
   })
 
   it('renders the mobile HQ hub menu drawer', () => {
@@ -254,6 +256,7 @@ describe('SidebarHqSection', () => {
     const reloadSidebarLists = vi.fn(async () => undefined)
     const controller = makeSidebarHqController({
       mobileDrawerOpen: true,
+      isAdmin: true,
       setMobileDrawerOpen,
       reloadSidebarLists,
       hubMenuExpandedSections: new Set(),
@@ -280,7 +283,10 @@ describe('SidebarHqSection', () => {
     expect(screen.queryByText('All Tasks')).toBeNull()
     expect(screen.getByText('Team')).toBeTruthy()
     expect(screen.getByText('Programs')).toBeTruthy()
-    expect(screen.getByText('More')).toBeTruthy()
+    expect(screen.getByText('Brain')).toBeTruthy()
+    expect(screen.getByText('Projects')).toBeTruthy()
+    expect(screen.getByText('Flows')).toBeTruthy()
+    expect(screen.queryByText('More')).toBeNull()
   })
 
   it('does not load the next spaces page until a Programs tree item is expanded', async () => {
@@ -325,7 +331,7 @@ describe('SidebarHqSection', () => {
     expect(screen.queryByRole('button', { name: 'Collapse AI Chats' })).not.toBeInTheDocument()
   })
 
-  it('does not broadcast a flyout close when opening More from an already unpinned rail', () => {
+  it('does not broadcast a flyout close when opening Projects from an already unpinned rail', () => {
     useShellStore.setState({
       sidebarPinned: false,
       sidebarPeek: false,
@@ -335,14 +341,15 @@ describe('SidebarHqSection', () => {
     const controller = makeSidebarHqController({
       mobileDrawerOpen: false,
       pathname: '/brain',
+      isAdmin: true,
       setActiveManagePanel,
     })
 
     render(<SidebarHqSection c={controller} />)
     const closeEpochBeforeClick = useShellStore.getState().sidebarFlyoutCloseEpoch
-    fireEvent.click(screen.getByRole('button', { name: 'More' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Projects' }))
 
-    expect(setActiveManagePanel).toHaveBeenCalledWith('more')
+    expect(setActiveManagePanel).toHaveBeenCalledWith('projects')
     expect(useShellStore.getState().sidebarFlyoutCloseEpoch).toBe(closeEpochBeforeClick)
   })
 

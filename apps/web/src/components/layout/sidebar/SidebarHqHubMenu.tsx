@@ -8,7 +8,6 @@ import type { SidebarControllerReturn } from './useSidebarController'
 
 export type HubMenuPaneProps = {
   c: SidebarControllerReturn
-  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
   spacesSearchOpen: boolean
   setSpacesSearchOpen: Dispatch<SetStateAction<boolean>>
   spacesSearchQuery: string

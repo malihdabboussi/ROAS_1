@@ -17,23 +17,19 @@ import {
 } from './sidebar-hq-rail.helpers'
 import type { ManagePanelId, ManageRailItem } from './sidebar-types'
 import { SidebarHqHubLogoButton } from './SidebarHqHubLogoButton'
-import type { HubMenuPaneProps } from './SidebarHqHubMenu'
 import { useOpenDelegationDesk } from './use-open-delegation-desk'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 export function SidebarHqRail({
   c,
-  featureUpdates: _featureUpdates,
   visibleRailItems,
   clearSpacesFlyoutCloseTimer,
   closeHoverManageFlyout,
 }: {
   c: SidebarControllerReturn
-  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
   visibleRailItems: ManageRailItem[]
   clearSpacesFlyoutCloseTimer: () => void
   closeHoverManageFlyout: () => void
-  hubMenuProps: HubMenuPaneProps
 }) {
   const router = useRouter()
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
@@ -346,28 +342,32 @@ export function SidebarHqRail({
                           </button>
                         )
                       }
-                      if (item.type === 'panel' && item.panelId === 'more') {
+
+                      // Direct panel destinations keep their hover flyout and navigate on click.
+                      // Projects has no index route, so it intentionally opens only its flyout.
+                      if (item.type === 'panel') {
                         return (
                           <button
                             key={item.id}
                             type="button"
-                            data-hub-rail-trigger="more"
+                            data-hub-rail-trigger={item.panelId}
                             onMouseEnter={() => {
                               clearSpacesFlyoutCloseTimer()
                               c.setIsPanelClosing(false)
-                              c.setActiveManagePanel('more')
+                              c.setActiveManagePanel(item.panelId)
                             }}
                             onFocus={() => {
                               clearSpacesFlyoutCloseTimer()
                               c.setIsPanelClosing(false)
-                              c.setActiveManagePanel('more')
+                              c.setActiveManagePanel(item.panelId)
                             }}
                             onClick={() => {
                               closeHubIfOpen()
-                              syncWorkContextForPanel('more')
+                              syncWorkContextForPanel(item.panelId)
                               setCollapsed(true)
                               c.setIsPanelClosing(false)
-                              c.setActiveManagePanel('more')
+                              c.setActiveManagePanel(item.panelId)
+                              if (item.href) pushIfNeeded(item.href)
                             }}
                             className={railItemClass}
                             aria-label={item.label}

@@ -210,7 +210,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   // Do not keep a permanent HQ prefetch that refetches on every rail mount.
   const hubSpacesDataEnabled =
     activeManagePanel === 'spaces' || (hubMenuOpen && hubMenuExpandedSections.has('spaces'))
-  const hubProjectsDataEnabled = activeManagePanel === 'more' || hubMenuOpen
+  const hubProjectsDataEnabled = activeManagePanel === 'projects' || hubMenuOpen || mobileDrawerOpen
 
   const { data: sidebarProjectsData } = useCachedProjects(hubProjectsDataEnabled)
   const sidebarProjects = sidebarProjectsData ?? []
@@ -261,7 +261,7 @@ export function useSidebarController({ userName, email, avatarUrl }: SidebarProp
   }, [])
 
   useEffect(() => {
-    if (activeManagePanel !== 'more') {
+    if (activeManagePanel !== 'projects') {
       setIsCreatingProject(false)
       setNewProjectName('')
     }

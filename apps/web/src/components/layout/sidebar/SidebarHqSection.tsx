@@ -13,7 +13,7 @@ import { SidebarHqRail } from './SidebarHqRail'
 import type { SidebarControllerReturn } from './useSidebarController'
 
 const SPACES_FLYOUT_CLOSE_DELAY_MS = 350
-const HOVER_CLOSE_PANELS = new Set(['favorites', 'spaces', 'more'])
+const HOVER_CLOSE_PANELS = new Set(['favorites', 'spaces', 'team2', 'brain', 'projects'])
 
 export function SidebarHqSection({
   c,
@@ -83,7 +83,7 @@ export function SidebarHqSection({
     [c.sidebarLists, spaceUserState.hiddenIds],
   )
   const hiddenSidebarCount = c.hiddenCampaigns.length + hiddenSpaces.length
-  const visibleRailItems = manageRailItems
+  const visibleRailItems = manageRailItems.filter((item) => item.id !== 'projects' || c.isAdmin)
 
   const openHiddenMenu = () => {
     if (hiddenEyeRef.current) {
@@ -111,7 +111,6 @@ export function SidebarHqSection({
 
   const hubMenuProps = {
     c,
-    featureUpdates,
     spacesSearchOpen,
     setSpacesSearchOpen,
     spacesSearchQuery,
@@ -149,11 +148,9 @@ export function SidebarHqSection({
           <div className="shell-menu-dock-rail-wrap">
             <SidebarHqRail
               c={c}
-              featureUpdates={featureUpdates}
               visibleRailItems={visibleRailItems}
               clearSpacesFlyoutCloseTimer={clearSpacesFlyoutCloseTimer}
               closeHoverManageFlyout={closeHoverManageFlyout}
-              hubMenuProps={hubMenuProps}
             />
             <SidebarHqFlyouts
               placement="hover"
@@ -173,7 +170,6 @@ export function SidebarHqSection({
               setBrowsePanelBucket={setBrowsePanelBucket}
               setCreateSpaceModalFor={setCreateSpaceModalFor}
               spaceUserState={spaceUserState}
-              featureUpdates={featureUpdates}
             />
           </div>
         </div>

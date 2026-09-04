@@ -52,8 +52,8 @@ vi.mock('./SidebarHqHubLogoButton', () => ({
     </button>
   ),
 }))
-vi.mock('./SidebarHqMoreFlyoutBody', () => ({
-  SidebarHqMoreFlyoutBody: () => <div>More flyout</div>,
+vi.mock('./SidebarProjectsFlyout', () => ({
+  SidebarProjectsFlyout: () => <div>Projects flyout</div>,
 }))
 describe('SidebarSimpleSection', () => {
   beforeEach(() => {
@@ -69,8 +69,8 @@ describe('SidebarSimpleSection', () => {
 
   afterEach(cleanup)
 
-  it('combines new chat, primary navigation, favorites, More, and chats', () => {
-    render(<SidebarSimpleSection c={makeSidebarHqController()} />)
+  it('combines new chat, all primary navigation, favorites, and chats without More', () => {
+    render(<SidebarSimpleSection c={makeSidebarHqController({ isAdmin: true })} />)
 
     expect(screen.getByRole('button', { name: 'New chat' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'New chat' }).querySelector('svg')).toHaveClass(
@@ -88,9 +88,14 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByRole('link', { name: 'Launches' })).toHaveAttribute('href', '/launches')
     expect(screen.getByRole('link', { name: 'Artifacts' })).toHaveAttribute('href', '/artifacts')
     expect(screen.getByRole('link', { name: 'All Tasks' })).toHaveAttribute('href', '/all-tasks')
+    expect(screen.getByRole('link', { name: 'Programs' })).toHaveAttribute('href', '/programs')
+    expect(screen.getByRole('link', { name: 'Team' })).toHaveAttribute('href', '/team')
+    expect(screen.getByRole('link', { name: 'Brain' })).toHaveAttribute('href', '/brain')
+    expect(screen.getByRole('button', { name: 'Projects' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Flows' })).toHaveAttribute('href', '/flows')
     expect(screen.queryByText('Favorites')).not.toBeInTheDocument()
     expect(screen.queryByText('No favorites yet')).not.toBeInTheDocument()
-    expect(screen.getByText('More')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument()
     expect(screen.getByText('Chat history')).toBeInTheDocument()
   })
 
@@ -107,7 +112,7 @@ describe('SidebarSimpleSection', () => {
 
   it('keeps the collapsed rail closed on hover and expands it on click', () => {
     useShellMenuDock.setState({ menuStyle: 'simple', menuCompact: true })
-    const controller = makeSidebarHqController()
+    const controller = makeSidebarHqController({ isAdmin: true })
     const { container } = render(<SidebarSimpleSection c={controller} />)
     const newChat = screen.getByRole('button', { name: 'New chat' })
 
@@ -121,7 +126,12 @@ describe('SidebarSimpleSection', () => {
     expect(screen.getByRole('link', { name: 'Client Campaigns' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Launches' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Artifacts' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'More' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Programs' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Team' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Brain' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Projects' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Flows' })).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Search' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Show favorites' })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Show chats' })).not.toBeInTheDocument()
@@ -176,14 +186,20 @@ describe('SidebarSimpleSection', () => {
     expect(useShellStore.getState().artifactPinned).toBe(false)
   })
 
-  it('opens More only after the More row is clicked', () => {
-    render(<SidebarSimpleSection c={makeSidebarHqController()} />)
-    const more = screen.getByRole('button', { name: 'More' })
+  it('opens Projects directly from its sidebar row', () => {
+    render(<SidebarSimpleSection c={makeSidebarHqController({ isAdmin: true })} />)
+    const projects = screen.getByRole('button', { name: 'Projects' })
 
-    fireEvent.mouseEnter(more)
-    expect(screen.queryByText('More flyout')).not.toBeInTheDocument()
-    fireEvent.click(more)
-    expect(screen.getByText('More flyout')).toBeInTheDocument()
+    expect(screen.queryByText('Projects flyout')).not.toBeInTheDocument()
+    fireEvent.click(projects)
+    expect(screen.getByText('Projects flyout')).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: 'More' })).not.toBeInTheDocument()
+  })
+
+  it('keeps Projects hidden for non-admin members', () => {
+    render(<SidebarSimpleSection c={makeSidebarHqController({ isAdmin: false })} />)
+
+    expect(screen.queryByRole('button', { name: 'Projects' })).not.toBeInTheDocument()
   })
 
   it('shows only campaigns explicitly favorited by the user', () => {

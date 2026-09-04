@@ -80,7 +80,7 @@ describe('HubDockFlyout', () => {
     render(
       <HubDockFlyout
         anchor={anchor}
-        title="More"
+        title="Projects"
         compact
         onClose={() => {}}
         onEnter={() => {}}
@@ -90,7 +90,7 @@ describe('HubDockFlyout', () => {
       </HubDockFlyout>,
     )
 
-    const flyout = screen.getByText('More').closest('[data-hub-dock-flyout]')
+    const flyout = screen.getByText('Projects').closest('[data-hub-dock-flyout]')
     expect(flyout).not.toHaveClass('hub-dock-flyout-viewport')
     expect(flyout).toHaveStyle({ top: '40px' })
   })
@@ -122,8 +122,8 @@ describe('HubDockFlyout', () => {
 
     render(
       <>
-        <button type="button" data-hub-rail-trigger="more">
-          More
+        <button type="button" data-hub-rail-trigger="projects">
+          Projects
         </button>
         <HubDockFlyout
           anchor={anchor}
@@ -137,7 +137,7 @@ describe('HubDockFlyout', () => {
       </>,
     )
 
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'More' }))
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Projects' }))
     expect(onClose).not.toHaveBeenCalled()
   })
 

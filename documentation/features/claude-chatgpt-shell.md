@@ -1,12 +1,14 @@
 # Claude/ChatGPT shell (apps/web)
 
-Last Modified: 2026-09-01
+Last Modified: 2026-09-03
 
 ## Overview
 
 Dashboard chrome inspired by Claude/ChatGPT and ClickUp: a Simple-by-default combined sidebar for navigation, favorites, Programs, and chat history; an optional Advanced movable workspace rail; a resizable AI chat surface; a Space work dock (no open-item tab strip); a shared artifact slide-out; and a chat-scoped work summary (Connections + Outputs / Sources / Activity) that sits as a rounded in-flow card when the chat pane is wide and otherwise overlays from the header toggle.
 
 Design reference: `.docs/design/claude-chatgpt-shell-v4/` (HTML prototype + `shell-state.md`).
+
+Current navigation rule (supersedes the older More-menu references retained in the decision history below): Simple, compact, Advanced, and mobile sidebars expose Programs, Team, Brain, Projects, and Flows as direct main-sidebar entries. Projects remains admin-only and opens its project list flyout because the app has no `/projects` index route. Account and Settings remain in the sidebar footer.
 
 ## Data Flow
 

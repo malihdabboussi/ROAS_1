@@ -19,10 +19,10 @@ import { HubDockFlyout } from './HubDockFlyout'
 import { SidebarBrainNavLinks } from './SidebarBrainFlyout'
 import { SidebarFavoritesFlyout } from './SidebarFavoritesFlyout'
 import { SidebarHomeFlyout } from './SidebarHomeFlyout'
-import { SidebarHqMoreFlyoutBody } from './SidebarHqMoreFlyoutBody'
 import { ProgramRowsSkeleton } from './SidebarHqSpacesBucketList'
 import { SidebarHqSpacesGroupedList } from './SidebarHqSpacesGroupedList'
 import { SidebarProgramsCreateMenu, type ProgramsCreateAction } from './SidebarProgramsCreateMenu'
+import { SidebarProjectsFlyout } from './SidebarProjectsFlyout'
 import { SidebarTeam2Flyout } from './SidebarTeam2Flyout'
 import type { SidebarControllerReturn } from './useSidebarController'
 
@@ -50,7 +50,6 @@ export function SidebarHqFlyouts({
   setBrowsePanelBucket,
   setCreateSpaceModalFor,
   spaceUserState,
-  featureUpdates,
 }: {
   placement?: 'all' | 'inline' | 'hover'
   c: SidebarControllerReturn
@@ -69,7 +68,6 @@ export function SidebarHqFlyouts({
   setBrowsePanelBucket: Dispatch<SetStateAction<string | null>>
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
-  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const showHover = (placement === 'all' || placement === 'hover') && !c.hubMenuOpen
   const [pinned, setPinned] = useState(false)
@@ -114,7 +112,7 @@ export function SidebarHqFlyouts({
         c.activeManagePanel === 'brain' ||
         c.activeManagePanel === 'favorites' ||
         c.activeManagePanel === 'spaces' ||
-        c.activeManagePanel === 'more'
+        c.activeManagePanel === 'projects'
         ? c.activeManagePanel
         : null
       : null
@@ -364,33 +362,19 @@ export function SidebarHqFlyouts({
         onSelect={handleCreateAction}
       />
 
-      {hoverPanel === 'more' && anchor ? (
-        <HubDockFlyout
+      {hoverPanel === 'projects' && anchor ? (
+        <SidebarProjectsFlyout
+          c={c}
           anchor={anchor}
-          title="More"
-          compact
           onEnter={clearSpacesFlyoutCloseTimer}
           onLeave={() => {
-            if (!pinned && !subOpen) scheduleSpacesFlyoutClose()
+            if (!pinned) scheduleSpacesFlyoutClose()
           }}
           onClose={closeHover}
           pinned={pinned}
           onPinnedChange={setPinned}
-          leaveSuspended={subOpen}
-        >
-          <SidebarHqMoreFlyoutBody
-            c={c}
-            showProjects={c.isAdmin}
-            featureUpdates={featureUpdates}
-            onNavigate={closeHover}
-            onHoldParentFlyout={clearSpacesFlyoutCloseTimer}
-            onReleaseParentFlyout={() => {
-              if (!pinned) scheduleSpacesFlyoutClose()
-            }}
-            onSubFlyoutOpenChange={setSubOpen}
-            onCloseParentFlyout={closeHover}
-          />
-        </HubDockFlyout>
+          onNavigate={closeHover}
+        />
       ) : null}
     </>
   )

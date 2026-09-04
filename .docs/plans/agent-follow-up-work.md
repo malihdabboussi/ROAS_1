@@ -40299,3 +40299,27 @@ Evidence: The workflows currently live in `.claude/commands/*.md`, matching the 
 Needed work: Evaluate an opt-in migration or shared command/skill core after the command contracts have production usage evidence.
 
 Reason not done now: Skills were considered and rejected by the frozen ADR for this delivery.
+
+## 2026-09-03 - [ARCH] Decompose the sidebar controller hook
+
+Status: Open
+
+Found while: Promoting all former More-menu destinations into the main sidebar.
+
+Evidence: `apps/web/src/components/layout/sidebar/useSidebarController.ts` is 815 lines, exceeding the 300-line hook guideline and 600-line hard limit. This task only changed the project-data activation condition used by the new direct Projects entry.
+
+Needed work: Split project, campaign, navigation, and hub-menu state into focused hooks while preserving the existing `SidebarControllerReturn` contract for current consumers.
+
+Reason not done now: Decomposing the shared controller is broader and riskier than the requested navigation flattening.
+
+## 2026-09-03 - [ARCH] Extract near-limit sidebar components
+
+Status: Open
+
+Found while: Promoting all former More-menu destinations into the main sidebar.
+
+Evidence: `SidebarHqFlyouts.tsx` is 381 lines, `SidebarSimpleSection.tsx` is 376 lines, and `SidebarHqHubMenuContent.tsx` is 342 lines. Each is above the 320-line 80% threshold for a 400-line component.
+
+Needed work: Extract focused navigation-row and flyout-state components without changing the shared sidebar contracts or route behavior.
+
+Reason not done now: The files remain below the hard component limit, and structural decomposition is outside this focused navigation change.

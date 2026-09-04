@@ -13,12 +13,13 @@ import {
 import {
   Brain,
   BriefcaseBusiness,
-  ChevronDown,
+  FolderGit2,
   Inbox,
   Layers3,
   ListChecks,
   Rocket,
   Users,
+  Workflow,
 } from 'lucide-react'
 import { useGlobalChatStore } from '@/components/global-chat/store/use-global-chat-store'
 import { useShellStore } from '@/components/shell/use-shell-store'
@@ -48,7 +49,6 @@ export function SidebarHqHubMenuContent({
   setBrowsePanelBucket,
   setCreateSpaceModalFor,
   spaceUserState,
-  featureUpdates,
 }: {
   c: SidebarControllerReturn
   variant: 'panel' | 'drawer'
@@ -69,7 +69,6 @@ export function SidebarHqHubMenuContent({
   setBrowsePanelBucket: Dispatch<SetStateAction<string | null>>
   setCreateSpaceModalFor: Dispatch<SetStateAction<{ campaignId: string | null } | null>>
   spaceUserState: ReturnType<typeof useSpaceUserState>
-  featureUpdates?: { hasUnread: boolean; onOpen: (anchor: HTMLElement) => void }
 }) {
   const setWorkContext = useGlobalChatStore((s) => s.setWorkContext)
   const setChatCollapsed = useGlobalChatStore((s) => s.setCollapsed)
@@ -77,7 +76,6 @@ export function SidebarHqHubMenuContent({
   const [dock, setDock] = useState<HubMenuDockKey | null>(null)
   const [anchor, setAnchor] = useState<DOMRect | null>(null)
   const [pinned, setPinned] = useState(false)
-  const [subOpen, setSubOpen] = useState(false)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const rowEls = useRef<Partial<Record<HubMenuDockKey, HTMLElement | null>>>({})
   const clearClose = () => {
@@ -92,7 +90,6 @@ export function SidebarHqHubMenuContent({
     setDock(null)
     setAnchor(null)
     setPinned(false)
-    setSubOpen(false)
     setSpacesSearchOpen(false)
     setSpacesSearchQuery('')
     c.setIsCreatingProject(false)
@@ -111,19 +108,18 @@ export function SidebarHqHubMenuContent({
       const rect = measure(key)
       setDock(key)
       setPinned(false)
-      setSubOpen(false)
       if (rect) setAnchor(rect)
     },
     [measure],
   )
 
   const scheduleClose = useCallback(() => {
-    if (pinned || subOpen) return
+    if (pinned) return
     clearClose()
     closeTimer.current = setTimeout(() => {
       closeDock()
     }, HUB_DOCK_FLYOUT_LEAVE_MS)
-  }, [closeDock, pinned, subOpen])
+  }, [closeDock, pinned])
 
   useLayoutEffect(() => {
     if (!dock) return
@@ -267,19 +263,30 @@ export function SidebarHqHubMenuContent({
           onLeave={scheduleClose}
         />
 
-        {/* More = Projects + Flows — always available; hover opens docked menu */}
+        {showAdminSections ? (
+          <SidebarHqHubMenuNavRow
+            icon={<FolderGit2 />}
+            label="Projects"
+            active={dock === 'projects' || c.pathname.startsWith('/projects')}
+            rowRef={(el) => {
+              rowEls.current.projects = el
+            }}
+            onNavigate={() => openDock('projects')}
+            onHover={() => openDock('projects')}
+            onLeave={scheduleClose}
+          />
+        ) : null}
+
         <SidebarHqHubMenuNavRow
-          icon={<ChevronDown className="hub-menu-more-chevron" />}
-          label="More"
-          active={
-            dock === 'more' || c.pathname.startsWith('/projects') || c.pathname.startsWith('/flows')
-          }
-          rowRef={(el) => {
-            rowEls.current.more = el
+          href="/flows"
+          active={c.pathname.startsWith('/flows')}
+          icon={<Workflow />}
+          label="Flows"
+          onNavigate={() => {
+            setWorkContext({ surface: 'flows' })
+            handleNavigate()
           }}
-          onNavigate={() => openDock('more')}
-          onHover={() => openDock('more')}
-          onLeave={scheduleClose}
+          onHover={() => scheduleClose()}
         />
 
         {pinnedCampaigns.length > 0 ? (
@@ -314,8 +321,6 @@ export function SidebarHqHubMenuContent({
         closeDock={closeDock}
         pinned={pinned}
         setPinned={setPinned}
-        subOpen={subOpen}
-        setSubOpen={setSubOpen}
         handleNavigate={handleNavigate}
         c={c}
         spacesSearchOpen={spacesSearchOpen}
@@ -331,8 +336,6 @@ export function SidebarHqHubMenuContent({
         setBrowsePanelBucket={setBrowsePanelBucket}
         setCreateSpaceModalFor={setCreateSpaceModalFor}
         spaceUserState={spaceUserState}
-        showAdminSections={showAdminSections}
-        featureUpdates={featureUpdates}
       />
     </div>
   )

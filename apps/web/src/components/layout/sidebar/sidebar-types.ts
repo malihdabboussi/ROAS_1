@@ -9,14 +9,7 @@ export interface SidebarProps {
   avatarUrl?: string | null
 }
 
-export type ManagePanelId =
-  | 'home'
-  | 'projects'
-  | 'spaces'
-  | 'team2'
-  | 'brain'
-  | 'favorites'
-  | 'more'
+export type ManagePanelId = 'home' | 'projects' | 'spaces' | 'team2' | 'brain' | 'favorites'
 
 export type ManageRailItem = {
   id: string
