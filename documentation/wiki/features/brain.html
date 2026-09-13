@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain, from the user's side · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat active" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🧠 Brain, what you can do with it</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-11</span>
+  <span>Category: <a href="index.html">Features</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></span>
+  <span>Source of truth: <code>apps/web/src/features/brain</code>, <code>apps/api/src/modules/brain/controllers</code></span>
+  <span>How it works inside: <a href="../system-map/brain.html">System map › Brain</a></span>
+</div>
+<p class="sub">This page is written from the user's side: the screens, the buttons, and what happens when you press them. For the machinery underneath (the queue, Atlas, the shelves) read the <a href="../system-map/brain.html">System map page</a>. Every point names the screen component, the call the browser makes, and the door in the API that answers it.</p>
+<div class="pathnote">📍 Paths starting with <code>web/</code> mean <code>apps/web/src/</code>. Paths starting with <code>brain/</code> mean <code>apps/api/src/modules/brain/</code>. Paths starting with <code>migrations/</code> mean <code>supabase/migrations/</code>. The API adds <code>/api</code> in front of every route.</div>
+
+<div class="card" id="summary" style="margin-bottom:14px">
+  <h3>In one paragraph</h3>
+  <p>You open <strong>Brain</strong> from the sidebar and see your notebooks: yours, your agents', your campaigns', the shared customer one, and the company one, each with a health label. You feed a notebook with <strong>Train</strong> (paste text, drop a file, paste a link, or connect Fathom, Fireflies, Slack), watch the job in the <strong>tray</strong>, then look at what landed on the <strong>graph</strong> or find it with <strong>search</strong>. The Chrome extension can send pages in from any tab, admins can share a brain with teammates, and the chat helper is supposed to save and recall from it while you talk. To see memories, a snapshot, and Cortex Max act on one thread, read <a href="#story">One story</a>.</p>
+</div>
+
+<h2 id="home"><span class="n">1</span> Brain home: your notebooks at a glance</h2>
+<div class="card">
+  <p><strong>The point.</strong> One screen lists every brain you may see, grouped by kind, with a health label and a memory count. Inside a brain, the breadcrumb at the top switches between kinds.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Test Admin opens Brain for the first time today.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The page loads the brain list, then asks the API for health in batches of ten. The label is computed in the browser from two health fields: embeddings still running → <em>Training</em>; no capture ever → <em>Never trained</em>; a capture in the last 7 days → <em>Recent</em>; 7 to 30 days → <em>Quiet</em>; older → <em>Dormant</em>.</span></div>
+    <div class="sc-row"><b>What you see</b><span>"USER BRAINS 1: Test Admin, Recent, 2 memories, 14h ago" and "CUSTOMER BRAINS 1: Customer Brain, Never trained, 0 memories". Clicking a row opens that brain's graph. An "Add agent brain" card starts a checkout for an agent that has none yet.</span></div>
+    <div class="where">📍 Screen: route <code>web/app/(dashboard)/brain/page.tsx:21</code> · container <code>web/features/brain/containers/BrainHome.tsx:42</code> · list <code>web/features/brain/components/BrainHomeListView.tsx:226</code> · grid card and label rule <code>web/features/brain/components/BrainHomeGridCard.tsx:52,67,161</code> · breadcrumb <code>web/features/brain/components/BrainScopeBreadcrumb.tsx:9</code> · add agent <code>web/features/brain/components/BrainHomeAddAgentCard.tsx:49</code> → <code>web/features/brain/components/AddAgentBrainModals.tsx:39</code><br>📍 Calls: <code>web/features/brain/services/brain.service.ts:52</code> <code>fetchBrainHealthBatch</code> → <code>GET /api/brain/health/batch</code> <code>brain/controllers/memories-status.controller.ts:62</code> · single brain <code>:47</code> · brain list <code>GET /api/brain/brains</code> <code>:25</code></div>
+  </div>
+  <p class="tech" style="margin-top:10px">The "2 memories" on the home row is the same counter as the graph stats bar: memory rows plus textbook entries. See <a href="../system-map/brain.html#other-f7">Other finding 7</a> for why it can disagree with the picture. The kinds shown in the breadcrumb are read straight from Supabase in the browser, not through the API: <code>web/features/brain/hooks/use-brain-scope-nav-options.ts:141,316</code>.</p>
+</div>
+
+<h2 id="train"><span class="n">2</span> Train: feeding a notebook</h2>
+<div class="card">
+  <p><strong>The point.</strong> One modal with three tabs: <em>One-time</em> (paste text, drop files, paste links, or pick Google Drive, Dropbox, Fathom, Fireflies), <em>Recurring</em> (rules that keep pulling from Slack, Zoom, Fathom, Fireflies), and <em>Activity</em> (the job list). You pick one or more target brains, stage items, then press "Add N to queue".</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara opens Train on an agent, pastes a sales playbook, drops a PDF, and adds a link, then presses "Add 3 to queue".</span></div>
+    <div class="sc-row"><b>What happens</b><span>The paste area decides what each item is: a URL becomes a link, everything else a text note, a file a file. The PDF is sent to the extract-text door first and comes back as text. Each item becomes one import job per target brain: text and file through the textbook door, the link through the textbook link door. A toast says "3 items added to queue" and the tray refreshes.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Three rows in the tray moving from queued to processing to succeeded, then new entries on the agent's graph under the source title. Items that failed to queue stay staged.</span></div>
+    <div class="where">📍 Screen: <code>web/features/brain/components/training/TrainingModal.tsx:34</code>, tabs <code>:293-299</code>, "Add all" <code>:174</code>, toast <code>:210</code> · paste area <code>web/features/brain/components/training/TrainingAddPane.tsx:92,153,184</code> · button <code>web/features/brain/components/training/TrainingStagingPanel.tsx:158</code> · target picker <code>web/features/brain/components/training/BrainTrainTargetSelect.tsx:89</code> · dispatch <code>web/features/brain/components/training/training-queue-dispatch.ts:31,41,72</code><br>📍 Calls: <code>web/lib/brain/brain-import-api.ts:220</code> <code>enqueueSkIngest</code> → <code>POST /api/brain/import-jobs/sk-ingest</code> <code>brain/controllers/import-jobs.controller.ts:119</code> · link <code>brain-import-api.ts:248</code> → <code>sk-ingest-link</code> <code>:131</code> · file text <code>web/features/brain/services/sk.service.ts:108</code> → <code>POST /api/brain/sk/extract-text</code> <code>brain/controllers/sk.controller.ts:39</code> · Fathom <code>brain-import-api.ts:87</code> → <code>:39</code> · Fireflies <code>:111</code> → <code>:62</code></div>
+  </div>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara opens her own brain that has no rows yet and sees the older "Add information" panel with Text, Link, and Image tabs. She types "our webinar sign-ups are best on Tuesdays".</span></div>
+    <div class="sc-row"><b>What happens</b><span>The text is wrapped as a small document and queued through the personal remember door. Atlas reads it and saves a memory with the label Gemini picks (fact, preference, and so on). A toast says "Text import queued."</span></div>
+    <div class="sc-row"><b>What you see</b><span>One job in the tray, then one dot on your graph with source "document" and your title as the source title.</span></div>
+    <div class="where">📍 Screen: <code>web/features/brain/components/BrainVisualizationAddInfoLayer.tsx:37</code> · panel tabs <code>web/features/brain/components/user-add-info-panel/UserAddInfoPanel.tsx:77-83</code> · submit <code>web/features/brain/components/user-add-info-panel/use-user-add-info-form.ts:158</code> text, <code>:224</code> link, <code>:130</code> image<br>📍 Calls: <code>web/lib/brain/brain-import-api.ts:127</code> <code>rememberDocumentMemory</code> → <code>POST /api/brain/import-jobs/remember-document</code> <code>brain/controllers/import-jobs.controller.ts:28</code> · link <code>brain-import-api.ts:183</code> → <code>remember-link</code> <code>:51</code> · 🗄️ <code>brain_import_jobs</code> <code>migrations/20260303120000_brain_import_jobs.sql:1</code></div>
+  </div>
+  <p style="margin-top:10px">Which brain gets what, and the road each item takes: <a href="../system-map/brain.html#flow-doors">System map › Which door takes which road</a>. Note that Train puts <em>textbook entries</em> into whichever brain you pick, personal brains included.</p>
+</div>
+
+<h2 id="chat"><span class="n">3</span> "Remember this" while chatting with the helper</h2>
+<div class="card">
+  <p><strong>The point.</strong> There is no button for this in the web app. You say it in chat, and the helper is supposed to call its save-memory action itself. Today that does not work.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara tells the helper "remember, our webinar sign-ups are best on Tuesdays".</span></div>
+    <div class="sc-row"><b>What happens</b><span>The helper should call <code>save_user_memory</code> in agent-api, which writes one memory row directly, no queue, and shows a small "Saving this to your brain" chip in the chat. On the local stack the helper is denied that action because of a wiring bug, so it answers "Got it" and saves nothing.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A friendly reply and an unchanged brain. Use Train or Add information until ROA-32 is fixed.</span></div>
+    <div class="sc-row"><b>Should be</b><span>One new dot on your graph within a second, source "conversation".</span></div>
+    <div class="where">📍 Save tool <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code> · action docs <code>apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts:1267</code> · the bug <a href="../system-map/brain.html#live-1">Live finding 1</a> and <a href="../system-map/brain.html#live-4">Live finding 4</a> · tickets <a href="https://linear.app/1dscollective/issue/ROA-29">ROA-29</a>, <a href="https://linear.app/1dscollective/issue/ROA-32">ROA-32</a></div>
+  </div>
+  <p class="tech" style="margin-top:10px">An HTTP door <code>POST /api/brain/remember</code> exists (<code>brain/controllers/memories.controller.ts:39</code>) but nothing in the web app calls it; only a smoke script and tests do.</p>
+</div>
+
+<h2 id="tray"><span class="n">4</span> The import tray and notifications</h2>
+<div class="card">
+  <p><strong>The point.</strong> Every queued import shows with five states: queued, processing, retry, succeeded, failed. You can retry, cancel, or dismiss a job. Finished jobs also pop a toast when the tray is not on screen.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A textbook import fails because agent-api was down.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The tray (bottom of the graph screen) and the Activity tab of the Train modal both read the active-jobs door every 4 seconds and on realtime events. Pressing retry moves the row back to queued at once. Cancel removes an unstarted job. Dismiss hides a finished one. The app-wide notifier asks for pending notifications, shows one toast per finished job, then acknowledges them so they do not repeat.</span></div>
+    <div class="sc-row"><b>What you see</b><span>"Webinar timing, processing, Retrying…" then green, or a red row with the error text and a retry button. Succeeded rows fade after about ten seconds.</span></div>
+    <div class="where">📍 Screen: tray <code>web/features/brain/components/BrainProcessingQueue.tsx:158</code>, retry <code>:105</code>, cancel <code>:93</code>, dismiss <code>:116</code>, mounted in <code>web/features/brain/components/BrainVisualizationDock.tsx:356</code> · Activity tab <code>web/features/brain/components/training/TrainingActivityTab.tsx:113</code> · data hook <code>web/features/brain/hooks/use-brain-queue.ts:82</code>, poll <code>:211</code> · notifier <code>web/features/brain/components/BrainImportJobNotifier.tsx:12,49,60</code> mounted in <code>web/app/layout.tsx:44</code><br>📍 Calls: <code>web/lib/brain/brain-import-api.ts:202</code> <code>listActiveImportJobs</code> → <code>GET /api/brain/import-jobs/active</code> <code>brain/controllers/import-job-status.controller.ts:40</code> · retry <code>:268</code> → <code>POST :jobId/retry</code> <code>:88</code> · cancel <code>:264</code> → <code>DELETE :jobId</code> <code>:76</code> · dismiss <code>:272</code> → <code>:101</code> · toasts <code>:190</code> → <code>GET notifications/pending</code> <code>:31</code>, ack <code>:64</code><br>🗄️ states <code>migrations/20260303120000_brain_import_jobs.sql:8</code></div>
+  </div>
+  <p class="tech" style="margin-top:10px">A job can say "succeeded" with nothing saved, and a source can sit at "processing" forever after a crash: <a href="../system-map/brain.html#live-3">Live finding 3</a>.</p>
+</div>
+
+<h2 id="graph"><span class="n">5</span> The graph: seeing what landed</h2>
+<div class="card">
+  <p><strong>The point.</strong> Each dot is one memory. The legend filters by type, the bar at the bottom shows counts, and clicking a dot opens a panel where you can read it, move it to another brain, copy it, or delete it. The dock also has an "Experiences only" toggle, a created-date filter, and search.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Test Admin clicks the only dot on the personal brain.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The panel shows the sentence, its type (FACT), significance and confidence bars, who wrote it (Atlas), the emotion tags, source and source title, and the learned date. The arrows icon opens "move to another brain", the copy icon "copy to another brain", the bin asks to confirm and deletes. Move and copy use the same transfer door; delete picks the door for the row's kind (memory, snapshot, textbook entry, or whole source).</span></div>
+    <div class="sc-row"><b>What you see</b><span>"In 2026, the free ROAS audit checklist is the best-performing lead magnet…", significance 70%, confidence 80%, source document, "Lead magnet note". After a move: "Moved to target brain." and the dot disappears.</span></div>
+    <div class="where">📍 Screen: <code>web/features/brain/components/BrainVisualization.tsx:29</code>, canvas <code>:256</code> · legend <code>web/features/brain/components/LegendPanel.tsx:51</code> · stats bar <code>web/features/brain/components/BrainStats.tsx:43-95</code> · panel <code>web/features/brain/components/NodeDetailModal.tsx:88</code>, move <code>:252</code>, copy <code>:260</code>, delete <code>:271</code> · dock toggles <code>web/features/brain/components/BrainVisualizationDock.tsx:275,328</code><br>📍 Calls: graph <code>web/features/brain/services/brain.service.ts:26</code> <code>fetchBrainGraph</code> → <code>GET /api/brain/graph</code> <code>brain/controllers/graph.controller.ts:26</code> · move or copy <code>brain.service.ts:233</code> <code>transferBrainNode</code> → <code>POST /api/brain/nodes/transfer</code> <code>brain/controllers/memories-crud.controller.ts:91</code> · delete memory <code>brain.service.ts:219</code> → <code>DELETE /api/brain/memories/:id</code> <code>:59</code> · delete snapshot <code>brain/controllers/snapshots.controller.ts:143</code> · delete textbook entry or source <code>brain/controllers/sk-mutations.controller.ts:33,49</code></div>
+  </div>
+  <p style="margin-top:10px">Two things to know: the counters add textbook entries that a personal-brain canvas does not draw, and the 70% / 80% on Atlas-saved memories are defaults, not judgments. Both explained in <a href="../system-map/brain.html#questions">the System map questions card</a>.</p>
+</div>
+
+<h2 id="search"><span class="n">6</span> Search: asking the notebook a question</h2>
+<div class="card">
+  <p><strong>The point.</strong> The magnifier in the graph dock opens a search box. Results come back ranked by meaning, with a score, and you can thumb them up or down. Picking a result zooms to that dot and opens its panel.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara types "best day for webinars".</span></div>
+    <div class="sc-row"><b>What happens</b><span>The browser calls the search door with the brain id and the words, no mode, so the API uses its default, hybrid: it embeds the question, runs the twelve lanes (memories, textbook, snapshots, evidence, beliefs, pages, timelines, and more), merges, and re-ranks.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A panel above the dock with hits and a score each, for example the "Optimizing Webinar Sign-Ups via Tuesday Promotions" entry at 0.78, or "No results found".</span></div>
+    <div class="where">📍 Screen: box <code>web/features/brain/components/BrainVisualizationDock.tsx:188</code> · results <code>web/features/brain/components/BrainSearchResultsPanel.tsx:12</code> · hook <code>web/features/brain/hooks/use-brain-visualization-search.ts:87</code><br>📍 Calls: <code>web/features/brain/services/brain.service.ts:89</code> <code>fetchBrainSearch</code> → <code>GET /api/brain/search</code> <code>brain/controllers/search.controller.ts:39</code>, default mode <code>:61</code>, allowed modes <code>:46</code> · feedback <code>brain.service.ts:140</code> → <code>POST /api/brain/search/feedback</code> <code>:93</code> · image search <code>:104</code> → <code>:112</code></div>
+  </div>
+  <p class="tech" style="margin-top:10px">The chat helper does not use this search; it has its own copy in agent-api. <a href="../system-map/brain.html#problem-1">Problem 1</a>.</p>
+</div>
+
+<h2 id="extension" data-tab="More surfaces"><span class="n">7</span> Chrome extension: send a page in from any tab</h2>
+<div class="card">
+  <p><strong>The point.</strong> The extension's Brain tab lets you pick an account and a target brain, choose what to capture (the URL, your selection, or the article text), and send it. It also searches your brain and mirrors the job queue.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara reads a competitor's pricing page and presses "Send to brain queue" with her personal brain selected.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The content script scrapes the page; the background worker posts it through the personal remember door (or the textbook door for an agent, or the campaign door for a campaign). There is no toast; the button spins and errors show inline. The job then appears in the web app's tray.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A job in the tray, then memories on the graph with the page title as source.</span></div>
+    <div class="where">📍 Extension: tab <code>apps/chrome-extension/src/sidepanel/tabs/BrainCaptureTab.tsx:227</code>, send button <code>:337</code> · send path <code>apps/chrome-extension/src/sidepanel/SidepanelApp.tsx:161</code> → <code>apps/chrome-extension/src/background/api.ts:86</code> · endpoints <code>:98</code> remember-link, <code>:107</code> remember-document, <code>:124</code> sk-ingest-link, <code>:137</code> sk-ingest, <code>:155</code> campaign-url, <code>:163</code> campaign-file, <code>:182</code> search, <code>:365</code> active jobs</div>
+  </div>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Someone expects a "review before it lands" step for captures.</span></div>
+    <div class="sc-row"><b>What happens</b><span>There is none. The API has a pending-captures queue with accept and reject doors, and the web app has the client functions for it, but no screen calls them. Extension captures go straight into the import queue.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Nothing to review; captures either land or fail in the tray.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Either a review screen wired to the existing doors, or the doors removed. See <a href="../system-map/brain.html#other-f9">Other finding 9</a>.</span></div>
+    <div class="where">📍 unused client <code>web/features/brain/services/brain.service.ts:128-136</code> · doors <code>brain/controllers/pending-captures.controller.ts:20-41</code> · 🗄️ <code>ns_pending_captures</code> <code>migrations/047_brain_consolidation.sql:357</code></div>
+  </div>
+</div>
+
+<h2 id="customer" data-tab="More surfaces"><span class="n">8</span> Customer brain: a note about a contact</h2>
+<div class="card">
+  <p><strong>The point.</strong> One shared notebook per workspace about the people you sell to. Notes are linked to a contact. A workspace admin can switch the customer brain on or off from the brain's menu or from Settings › Brain.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara notes "Lina prefers email over calls" and picks Lina from the contact list.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The text goes to the customer text door, which checks Sara's role, finds or creates the workspace customer brain, dedupes, and writes a memory linked to Lina's contact record.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The note under Lina in the customer view. Notes without a known contact land under "unlinked signals".</span></div>
+    <div class="where">📍 Screen: <code>web/features/brain/components/BrainVisualizationAddInfoLayer.tsx:45</code> · on/off <code>web/features/brain/components/BrainScopeContextMenu.tsx:219,230</code> and <code>web/features/settings/components/settings-content/BrainPageContent.tsx:144</code><br>📍 Calls: <code>web/features/brain/services/brain.service.ts:182</code> <code>addCustomerBrainText</code> → <code>POST /api/brain/customer/memories/text</code> <code>brain/controllers/customer-brain.controller.ts:58</code> · link a note to a contact <code>:79</code> · on/off <code>web/features/settings/lib/brain-settings-api.ts:35</code> → <code>PATCH customer/enabled</code> <code>:90</code> · view <code>:108</code> · 🗄️ <code>ns_memories.contact_id</code></div>
+  </div>
+</div>
+
+<h2 id="sharing" data-tab="More surfaces"><span class="n">9</span> Sharing a brain with teammates</h2>
+<div class="card">
+  <p><strong>The point.</strong> An org admin opens "Share" from a brain's card menu or the graph dock, invites a teammate, and picks View only or Full edit. Every brain door then checks the grant before showing or changing anything.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>An org admin wants Omar to be able to query Sara's campaign brain but not train it.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The dialog writes a share row with level <em>query</em> for "Full edit" or <em>view</em> for "View only". The database also knows a third level, <em>train</em>, but the dialog can neither grant it nor show it: an existing train share displays as "Full edit" and saving it again downgrades it to query.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Omar's home shows the brain under its owner's name; Train is hidden for him.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Three choices in the dialog that match the three levels. See <a href="../system-map/brain.html#other-f8">Other finding 8</a>.</span></div>
+    <div class="where">📍 Screen: menu <code>web/features/brain/components/BrainHomeGridCardMenu.tsx:156</code>, dock <code>web/features/brain/components/BrainVisualizationDock.tsx:346</code>, gate <code>web/features/brain/hooks/use-brain-scope-menu-actions.ts:118</code> · dialog <code>web/components/org/ShareModal.tsx:24</code> · level mapping <code>web/lib/org/org-resource-sharing.ts:23,52,56</code><br>📍 Calls: <code>web/lib/org/org-api.ts:222-241</code> → <code>GET /api/org/:orgId/sharing/brains</code>, <code>DELETE …/brains/:brainId/shares/:shareId</code> <code>apps/api/src/modules/org/controllers/org-sharing.controller.ts:89-131</code> · grant <code>POST /api/org/:orgId/brains/share</code> <code>apps/api/src/modules/org/controllers/org-brain-sharing-legacy.controller.ts:38</code> · checks <code>brain/services/brain-permissions.service.ts</code> · 🗄️ <code>brain_shares</code> and <code>can_access_brain</code> <code>migrations/20260520210300_brain_access_control.sql:80</code></div>
+  </div>
+  <p class="tech" style="margin-top:10px">A few brain doors skip the permission check: <a href="../system-map/brain.html#other">Other things worth a ticket, permissions</a>.</p>
+</div>
+
+<h2 id="cortex" data-tab="More surfaces"><span class="n">10</span> Cortex Max and crystallize: background thinking</h2>
+<div class="card">
+  <p><strong>In one line:</strong> Cortex Max keeps a brain thinking in the background, turning many memories into pages, timelines, and belief patterns, so the helper can answer about the big picture and how it changed over time, not just single facts.</p>
+  <p><strong>The point.</strong> Cortex Max is a per-brain switch for background thinking. Off, the brain only stores what you feed it. On, it also writes things about itself while nobody is looking: narrative pages (wiki-style summaries built from many memories, the "library"), timelines (dated events per subject), belief patterns and perspectives, and refreshed customer avatars for the customer brain. Switching it on queues a first full library sync; then every 10 new memories queues a library sync, every 5 changed pages a pattern analysis, and new customer memories an avatar pass. The Cortex Max modal shows the pages and timelines; "Crystallize" forces a full rebuild. All of it runs as background jobs that need a worker.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara switches Cortex Max on for her brain and presses Crystallize.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The switch flips the brain's flag and starts an initial library sync. Crystallize queues a job in the brain-ops outbox. A worker is supposed to pick it up and write snapshots, pages, and timelines.</span></div>
+    <div class="sc-row"><b>What you see</b><span>"Cortex Max enabled. Initial library sync started." then a "Crystallize" job spinning. On the local stack it never finishes: <a href="../issues/index.html">Brain-ops synthesis jobs never complete locally</a>.</span></div>
+    <div class="where">📍 Screen: switch <code>web/features/settings/components/settings-content/BrainPageContent.tsx:122</code> · modal <code>web/features/brain/components/CortexMaxModal.tsx:52</code>, timelines <code>web/features/brain/components/CortexMaxCoreDetails.tsx:145</code> · crystallize <code>web/features/brain/components/CrystallizeBrainModal.tsx:38</code><br>📍 Calls: <code>web/features/settings/lib/brain-settings-api.ts:21</code> → <code>PATCH /api/brain/:brainId/cortex-max</code> <code>brain/controllers/brain-cortex-max.controller.ts:49</code> · crystallize <code>POST …/cortex-max/crystallize</code> <code>:66</code> · pages <code>:118</code>, timelines <code>:86,101</code> · brain picture <code>PATCH :brainId/image</code> <code>:34</code> · 🗄️ <code>brain_ops_outbox</code> <code>migrations/20260407100000_brain_ops_outbox.sql</code></div>
+  </div>
+</div>
+
+<h2 id="more" data-tab="More surfaces"><span class="n">11</span> Smaller surfaces, and what does not exist</h2>
+<div class="card">
+  <ul>
+    <li><strong>Recurring training rules</strong> (Slack, Zoom, Fathom, Fireflies, company dream): the Recurring tab of the Train modal. 📍 <code>web/features/brain/components/training/recurring/RecurringTab.tsx</code> · <code>web/features/brain/services/recurring-rules.service.ts</code></li>
+    <li><strong>Cross-brain suggestions</strong> ("copy these meeting memories into campaign X?"): accepted or rejected from the notifications feed, not the Brain screen. 📍 <code>web/features/notifications/components/NotificationFeedRow.tsx:184,208,219</code> → <code>brain/controllers/brain-cross-suggestions.controller.ts:27-47</code></li>
+    <li><strong>Talk to the brain</strong> (voice session): 📍 <code>web/features/brain/hooks/use-brain-live-session.ts:181</code> → <code>POST /api/brain/live-session</code></li>
+    <li><strong>Company brain settings and signals</strong>: Settings › Brain. 📍 <code>web/features/settings/components/settings-content/brain-page/CompanyCortexSignalsCard.tsx</code> → <code>brain/controllers/company-cortex.controller.ts:19-105</code></li>
+    <li><strong>Not implemented:</strong> renaming a brain, deleting a whole brain (only rows, or cancelling an agent brain through billing <code>web/lib/billing/billing-api.ts:371</code>), a review screen for pending captures, and any screen for textbook gaps, mastery, or sources (<code>web/features/brain/services/sk.service.ts:178-191</code> are defined and unused).</li>
+  </ul>
+</div>
+
+<h2 id="story" data-tab="One story"><span class="n">12</span> One story: memories, a snapshot, and Cortex Max working together</h2>
+<div class="card">
+  <p><strong>The setup.</strong> Sara's personal brain, Cortex Max switched on, a worker running. One year of pricing decisions flows in through the normal doors. Nothing below is a new feature; it is the pieces from this page and the System map page acting on one thread.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>January</b><span>Sara tells the helper in chat: "remember, we discounted 20% in Q1 to fill the pipeline." The helper calls its save tool. One memory, type preference.</span></div>
+    <div class="sc-row"><b>February to March</b><span>Six Fathom calls with prospects are imported. Atlas reads each transcript and saves the durable bits as memories: "two discounted clients churned in 60 days", "support load doubled on discounted accounts". On the March call Sara says the "hold price, add a bonus" paragraph; Atlas also calls its crystallize tool on that passage. One snapshot, "Hold price, add value", type Principle, with story, method, and proof.</span></div>
+    <div class="sc-row"><b>Behind the scenes, March</b><span>The tenth new memory since the last sync trips the counter. A library-sync job is queued and the worker writes a narrative page "Pricing strategy" that summarizes the memories with their sources, and a timeline: January discounting, March stopped.</span></div>
+    <div class="sc-row"><b>May and August</b><span>A note "bonus policy live" and a note "base price raised 10%" come in through Add information. More memories; the timeline grows two entries when the counter trips again. Five pages have changed by now, so a pattern analysis runs and records the belief pattern "avoids price competition", backed by twelve memories.</span></div>
+    <div class="sc-row"><b>September, the question</b><span>Sara asks the helper: "How has our pricing thinking changed this year, and this prospect wants 15% off or they walk?"</span></div>
+    <div class="sc-row"><b>What she gets</b><span>The helper searches five lanes at once. Memories give the facts. The snapshot gives the belief with its story, method, and proof. The page gives the summary, the timeline gives the dates, the belief pattern gives the tendency. The answer: the arc from discounting to holding price with dates, then "hold the price, offer a 30-day onboarding bonus; last time discounting cost churn and support, and close rate rose from 18% to 24% when you stopped."</span></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3>The same story as a flow</h3>
+  <div class="flow6">
+    <div class="col">
+      <div class="stagehead">Over the year</div>
+      <div class="box door">🗨️ Jan: "remember, we discounted 20% in Q1"</div>
+      <div class="box door">🎙️ Feb to Mar: six Fathom calls</div>
+      <div class="box door">✍️ May: "bonus policy live"</div>
+      <div class="box door">✍️ Aug: "base price raised 10%"</div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Saved at once</div>
+      <div class="box work stage">Atlas + save tool<small>Reads each text, keeps the durable bits, one memory each.</small></div>
+      <div class="box work stage">Atlas + crystallize<small>On the March passage only: four model calls, one snapshot.</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Shelves</div>
+      <div class="box store">📓 Memories<br><small>facts, preferences, decisions</small></div>
+      <div class="box store">💎 Snapshot "Hold price, add value"<br><small>story, method, proof</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Cortex Max, background</div>
+      <div class="box work stage">Counter: 10 new memories<small>queues a library sync</small></div>
+      <div class="box work stage">Counter: 5 changed pages<small>queues a pattern analysis</small></div>
+      <div class="box work stage bypass">Crystallize button<small>skips the counters, runs both now</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Its shelves</div>
+      <div class="box store">📄 Page "Pricing strategy"</div>
+      <div class="box store">📅 Timeline: Jan, Mar, May, Aug</div>
+      <div class="box store">🧠 Belief pattern "avoids price competition"</div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">September question</div>
+      <div class="box read">🔎 Search, five lanes at once<br><small>memories, snapshots, pages, timelines, beliefs</small></div>
+      <div class="box read">💬 Answer: the arc with dates, the advice, the proof</div>
+    </div>
+  </div>
+  <div class="legend"><span><i style="background:var(--blue-bg);border-color:var(--blue)"></i> input</span><span><i style="background:var(--purple-bg);border-color:var(--purple)"></i> work</span><span><i style="background:var(--green-bg);border-color:var(--green)"></i> shelf</span><span><i style="background:var(--teal-bg);border-color:var(--teal)"></i> reading back</span></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3>Step by step, with the code behind each step</h3>
+  <ol class="steps">
+    <li><strong>January, chat.</strong> The helper calls <code>save_user_memory</code>; one row on the memories shelf, source "conversation". Today this step fails on the local stack (<a href="../system-map/brain.html#live-1">Live finding 1</a>).<div class="where">📍 <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code></div></li>
+    <li><strong>February to March, calls.</strong> Each Fathom meeting becomes a ticket, Atlas reads it and calls <code>save_user_memory</code> per durable point.<div class="where">📍 door <code>brain/controllers/import-jobs.controller.ts:39</code> · Atlas prompt for a personal brain <code>brain/services/brain-import-jobs-execution.base.ts:240</code></div></li>
+    <li><strong>March, the snapshot.</strong> The same prompt allows Atlas to call <code>crystallize_user_brain</code> on a passage that reads like a belief. Four model calls, a significance gate, one row on the snapshots shelf.<div class="where">📍 permission in the prompt <code>brain/services/brain-import-jobs-execution.base.ts:247</code> · tool <code>apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestion-actions.service.ts:11-39</code> · pipeline <code>brain/services/crystallization.service.ts:84-185</code></div></li>
+    <li><strong>The counter trips.</strong> Every save bumps "memories since last sync". At 10, with Cortex Max on, a library-sync job goes to the outbox.<div class="where">📍 <code>brain/services/brain-ops-hook.service.ts:102-116</code>, threshold <code>:4</code> · 🗄️ <code>brain_ops_outbox</code> <code>migrations/20260407100000_brain_ops_outbox.sql</code></div></li>
+    <li><strong>The worker writes the page and the timeline.</strong> It reads the memories since the watermark and writes or refreshes narrative pages and timeline items. Not running on the local stack (<a href="../issues/index.html">Issues</a>).<div class="where">📍 pages <code>apps/agent-api/src/modules/artifacts/repositories/artifact-brain-narrative.repository.ts:149</code> · timelines <code>:101,128</code> · 🗄️ <code>ns_narrative_pages</code>, <code>brain_timelines</code>, <code>brain_timeline_items</code></div></li>
+    <li><strong>Five pages changed.</strong> A pattern analysis job runs and records belief patterns and perspectives across the memories.<div class="where">📍 <code>brain/services/brain-ops-hook.service.ts:205-215</code> · writer <code>brain/repositories/emotional-intelligence.repository.ts:100</code> · 🗄️ <code>ns_belief_patterns</code> <code>migrations/047_brain_consolidation.sql:196</code></div></li>
+    <li><strong>September, the question.</strong> The helper's retrieval runs the lanes in parallel and merges: memories, snapshots, pages, timelines, belief patterns. Today the helper never reaches the personal brain (<a href="../system-map/brain.html#live-4">Live finding 4</a>); the web search does.<div class="where">📍 web lanes <code>brain/repositories/brain-retrieval.repository.ts:114</code> memories, <code>:150</code> snapshots, <code>:259</code> pages, <code>:347</code> timelines, <code>:273</code> belief patterns · agent copy <code>apps/agent-api/src/modules/brain/repositories/brain-retrieval-search.repository.ts</code>, <code>brain-retrieval-context.repository.ts</code></div></li>
+    <li><strong>The answer.</strong> Facts from memories, the reasoning from the snapshot, the arc from the page and timeline, the tendency from the belief pattern.</li>
+  </ol>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3>Who does what</h3>
+  <table>
+    <thead><tr><th>Piece</th><th>Reads</th><th>Writes</th><th>When</th><th>One line</th></tr></thead>
+    <tbody>
+      <tr><td>Atlas + save tool</td><td>one incoming text</td><td>memories (or textbook entries)</td><td>each import</td><td>keeps what still matters, one sentence per row</td></tr>
+      <tr><td>Crystallize</td><td>one incoming text</td><td>one snapshot</td><td>when Atlas or a person asks</td><td>turns a text into a belief with story, method, and proof, so the helper can advise instead of only recall</td></tr>
+      <tr><td>Cortex Max</td><td>many stored memories</td><td>pages, timelines, belief patterns</td><td>on counters, or the Crystallize button</td><td>keeps a brain thinking in the background so the helper can answer about the big picture and how it changed over time</td></tr>
+      <tr><td>Search</td><td>all shelves</td><td>nothing</td><td>each question</td><td>runs the lanes at once and merges</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="related"><span class="n">13</span> Related pages</h2>
+<div class="card">
+  <ul>
+    <li><a href="../system-map/brain.html">System map › Brain</a>: the five kinds, the eight doors, the six stages, the shelves, and every finding.</li>
+    <li><a href="../tests/brain-textbook-import.html">Tests › Textbook import end to end</a> and <a href="../tests/brain-memory-search.html">Tests › Memory in, search out</a>: how to prove a training landed without clicking.</li>
+    <li><a href="../issues/index.html">Issues and risks</a>: every open brain ticket.</li>
+  </ul>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">Questions about how the brain works inside are answered on the <a href="../system-map/brain.html#questions">System map page</a>.</p>
+  <dl class="qa">
+    <dt>Do snapshots and memories expire after 6 months? <span class="when">2026-09-11</span></dt>
+    <dd>No. They stay until someone deletes them. "Would this still matter in 6 months?" is a question the extractor asks itself before saving; if the answer is no, the item is never written. Nothing removes rows by age afterwards. Rows do carry validity dates and a status (current, superseded) so the helper can tell an old belief from the current one, but those are labels, not deletion. The only age-based cleanups in the module are for company signals and cross-brain suggestions. 📍 the 6-month question <code>brain/services/conversation-processing.service.ts:352</code> · validity columns on snapshots <code>migrations/20260617092831_brain_temporal_spine.sql:123</code> · no age-based delete in <code>brain/repositories/snapshots.repository.ts</code> or <code>memories.repository.ts</code>.</dd>
+
+    <dt>What is Cortex Max used for, and how is that different from crystallize? <span class="when">2026-09-11</span></dt>
+    <dd><strong>In one line:</strong> Cortex Max keeps a brain thinking in the background, turning many memories into pages, timelines, and belief patterns, so the helper can answer about the big picture and how it changed over time, not just single facts.
+      <strong>Situation.</strong> Sara's brain holds 300 memories from six months of calls, notes, and Slack. She asks the helper: "How has our pricing thinking changed this year?"
+      <strong>Without Cortex Max.</strong> Search returns the ten memories closest in meaning: scattered sentences from January, March, and August. The helper stitches an answer from fragments and misses the arc.
+      <strong>With Cortex Max on.</strong> The background jobs have already built a narrative page "Pricing strategy" that summarizes forty memories with their sources, a timeline (January: discounting; March: stopped; May: bonus policy; August: base price raised), and a belief pattern "avoids price competition" backed by twelve memories. The page, timeline, and belief lanes return those, and the helper answers with the arc, the dates, and a citation to the page.
+      <strong>The difference.</strong> Crystallize goes deep on one text: one text in, one belief with story, method, and proof out. Cortex Max goes wide and across time: many memories in, an overview and a history out. Crystallize runs when a text arrives; Cortex Max runs by itself on triggers, and its "Crystallize" button only forces that rebuild now. <strong>Below the threshold nothing runs:</strong> a brain that gains five memories and stops keeps them searchable as memories but gets no pages or timelines until the counter reaches ten (it keeps counting across days) or someone presses Crystallize. Small or slow brains may only ever get pages by that button. 📍 counter on the brain row, threshold <code>brain/services/brain-ops-hook.service.ts:4</code>.
+      📍 lanes that read its output <code>brain/repositories/brain-retrieval.repository.ts:259</code> pages, <code>:347</code> timelines, <code>:273</code> belief patterns · jobs <code>brain/services/brain-ops-hook.service.ts:102-116,205-215</code> · 🗄️ <code>ns_narrative_pages</code> <code>migrations/20260406130000_brain_narrative_pages.sql:8</code>, <code>brain_timelines</code> <code>migrations/20260618143000_brain_timelines.sql:7</code>, <code>ns_belief_patterns</code> <code>migrations/047_brain_consolidation.sql:196</code>.</dd>
+
+    <dt>What are snapshots used for? <span class="when">2026-09-11</span></dt>
+    <dd><strong>Situation.</strong> Three months after the "hold price" call, Sara asks the helper: "This prospect wants 15% off or they walk. What do we do?"
+      <strong>What happens.</strong> The helper searches the brain by meaning. The memories shelf returns one sentence, "We stopped discounting in March". The snapshots shelf returns the whole belief: the core idea, the story (March churn wave, support burnout), the method (time-boxed bonus, never touch base price), the proof (close rate 18% to 24%), and the stress-test exception (a truly price-sensitive segment).
+      <strong>What you see.</strong> Advice, not recall: "Hold the price, offer a 30-day onboarding bonus. Discounting cost you churn and support last time, and close rate rose when you stopped. Is this prospect in the price-sensitive segment you flagged?"
+      <strong>The use.</strong> A memory says what is true; a snapshot says why, how to act, and what proves it. Snapshots also link to each other so related beliefs surface together. Caveat: the helper cannot reach the personal brain today (<a href="../system-map/brain.html#live-4">Live finding 4</a>), so the snapshot exists but is not seen in chat until ROA-32 is fixed.
+      📍 snapshot lane in search <code>brain/repositories/search.repository.ts:99</code> <code>find_similar_snapshots</code> and agent side <code>apps/agent-api/src/modules/brain/repositories/brain-retrieval-search.repository.ts:57</code> · links between snapshots <code>traverse_edges</code> <code>migrations/047_brain_consolidation.sql:580</code> · 🗄️ <code>ns_snapshots</code> <code>:112</code>, <code>ns_snapshot_edges</code> <code>:152</code>.</dd>
+
+    <dt>Show me crystallize with an example. <span class="when">2026-09-11</span></dt>
+    <dd><strong>Input.</strong> A Fathom call is imported and Atlas meets this passage, or someone sends it to the snapshots door. Sara said on the call: "We stopped discounting in March. Every time we cut price the wrong clients came in, churned in 60 days, and burned support. Now we hold price and add a bonus instead. Closed rate went from 18 to 24 percent."
+      <strong>What happens, four model calls in three steps.</strong>
+      <ul>
+        <li><em>Step 1, two calls at once.</em> The Thought Extractor names the belief: name "Hold price, add value", type Principle, one-liner "Never discount; add a bonus instead", core "Discounting attracts the wrong buyer". The Origin Mapper writes the story: where it came from (the March churn wave), the moment (the support burnout), and the emotion.</li>
+        <li><em>Step 2.</em> The System Builder turns it into a method: "When a prospect asks for a discount, offer a time-boxed bonus of equal perceived value; never touch the base price."</li>
+        <li><em>Step 3.</em> The Stress Test argues against it ("what about a genuinely price-sensitive segment?"), records the proof (18% → 24% close rate) and a significance score, say 0.8.</li>
+        <li><em>Gate.</em> Under 0.3 the whole thing is dropped. Above, the text is embedded (768 numbers) and one row is written on the snapshots shelf with all those fields, plus the raw call text as evidence chunks.</li>
+      </ul>
+      <strong>What you see.</strong> A diamond on the graph in the Snapshots group, "Hold price, add value", typed Principle. Search for "should we discount" finds it by meaning. The chat helper can cite it, with the story and the proof, once the retrieval bug is fixed.
+      <strong>Not to confuse with</strong> the Cortex Max "Crystallize" button, which takes no text and rebuilds pages, beliefs, and timelines from the memories already stored.
+      📍 pipeline <code>brain/services/crystallization.service.ts:84-121</code> (phases), gate <code>:121</code>, embed and insert <code>:132-185</code>, evidence <code>:189</code> · Atlas tool <code>apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestion-actions.service.ts:11-39</code> · manual door <code>POST /api/brain/snapshots/crystallize</code> <code>brain/controllers/snapshots.controller.ts:72</code> · 🗄️ <code>ns_snapshots</code> columns name, type, core, one_liner, story, moment, emotion, method, proof, significance_score <code>migrations/047_brain_consolidation.sql:112-150</code>.</dd>
+
+    <dt>What is "crystallize", and how is it different from Cortex Max? <span class="when">2026-09-11</span></dt>
+    <dd><strong>In one line:</strong> crystallize turns a piece of text into a snapshot, so the helper has not just the fact but the story behind it, the method, and the proof, and can advise instead of only recall. Two different things share the word.
+      <ul>
+        <li><strong>Crystallize a text into a snapshot.</strong> The older meaning. Take one piece of raw text (a meeting, a note) and run three Gemini passes over it (thought, system, stress test) to produce one <em>snapshot</em>: a structured belief with a claim, story, method, and proof, typed Model, Rule, Conviction, or Principle. It writes one row on the snapshots shelf. Reached by the snapshots door and by the Atlas tool <code>crystallize_user_brain</code>, which Atlas may use on a belief-like passage while importing to a personal brain. A dedicated meeting pipeline exists in the code but is not wired (<a href="../system-map/brain.html#other-f10">Other finding 10</a>). It does not need Cortex Max.</li>
+        <li><strong>Crystallize in the Cortex Max modal.</strong> A button that says "rebuild everything now". It queues three background jobs for the brain: a full library sync (narrative pages), a pattern analysis (beliefs and perspectives), and a timeline synthesis. It reads the memories the brain already has; it does not take new text. It only makes sense with Cortex Max on, because the same jobs run on their own when the switch is on.</li>
+      </ul>
+      So: Cortex Max is the switch that keeps background thinking running; the Cortex Max "Crystallize" button is a manual "do it all now"; and the older "crystallize" is a way to turn one text into one snapshot.
+      📍 snapshot crystallize <code>brain/services/crystallization.service.ts:66,100-121,185</code> · doors <code>brain/controllers/snapshots.controller.ts:72</code>, Atlas tool <code>apps/agent-api/src/modules/artifacts/services/artifact-action.registry.ts:629</code> · Cortex Max rebuild <code>brain/controllers/brain-cortex-max.controller.ts:66</code> → <code>brain/services/brain-ops-hook.service.ts</code> <code>enqueueManualCortexCrystallization</code> (library sync + pattern analysis + timeline synthesis) · 🗄️ <code>ns_snapshots</code> <code>migrations/047_brain_consolidation.sql:112</code>, <code>brain_ops_outbox</code>.</dd>
+
+    <dt>What is Cortex Max? <span class="when">2026-09-11</span></dt>
+    <dd>A per-brain switch for "background thinking". Off, the brain only stores what you feed it. On, it also writes things about itself while you are not looking: a library of narrative pages (wiki-style summaries built from many memories), timelines (dated lines of events per subject), belief patterns (recurring beliefs spotted across memories), and, for the customer brain, refreshed customer avatars. The work is queued as jobs in the brain-ops outbox and runs on a worker. Triggers: switching it on queues a first full library sync; then every 10 new memories queues a library sync, every 5 changed pages queues a pattern analysis, and new customer memories queue an avatar pass. "Crystallize" forces a full rebuild. On the local stack these jobs never finish, see Issues. 📍 switch <code>brain/services/brain-cortex-max.service.ts:80-93</code> · triggers <code>brain/services/brain-ops-hook.service.ts:102-116,205-215,260-272</code> · job kinds <code>brain_library_sync</code>, <code>brain_pattern_analysis</code>, <code>brain_timeline_synthesis</code>, <code>brain_avatar_synthesis</code> · 🗄️ <code>ns_brains.cortex_max</code>, <code>brain_ops_outbox</code> <code>migrations/20260407100000_brain_ops_outbox.sql</code>.</dd>
+  </dl>
+</div>
+
+<p class="footer">How this page was made: each screen was traced from its React component to the browser call and the API controller on 2026-09-10 (one explorer pass plus spot checks); behaviour statements come from the code and from live runs on the local stack the same week.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

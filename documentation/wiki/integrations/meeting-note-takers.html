@@ -1,0 +1,199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Meeting note takers · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat active" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🎙️ Meeting note takers: Fathom, Fireflies, Read.ai</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-13</span>
+  <span>Category: <a href="index.html">Integrations</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a> · <a href="https://linear.app/1dscollective/issue/ROA-44/modular-feature-planning">ROA-44</a></span>
+  <span>Source of truth: <code>apps/api/src/modules/integrations/{fathom,fireflies}</code>, <code>apps/api/src/modules/meetings</code>, <code>.docs/plans/meeting-notetaker-system-roa-40.md</code></span>
+</div>
+<p class="sub">How meeting recordings get from an AI note taker into ROAS today, what is wrong with it, and the plan (ROA-40) to make it one system that any note taker can join. Read the Overview for the story; the Findings tab has the evidence with file paths.</p>
+<div class="pathnote">📍 Paths starting with <code>fathom/</code> mean <code>apps/api/src/modules/integrations/fathom/</code>, <code>fireflies/</code> means <code>apps/api/src/modules/integrations/fireflies/</code>, <code>meetings/</code> means <code>apps/api/src/modules/meetings/</code>, <code>brain/</code> means <code>apps/api/src/modules/brain/</code>, <code>web/</code> means <code>apps/web/src/</code>. The API adds <code>/api</code> in front of every route.</div>
+
+<div class="card" id="summary" style="margin-bottom:14px">
+  <h3>In one paragraph</h3>
+  <p>Two note takers are connected today, each through its own pipe. <strong>Fathom</strong> is deep: it records, calls us when a recording is ready, and the recording lands in the brain, in the Meetings space as a call row, and in the customer and campaign brains. <strong>Fireflies</strong> is shallow: you paste an API key, press "sync", and a brain job is queued that never carries the transcript, so the brain learns nothing from it. Nothing in the code says "this is a meeting provider". The plan makes one shared definition of a meeting, one front door, one path into the brain, and turns Fathom, Fireflies and <strong>Read.ai</strong> into plug-ins behind it.</p>
+</div>
+
+<h2 id="today"><span class="n">1</span> How it works today</h2>
+<div class="card">
+  <p><strong>Fathom: a real pipe with six exits.</strong> When a Fathom call ends, Fathom posts the recording to our webhook. We work out whose recording it is, fetch the transcript if the post did not include it, then fan out: brain import, customer-brain signal, Meetings space call row, Page Grader client match, Campaign Brain, and the post-call Slack flow downstream.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Dylan finishes a client call that Fathom recorded.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Fathom posts to <code>POST /integrations/fathom/webhook</code>. The service matches the header value against every connected user's stored secret, or, when there is no header, guesses the owner from the invitee emails in the body. If auto-ingest is on, it queues a <code>fathom_meeting_import</code> brain job, writes a customer-interaction row, creates or attaches a call row in the Meetings space, syncs to Page Grader, and routes matched clients to their Campaign Brain.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A call in Meetings with transcript and follow-ups, memories in the brain a minute later, and a Slack recap draft.</span></div>
+    <div class="where">📍 Code: <code>fathom/controllers/fathom-webhooks.controller.ts:67</code> <code>receiveWebhook</code> · <code>fathom/services/fathom-webhook.service.ts:31</code> <code>processWebhookAsync</code> (brain <code>:116</code>, customer <code>:127</code>, space <code>:141</code>, Page Grader <code>:142</code>, campaign <code>:146</code>) · owner lookup <code>fathom/services/fathom-api.service.ts:138</code><br>🗄️ Table: <code>user_integrations</code> (tokens and <code>metadata.webhook_secret</code>) · <code>meeting_recordings</code> in <code>supabase/migrations/20260728200000_meeting_workspace_foundation.sql:64</code></div>
+  </div>
+  <p><strong>Fireflies: a key and a button.</strong> You paste an API key in Settings. Brain training lists your last transcripts and lets you import one, or "sync" queues the last twenty. Fireflies never calls us.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara presses "Sync" on Fireflies.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The API lists the twenty most recent transcripts and queues one <code>fireflies_transcript_import</code> job per transcript. The job payload holds only the transcript id.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Jobs that finish as "succeeded" in the tray, and nothing new in the brain (see problem 1 below).</span></div>
+    <div class="where">📍 Code: <code>fireflies/controllers/fireflies.controller.ts:95</code> <code>syncTranscripts</code> · <code>brain/services/brain-import-jobs-enqueue.base.ts:151</code> <code>enqueueFirefliesTranscriptImport</code><br>🗄️ Table: <code>vault_secrets</code> (API key) in <code>supabase/migrations/20260224170000_vault_and_fireflies.sql:5</code></div>
+  </div>
+  <p class="tech" style="margin-top:10px">The meetings domain already normalizes everything to one shape, <code>FathomMeetingSource</code> in <code>meetings/providers/fathom-meeting-source.ts:29</code>, and <code>meetings/services/meeting-source-ingestion.service.ts:172</code> uses only that shape after normalizing. That seam is what the plan promotes to a product-wide contract.</p>
+</div>
+
+<h2 id="problems"><span class="n">2</span> Three problems found</h2>
+<div class="card">
+  <p><strong>Problem 1: Fireflies brain imports carry no text.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Any Fireflies import, manual or sync.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The job payload is <code>{ transcriptId }</code>. When the job is built for Atlas, the content extractor finds no transcript, no content, no text and no url, so it sends the whole payload as JSON. The transcript fetch that exists for Fathom is never run for Fireflies.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A "succeeded" job and a brain with nothing from the call.</span></div>
+    <div class="sc-row"><b>Should be</b><span>The transcript is fetched from Fireflies before the job is queued and stored in the payload as speaker turns.</span></div>
+    <div class="where">📍 Code: <code>brain/services/brain-import-jobs-input.base.ts:81</code> · <code>brain/services/brain-import-jobs-execution.base.ts:304</code> <code>extractContentText</code> · Fathom-only fetch <code>:42</code> <code>ensureFathomTranscript</code></div>
+  </div>
+  <p><strong>Problem 2: the Fathom webhook does not verify the sender.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Anyone posts a JSON body to the Fathom webhook route.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The header is compared to stored secrets as a plain string, not as a signature over the body. With no header at all, the owner is guessed from invitee emails in the body and processing continues. The route always answers 200.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Nothing; that is the problem. A crafted body could create call rows and brain jobs for a user.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Fathom signs every delivery with <code>webhook-id</code>, <code>webhook-timestamp</code>, <code>webhook-signature</code> (HMAC-SHA256 over id.timestamp.body, 5-minute window). Verify it, reject the rest.</span></div>
+    <div class="where">📍 Code: <code>fathom/services/fathom-api.service.ts:138</code> <code>resolveUserByWebhookSecret</code> · fallback <code>fathom/services/fathom-webhook.service.ts:412</code> <code>resolveUserFromPayload</code> · <code>fathom/controllers/fathom-webhooks.controller.ts:84</code></div>
+  </div>
+  <p><strong>Problem 3: the Fireflies agent action is empty.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Vibey decides to import a Fireflies transcript with its tool.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The action exists in the registry and the docs, but the handler takes no arguments and does nothing.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The agent reports success; nothing is imported.</span></div>
+    <div class="sc-row"><b>Should be</b><span>One provider-agnostic action, <code>ingest_meeting_transcript</code>, with schema, preflight and lifecycle per the agent tool rules.</span></div>
+    <div class="where">📍 Code: <code>apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestion-actions.service.ts:475</code> · registry <code>artifact-action.registry.ts:636</code> · docs <code>apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts:2667</code></div>
+  </div>
+</div>
+
+<h2 id="plan"><span class="n">3</span> The plan in plain words</h2>
+<div class="card">
+  <p><strong>One definition of a meeting.</strong> Title, time, attendees, transcript, summary and action items, in one shape no matter which tool recorded it. Meetings are the first kind; the shape also allows calls, recordings and uploads later.</p>
+  <p><strong>One front door.</strong> Every tool posts to the same address, with a private key in the URL that names the connection. The plug-in for that tool checks the signature, a small table drops duplicates, and one intake service passes the meeting on.</p>
+  <p><strong>One path into the brain.</strong> One job type, <code>meeting_transcript_import</code>, whose payload already holds the transcript. It replaces the Fathom-only job and the broken Fireflies one.</p>
+  <p><strong>Plug-ins, not pipes.</strong> Fathom moves onto the new door and gains real signature checks. Fireflies gains a webhook and a working brain import. Read.ai joins as the third plug-in.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>After the plan ships, a Read.ai meeting ends.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Read.ai posts the full report to <code>POST /integrations/meetings/webhooks/read_ai/&lt;key&gt;</code>. The Read.ai plug-in checks <code>X-Read-Signature</code> with the signing key the user pasted, the delivery id is recorded, the report is normalized, and intake queues the brain job, writes the customer signal, and creates the call row.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The same result as a Fathom call today: a call in Meetings, memories in the brain, a Slack recap draft.</span></div>
+    <div class="where">📍 Planned: <code>meetings/intake/controllers/meeting-webhooks.controller.ts</code>, <code>meetings/intake/services/meeting-intake.service.ts</code>, <code>meetings/providers/meeting-provider.contract.ts</code>, <code>apps/api/src/modules/integrations/read-ai/</code><br>🗄️ Planned tables: <code>meeting_webhook_deliveries</code> (new), <code>integrations_available</code> row <code>read_ai</code>, <code>vault_secrets</code> label <code>signing_key</code></div>
+  </div>
+</div>
+
+<h2 id="add-readai"><span class="n">4</span> How a user adds Read.ai</h2>
+<div class="card">
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Nate uses Read.ai and wants his meetings in ROAS.</span></div>
+    <div class="sc-row"><b>What happens</b><span>In Settings › Integrations he picks Read AI. The card shows his personal ROAS webhook address with a copy button. In Read AI › Integrations › Webhooks he creates a webhook with that address and copies the signing key Read AI generates. Back in ROAS he pastes the key and presses Connect. Read AI's "Send test request" button proves the link.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Read AI shows as connected with the account name; the next meeting arrives on its own. Read AI webhooks need a Pro or Enterprise plan.</span></div>
+    <div class="where">📍 Planned: catalog row in <code>web/lib/integrations/integration-catalog.ts</code> (pattern: Cursor row <code>:431</code> with <code>connection_fields</code> and <code>buildPlatformWebhookUrl</code>) · connect route <code>POST /integrations/read-ai/connect</code> · signing rule from <a href="https://support.read.ai/hc/en-us/articles/16352415827219-Getting-Started-with-Webhooks">Read AI: Getting Started with Webhooks</a></div>
+  </div>
+</div>
+
+<h2 id="any-tool"><span class="n">5</span> How any future tool joins</h2>
+<div class="card">
+  <p><strong>Only the shape of a meeting is fixed. How it arrives is the plug-in's business.</strong> A tool can join in four ways, and every way ends in the same intake.</p>
+  <div class="scroll"><table>
+    <thead><tr><th>Trigger</th><th>Who starts it</th><th>Examples</th></tr></thead>
+    <tbody>
+      <tr><td>Push</td><td>The tool calls our per-connection URL</td><td>Fathom, Read.ai, Fireflies ping then fetch</td></tr>
+      <tr><td>Poll</td><td>Our scheduled sweep asks the tool</td><td>Zoom cloud recordings, any MCP-only server</td></tr>
+      <tr><td>User click</td><td>Someone picks a meeting in Brain training</td><td>"Import past meetings"</td></tr>
+      <tr><td>Agent action</td><td>Vibey fetches through a tool and hands it over</td><td><code>ingest_meeting_transcript</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>A plug-in declares which of four capability groups it has: <em>identity</em> (name, login style), <em>push</em> (verify and parse a delivery), <em>pull</em> (list recent, fetch one, poll since a cursor), <em>normalize</em>. Login style can be OAuth, an API key, a pasted signing key, or an MCP session. Adding a tool later is one plug-in class, one catalog row, and one seed migration.</p>
+  <p class="tech" style="margin-top:10px">Contract and registry: <code>meetings/providers/meeting-source.types.ts</code>, <code>meeting-provider.contract.ts</code>, <code>meeting-provider.registry.ts</code> (planned). Poll sweep follows <code>brain/services/brain-import-jobs-runtime.base.ts:167</code>. MCP is a pull transport; where its client runs (api or agent-api) is an open question in the plan.</p>
+</div>
+
+<h2 id="phases"><span class="n">6</span> Delivery: six phases, each with its proof</h2>
+<div class="card">
+  <ol class="steps">
+    <li><strong>Phase 0: contract, registry, front door, Fathom moved onto it.</strong> Proof: signature tests (valid, tampered, replayed, stale); a real Fathom recording arrives through the new door and the old door shows zero traffic.</li>
+    <li><strong>Phase 1: new brain path, Fireflies fixed and given a webhook.</strong> Proof: the job payload carries the transcript; a test recording uploaded to Fireflies becomes memories.</li>
+    <li><strong>Phase 2: Read.ai added.</strong> Proof: Read AI's test request produces a brain job and a saved meeting; a wrong key is rejected.</li>
+    <li><strong>Phase 3: Fireflies and Read.ai meetings appear in the Meetings space.</strong> Proof: one call row per provider test meeting with transcript document and follow-ups, matched to the calendar event when one exists.</li>
+    <li><strong>Phase 4: old Fathom-only and Fireflies-only code removed, one agent action.</strong> Proof: API, web and agent suites pass; a search finds none of the removed pieces.</li>
+    <li><strong>Phase 5: full-flow test, UI + backend + agents.</strong> Proof: one real meeting recorded by all three tools; checked in Settings, Meetings space (one call row, three recordings), brain memories, training panel, Vibey chat answers, post-call Slack flow. Gaps become fix tickets before ROA-40 closes.</li>
+  </ol>
+  <div class="where">📍 Plan: <code>.docs/plans/meeting-notetaker-system-roa-40.md</code> (Step-By-Step Implementation Plan, Test Plan, Rollout) · live checks run only on the app-runner checkout per <code>.claude/rules/testing.md</code></div>
+</div>
+
+<h2 id="findings" data-tab="Findings"><span class="n">7</span> Findings and evidence</h2>
+<div class="card">
+  <h3>Provider facts verified from official docs (2026-09-11)</h3>
+  <div class="scroll"><table>
+    <thead><tr><th>Provider</th><th>How we get the meeting</th><th>Signature</th><th>Login</th><th>Source</th></tr></thead>
+    <tbody>
+      <tr><td>Fathom</td><td>Push; transcript and summary may need a fetch (<code>/recordings/{id}/transcript</code>, 30 calls per minute)</td><td><code>webhook-id</code>, <code>webhook-timestamp</code>, <code>webhook-signature</code>; HMAC-SHA256 over <code>id.timestamp.body</code>; secret after <code>whsec_</code>, base64; 5-minute window</td><td>OAuth 2.0; we register the webhook with <code>destination_url</code> and <code>triggered_for</code></td><td><a href="https://developers.fathom.ai/webhooks">developers.fathom.ai/webhooks</a></td></tr>
+      <tr><td>Fireflies</td><td>Push ping <code>{ meetingId, eventType }</code> then GraphQL <code>transcript(id)</code> fetch</td><td><code>x-hub-signature</code>, HMAC-SHA256 with a user-set 16 to 32 character secret (encoding to be confirmed)</td><td>API key, <code>Authorization: Bearer</code>; user pastes our URL in Developer settings</td><td><a href="https://docs.fireflies.ai/graphql-api/webhooks">docs.fireflies.ai</a></td></tr>
+      <tr><td>Read.ai</td><td>Push; full report in the body (<code>transcript.speaker_blocks</code>, <code>summary</code>, <code>action_items</code>, <code>participants</code>, <code>report_url</code>, <code>request_id</code>)</td><td><code>X-Read-Signature</code>, hex HMAC-SHA256 of the raw body with the base64-decoded signing key</td><td>Signing key pasted by the user; Pro or Enterprise plan; up to 20 webhooks per user</td><td><a href="https://support.read.ai/hc/en-us/articles/16352415827219-Getting-Started-with-Webhooks">support.read.ai</a></td></tr>
+    </tbody>
+  </table></div>
+  <h3>Hardcoded lists a provider must join today</h3>
+  <p>These are why "add a provider" is a ten-file change now, and why the plan makes the API-side lists read from the registry.</p>
+  <ul>
+    <li><code>apps/api/src/modules/integrations/services/integrations-overview.service.ts:17</code> <code>INTEGRATION_IDS_FOR_OVERVIEW</code></li>
+    <li><code>apps/api/src/modules/integrations/services/personal-cross-context-providers.ts:11</code> <code>PERSONAL_CROSS_CONTEXT_PROVIDERS</code></li>
+    <li><code>apps/api/src/modules/integrations/services/integrations-composio.service.ts:48</code> <code>PERSONAL_ONLY</code></li>
+    <li><code>brain/types/brain.types.ts:21</code> <code>SourceType</code> · <code>brain/repositories/brain-import-job-status.repository.ts:54</code> job-type lists · <code>brain/repositories/memory-stats.repository.ts:392</code></li>
+    <li><code>web/lib/integrations/integration-catalog.ts:406</code>, <code>integration-logo.ts:28</code>, <code>web/features/settings/components/settings-content/integration-connection-label.ts:55</code>, <code>useIntegrations.ts:513</code> and <code>:657</code> (872-line file, hook limit 300)</li>
+    <li><code>web/features/brain/components/training/types.ts:13</code>, <code>use-training-modal-integrations.ts:72</code>, <code>training-queue-dispatch.ts:127</code></li>
+    <li><code>packages/api-shared/src/types/customer-interaction.ts:9</code> <code>INTERACTION_CHANNELS</code></li>
+  </ul>
+  <h3>Meetings-space coupling</h3>
+  <p><code>apps/api/src/modules/spaces/services/space-automation-service-06.base.ts:294</code> <code>processFathomRecordingEvent</code> reads a Fathom-shaped body and claims <code>space_external_automation_events</code> with <code>provider 'fathom'</code>; the provider CHECK is <code>('gmail','outlook','fathom')</code> in <code>supabase/migrations/20260510091200_space_external_automation_fathom.sql:16</code>. The Flow trigger <code>external_fathom_recording_ready</code> has 63 references, so the plan keeps its name and adds a <code>provider</code> field; the rename is a logged follow-up.</p>
+  <h3>Open questions before Phase 0</h3>
+  <ul>
+    <li>Fireflies signature encoding (hex or base64, <code>sha256=</code> prefix): capture one real delivery on a test account.</li>
+    <li>Fireflies and Read.ai retry behaviour: return one 500 during the test and watch redelivery.</li>
+    <li>Read.ai REST API login: only needed for "import past meetings"; the support article was not readable by automated fetch.</li>
+    <li>Does Fathom accept a <code>destination_url</code> with a path segment for the connection key.</li>
+    <li>Where an MCP-backed fetch runs: <code>apps/agent-api/src/modules/mcp/</code> has the client; <code>apps/api</code> does not.</li>
+  </ul>
+</div>
+
+<h2 id="related"><span class="n">8</span> Related pages</h2>
+<div class="card">
+  <ul>
+    <li><a href="../system-map/brain.html#flow">System map › Brain</a>: the import queue, Atlas and the shelves that every meeting ends up in (doors table lists Fathom and Fireflies).</li>
+    <li><a href="../features/brain.html#train">Features › Brain</a>: the Train modal where Fathom and Fireflies imports are picked today.</li>
+    <li><a href="../decisions/index.html">Decisions and plans</a>: the ROA-40 decision entry.</li>
+    <li><a href="../tests/index.html">Tests and checks</a>: where the Phase 5 run will be recorded.</li>
+  </ul>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <dl class="qa">
+    <dt>Will the structure support any other system, not just the listed note takers? <span class="when">2026-09-12</span></dt><dd>Yes for anything that delivers a transcript as text. The contract fixes only the shape of the result; how it arrives (push, poll, user click, agent action) and how you log in (OAuth, API key, signing key, MCP) are the plug-in's choice. Audio without text needs a transcription step first; that is a separate feature the contract leaves room for. 📍 <code>.docs/plans/meeting-notetaker-system-roa-40.md</code> "Extensibility Model"</dd>
+    <dt>Would it support an MCP connection? <span class="when">2026-09-12</span></dt><dd>Yes, as a pull transport. An MCP server never calls us, so an MCP-backed tool joins through the scheduled poll, a user click, or the agent action; its plug-in implements the pull group with an MCP session instead of REST. Open question: whether that client runs in api or agent-api. 📍 <code>apps/agent-api/src/modules/mcp/repositories/mcp.repository.ts</code></dd>
+    <dt>Where is testing in the delivery? <span class="when">2026-09-12</span></dt><dd>Every phase has its own proof (section 6), and Phase 5 is a full-flow run with a real meeting recorded by all three tools, checked across Settings, Meetings space, brain, training panel, Vibey chat and the Slack flow. 📍 plan "Test Plan" and "Phase 5"</dd>
+  </dl>
+</div>
+
+<p class="footer">How this page was made: three read-only code sweeps (meeting code, integrations architecture, brain import doors) plus the official Fathom, Fireflies and Read.ai webhook docs, all re-verified in the source on 2026-09-11; written as the human view of <code>.docs/plans/meeting-notetaker-system-roa-40.md</code>.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

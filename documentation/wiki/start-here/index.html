@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Start here · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat active" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🚀 Start here</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-10</span>
+  <span>Category: Start here</span>
+  <span>Source of truth: <code>package.json</code>, <code>apps/*/package.json</code>, <code>apps/*/.env.example</code>, <code>AGENTS.md</code>, <code>CLAUDE.md</code></span>
+</div>
+<p class="sub">ROAS is an agent-driven marketing and operations platform. It is one big repository holding several apps that talk to each other. This page tells you what those apps are, what you need before starting, the exact commands to start them, the config each one needs, and the rules everyone follows.</p>
+
+<h2 id="apps"><span class="n">1</span> The apps</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>App</th><th>What it is</th><th>Port</th><th>Start command</th><th>Defined in</th></tr></thead>
+    <tbody>
+      <tr><td><strong>web</strong></td><td>The product people use in the browser.</td><td>3000</td><td><code>pnpm dev:app</code></td><td><code>apps/web/package.json</code> <code>dev</code></td></tr>
+      <tr><td><strong>api</strong></td><td>The main backend. Owns the brain, spaces, campaigns, and most data.</td><td>3001</td><td><code>pnpm dev:back</code></td><td><code>apps/api/package.json</code> <code>dev</code></td></tr>
+      <tr><td><strong>admin</strong></td><td>Internal admin screens.</td><td>3002</td><td><code>pnpm dev:admin</code></td><td><code>apps/admin/package.json</code> <code>dev</code></td></tr>
+      <tr><td><strong>agent-api</strong></td><td>The AI agent's backend. Runs the helpers like Atlas and Pixel.</td><td>3003</td><td><code>pnpm dev:agentapi</code></td><td>root <code>package.json</code> <code>dev:agentapi</code></td></tr>
+      <tr><td><strong>openclaw</strong></td><td>The gateway the agents talk through.</td><td>18789</td><td><code>pnpm dev:agent</code></td><td>root <code>package.json</code> <code>dev:agent</code></td></tr>
+      <tr><td><strong>funnels, website</strong></td><td>Public pages and funnels.</td><td>3002 (funnels), other</td><td><code>pnpm dev:website</code></td><td><code>apps/website/package.json</code></td></tr>
+      <tr><td><strong>queue-worker, mission-worker</strong></td><td>Background workers on Redis queues.</td><td></td><td><code>pnpm --filter @vibey/queue-worker dev</code></td><td><code>apps/queue-worker/package.json</code>, <code>apps/mission-worker/package.json</code></td></tr>
+    </tbody>
+  </table>
+  <div class="where" style="margin-top:10px">📍 All root shortcuts live in <code>package.json</code> under <code>scripts</code>. Turborepo config in <code>turbo.json</code>. Stack: pnpm 9.15.4, Node 22, TypeScript, Next.js 16, NestJS, Supabase, BullMQ on Redis, Playwright, Vitest.</div>
+</div>
+
+<h2 id="before"><span class="n">2</span> What you need before starting</h2>
+<div class="grid g2">
+  <div class="card kind blue"><h3>💻 On your machine</h3>
+    <ul>
+      <li><strong>Node 22</strong> and <strong>pnpm 9.15.4</strong>. The repo pins the pnpm version.</li>
+      <li><strong>Redis</strong> running on <code>localhost:6379</code>, and <strong>it must be your own</strong>. Never point a local api at a shared or cloud Redis: any other api attached to the same Redis will grab your jobs and run them elsewhere, and your terminals will show nothing. Seen live on 2026-09-09, see the Brain page, Live finding 2.</li>
+      <li><strong>Git</strong> and a GitHub login for pull requests.</li>
+    </ul>
+    <div class="where">📍 <code>package.json</code> <code>engines.node &gt;=20</code>, <code>packageManager pnpm@9.15.4</code> · Redis default noted in <code>AGENTS.md</code> "Cursor Cloud specific instructions" · queue names in <code>apps/api/src/modules/agent-runtime/agent-runtime-queues.ts</code></div>
+  </div>
+  <div class="card kind orange"><h3>🔑 Accounts and keys, not in the repo</h3>
+    <ul>
+      <li><strong>Your own Supabase database.</strong> Since 2026-09-10 a local Supabase is wired: <code>supabase/config.toml</code> exists, see section 7 below. Do not develop against the shared dev project <code>sicxiwyukxtqicevlwuc</code>: a cloud api is attached to it and will take your jobs. Never point local writes at production <code>lhfgtsjetcardinpgouq</code>.</li>
+      <li><strong>An LLM key.</strong> <code>OPENROUTER_API_KEY</code> in <code>apps/api/.env</code>; the agent scripts read it from there. <code>GEMINI_API_KEY</code> for brain embeddings and OCR.</li>
+      <li><strong>One shared secret</strong>: <code>VAULT_ENCRYPTION_KEY</code> must be byte-identical in <code>apps/api/.env</code> and <code>apps/agent-api/.env</code>, or stored tokens cannot be read.</li>
+    </ul>
+    <div class="where">📍 <code>supabase/config.toml</code> (migrations and seed disabled, restore-based) · <code>dev:agentapi</code> script in root <code>package.json</code> reads <code>OPENROUTER_API_KEY</code> from <code>apps/api/.env</code> · vault note in <code>apps/agent-api/.env.example:13-15</code></div>
+  </div>
+</div>
+
+<h2 id="setup"><span class="n">3</span> First-time setup, step by step</h2>
+<div class="card">
+  <p><strong>Step 1. Install everything once.</strong></p>
+  <pre>pnpm install</pre>
+  <p><strong>Step 2. Create the config files.</strong> Each app has an example file. Copy it and fill in the values you have.</p>
+  <pre>cp apps/web/.env.example apps/web/.env.local
+cp apps/api/.env.example apps/api/.env
+cp apps/agent-api/.env.example apps/agent-api/.env
+cp apps/openclaw/.env.example apps/openclaw/.env
+cp apps/mission-worker/.env.example apps/mission-worker/.env</pre>
+  <p><strong>Step 3. Check the configs agree with each other.</strong> Two helper scripts exist for ROAS. The first copies shared values into the agent config. The second fails if any app still points at the old Vibey database.</p>
+  <pre>bash scripts/roas/sync-local-agent-env.sh
+bash scripts/roas/verify-local-env-alignment.sh</pre>
+  <p><strong>Step 4. Start Redis</strong> in its own terminal. It is a separate server program, already installed on the Mac, and nothing in the repo starts it for you.</p>
+  <pre>redis-server</pre>
+  <p><strong>Step 5. Start the apps you need, each in its own terminal, in this order.</strong> The API first because the web app and the agent call it.</p>
+  <pre>pnpm dev:back        # api on 3001
+pnpm dev:app         # web on 3000
+pnpm dev:agentapi    # agent-api on 3003, only if you need chat or agents
+pnpm dev:agent       # openclaw gateway on 18789, only if you need agents to run</pre>
+  <p><strong>Step 6. Open</strong> <code>http://localhost:3000</code>. With placeholder Supabase values the login page renders and the home page redirects to login. With a real project you can log in.</p>
+  <div class="where">📍 Scripts: root <code>package.json</code> <code>dev:back</code>, <code>dev:app</code>, <code>dev:agentapi</code>, <code>dev:agent</code> · helper scripts <code>scripts/roas/sync-local-agent-env.sh</code>, <code>scripts/roas/verify-local-env-alignment.sh</code> · env examples <code>apps/web/.env.example</code>, <code>apps/api/.env.example</code>, <code>apps/agent-api/.env.example</code>, <code>apps/openclaw/.env.example</code>, <code>apps/mission-worker/.env.example</code></div>
+
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Nour joins the team, clones the repo, runs <code>pnpm install</code>, then runs the root <code>pnpm dev</code> to start everything.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Admin and funnels both want port 3002, so one of them fails. The web app starts but every page returns an error because two Supabase variables are read without a fallback and Nour's env file is empty.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A port-in-use error in one terminal and a 500 on every web page.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Start apps one by one with the focused scripts, and set the two Supabase variables in <code>apps/web/.env.local</code> even with placeholder values.</span></div>
+    <div class="where">📍 Port clash and the two required variables documented in <code>AGENTS.md</code> "Cursor Cloud specific instructions" · the strict read is in <code>apps/web/src/middleware.ts</code> (<code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>) · admin port <code>apps/admin/package.json</code> <code>dev</code></div>
+  </div>
+</div>
+
+<h2 id="config"><span class="n">4</span> Config each app needs</h2>
+<p class="sub">Only the variables that matter for a local start. The example files list everything else, grouped by integration.</p>
+<div class="grid g2">
+  <div class="card"><h3>🖥️ web · <code>apps/web/.env.local</code></h3>
+    <table><tbody>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_URL</code></td><td>Required, even a placeholder.</td></tr>
+      <tr><td><code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code></td><td>Required, even a placeholder.</td></tr>
+      <tr><td><code>BACKEND_URL</code>, <code>NEXT_PUBLIC_BACKEND_URL</code></td><td><code>http://localhost:3001</code> for local api.</td></tr>
+      <tr><td><code>AGENT_BACKEND_URL</code></td><td><code>http://localhost:3003</code> for local agent-api.</td></tr>
+    </tbody></table>
+    <div class="where">📍 <code>apps/web/.env.example:5-14</code></div>
+  </div>
+  <div class="card"><h3>🧩 api · <code>apps/api/.env</code></h3>
+    <table><tbody>
+      <tr><td><code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>, <code>SUPABASE_JWT_SECRET</code></td><td>The database and login.</td></tr>
+      <tr><td><code>OPENCLAW_GATEWAY_URL</code>, <code>OPENCLAW_GATEWAY_TOKEN</code></td><td>How api reaches the agent gateway. Local token used by the dev scripts is <code>local-dev-gateway-token</code>.</td></tr>
+      <tr><td><code>AGENT_API_URL</code></td><td><code>http://localhost:3003</code>. Brain imports pause when this is unreachable.</td></tr>
+      <tr><td><code>VAULT_ENCRYPTION_KEY</code></td><td>Same value as agent-api.</td></tr>
+      <tr><td><code>OPENROUTER_API_KEY</code></td><td>LLM key, also read by the agent scripts.</td></tr>
+      <tr><td><code>PORT</code>, <code>APP_URL</code>, <code>API_URL</code>, <code>CORS_ORIGIN</code></td><td>3001 and the local URLs.</td></tr>
+    </tbody></table>
+    <div class="where">📍 <code>apps/api/.env.example:1-23</code> and <code>:109-113</code> · health check of agent-api in <code>apps/api/src/modules/brain/services/brain-import-jobs.base.ts</code> (<code>AGENT_API_URL</code>)</div>
+  </div>
+  <div class="card"><h3>🤖 agent-api · <code>apps/agent-api/.env</code></h3>
+    <table><tbody>
+      <tr><td><code>SUPABASE_URL</code>, <code>SUPABASE_ANON_KEY</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code></td><td>Same project as api.</td></tr>
+      <tr><td><code>VAULT_ENCRYPTION_KEY</code></td><td>Same value as api.</td></tr>
+      <tr><td><code>OPENCLAW_GATEWAY_URL</code>, <code>OPENCLAW_GATEWAY_TOKEN</code>, <code>OPENCLAW_CONFIG_PATH</code>, <code>AGENTS_BASE_DIR</code>, <code>PROJECTS_BASE_DIR</code></td><td>Set for you by the <code>dev:agentapi</code> script.</td></tr>
+      <tr><td><code>GEMINI_API_KEY</code></td><td>Brain embeddings and image reading.</td></tr>
+      <tr><td><code>MAIN_API_URL</code>, <code>INTERNAL_API_TOKEN</code></td><td>Calls back into api.</td></tr>
+      <tr><td><code>BRAIN_LLM_RERANKER</code>, <code>BRAIN_EVIDENCE_CHUNKS</code>, <code>BRAIN_MULTI_QUERY_RETRIEVAL</code></td><td>Brain search switches, off by default.</td></tr>
+    </tbody></table>
+    <div class="where">📍 <code>apps/agent-api/.env.example:8-33</code> and <code>:59-63</code> · script values in root <code>package.json</code> <code>dev:agentapi</code></div>
+  </div>
+  <div class="card"><h3>🔌 openclaw and workers</h3>
+    <table><tbody>
+      <tr><td><code>OPENCLAW_GATEWAY_TOKEN</code></td><td>Must match what api and agent-api send.</td></tr>
+      <tr><td>One model key: <code>OPENAI_API_KEY</code>, <code>ANTHROPIC_API_KEY</code>, <code>GEMINI_API_KEY</code>, or <code>OPENROUTER_API_KEY</code></td><td>At least one.</td></tr>
+      <tr><td>Workers: <code>REDIS_URL</code>, <code>SUPABASE_URL</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>, <code>OPENCLAW_GATEWAY_URL</code>, <code>BACKEND_URL</code></td><td>Queue, database, gateway, api.</td></tr>
+    </tbody></table>
+    <div class="where">📍 <code>apps/openclaw/.env.example:14-40</code> · <code>apps/mission-worker/.env.example</code> · agent config file <code>docker/openclaw.json</code> · local Docker option <code>docker/docker-compose.local.yml</code> runs agent-api on 3003 from <code>docker/Dockerfile.local</code></div>
+  </div>
+</div>
+
+<h2 id="prod"><span class="n">5</span> Where things run in production</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>What</th><th>Where</th><th>How it gets deployed</th></tr></thead>
+    <tbody>
+      <tr><td>web, api</td><td>Vercel</td><td>Every push makes a preview. Merging to <code>main</code> goes live.</td></tr>
+      <tr><td>agent-api, OpenClaw</td><td>Fly.io app <code>roas-runtimes</code></td><td>By hand, only with <code>bash scripts/roas/deploy-fly-runtimes.sh</code>.</td></tr>
+      <tr><td>queue-worker, mission-worker</td><td>Railway project <code>roas-workers</code></td><td>Automatically on merge to <code>main</code>.</td></tr>
+      <tr><td>apps-proxy</td><td>Cloudflare Worker</td><td>By hand with <code>scripts/roas/deploy-apps-proxy.sh</code>.</td></tr>
+    </tbody>
+  </table>
+  <div class="note" style="margin-top:12px">The only production database is Supabase project <code>lhfgtsjetcardinpgouq</code>. Older docs sometimes mention other projects. Never use those for real data.</div>
+  <div class="where">📍 <code>CLAUDE.md</code> "Deploy map" · <code>apps/web/vercel.json</code>, <code>apps/api/vercel.json</code> · <code>docker/fly.roas.runtime.toml</code></div>
+</div>
+
+<h2 id="rules"><span class="n">6</span> Rules everyone follows</h2>
+<div class="grid g2">
+  <div class="card"><h3>🌿 Branches and shipping</h3>
+    <ul>
+      <li>Never work directly on <code>main</code>. Make a branch, open a pull request, get it reviewed.</li>
+      <li>Shipping stops at the pull request. Going live is a manual merge or a manual script.</li>
+      <li>Docs and changelog are written before the commit, not after.</li>
+      <li>On every commit a hook runs the architecture size check and the linter on staged files.</li>
+    </ul>
+    <div class="where">📍 <code>AGENTS.md</code> §0 · <code>.claude/rules/git-workflow.md</code> · hook <code>.husky/pre-commit</code> runs <code>pnpm architecture:check -- --staged</code> and <code>pnpm lint-staged</code></div>
+  </div>
+  <div class="card"><h3>🧪 Testing</h3>
+    <ul>
+      <li>Browser tests attach to a running app. They never start servers on their own.</li>
+      <li>Tests against anything that is not your own machine are read-only.</li>
+      <li>Every acceptance rule needs a clear "how do we know it passed".</li>
+      <li>Full workflows on the <a href="../tests/index.html">Tests and checks</a> page.</li>
+    </ul>
+    <div class="where">📍 <code>.claude/rules/testing.md</code></div>
+  </div>
+  <div class="card"><h3>📚 Where the written rules live</h3>
+    <ul>
+      <li>Operating protocol: <code>AGENTS.md</code></li>
+      <li>Project summary and deploy map: <code>CLAUDE.md</code></li>
+      <li>Guidelines: <code>.docs/guidelines/</code></li>
+      <li>Rules loaded into the AI assistant: <code>.claude/rules/*.md</code></li>
+    </ul>
+  </div>
+  <div class="card"><h3>📝 Where the docs live</h3>
+    <ul>
+      <li>This wiki: <code>documentation/wiki/</code></li>
+      <li>Feature notes in markdown: <code>documentation/features/</code></li>
+      <li>Daily changelog: <code>.docs/logs/</code></li>
+      <li>Plans and follow-ups: <code>.docs/plans/</code></li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="localdb" data-tab="Local database"><span class="n">7</span> Your own local database, step by step</h2>
+<div class="card">
+  <p>Copy the shared dev database onto your laptop once, then every job, log, and row is yours. Done for the first time on 2026-09-09/10; about 30 minutes.</p>
+  <ol>
+    <li><strong>Tools.</strong> Docker Desktop running, <code>brew install supabase/tap/supabase</code>, Postgres client tools 16+. Node 22 or 23 from nvm for the apps.</li>
+    <li><strong>Start local Supabase</strong> from the repo root. Migrations and seed are off in <code>supabase/config.toml</code> because we restore a real copy instead of replaying 937 files.
+<pre>supabase start -x edge-runtime,logflare,vector,imgproxy</pre>
+    Database on 54322, API on 54321, console on 54323. Keys are the standard local ones printed by <code>supabase status</code>.</li>
+    <li><strong>Vector extension in <code>public</code>.</strong> The dev database has it there, and the dump types columns as <code>public.vector</code>. Putting it under <code>extensions</code> makes 15 tables fail.
+<pre>psql postgresql://postgres:postgres@127.0.0.1:54322/postgres -c "create extension vector with schema public; create extension pg_trgm with schema extensions;"</pre></li>
+    <li><strong>Dump the dev database</strong> in pgAdmin: format Custom, whole database is fine. The file is made by Postgres 17 tools, so restore with the tools inside the container.</li>
+    <li><strong>Restore, auth first then public</strong>, because profile rows point at auth users:
+<pre>docker cp ~/backup.dump supabase_db_roas-local:/tmp/backup.dump
+docker exec supabase_db_roas-local pg_restore --data-only --no-owner -n auth -t users -t identities -d postgresql://postgres:postgres@127.0.0.1:5432/postgres /tmp/backup.dump
+docker exec supabase_db_roas-local pg_restore --no-owner -n public -d postgresql://postgres:postgres@127.0.0.1:5432/postgres /tmp/backup.dump</pre>
+    If identities fail on a foreign key, run the identities line again after users landed. Expect zero errors on the public restore.</li>
+    <li><strong>Turn off cloud routing on your profile</strong>, or the api sends your jobs to a cloud runtime:
+<pre>update profiles set agent_runtime_type='fly_machine', agent_runtime_url=null where id='&lt;your user id&gt;';</pre></li>
+    <li><strong>Point the apps at it.</strong> In <code>apps/api/.env</code>: <code>SUPABASE_URL=http://127.0.0.1:54321</code>, the local anon key, service role key, and JWT secret; <code>REDIS_URL=redis://localhost:6379</code>; <code>PORT=3001</code>. In <code>apps/web/.env.local</code>: the two <code>NEXT_PUBLIC_SUPABASE_*</code> values. Create <code>apps/agent-api/.env</code> with <code>PORT=3003</code> so it stops borrowing the api's port.</li>
+    <li><strong>Restart api, web, agent-api.</strong> Log in again with the same password; it carried over. Run the <a href="../tests/brain-textbook-import.html">textbook import test</a> to prove it.</li>
+  </ol>
+  <div class="where">📍 Env loading: api <code>apps/api/src/app.module.ts:80-82</code> (its own <code>.env</code> then <code>apps/mission-worker/.env</code>); agent-api <code>apps/agent-api/src/lib/agent-api-env.ts:5-8</code> (own <code>.env</code>, then <code>../api/.env</code>) · runtime routing <code>apps/api/src/modules/user-agent-api/services/user-agent-api.service.ts:78-118</code> · profile columns <code>profiles.agent_runtime_type</code>, <code>profiles.agent_runtime_url</code><br>⚠️ Known gaps: Supabase storage buckets are not restored, so transcript uploads log "Bucket not found" and the Train Brain file tab needs a bucket; <code>find_connections_between</code> is missing in dev too, so brain stats fail here as well.</div>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <dl class="qa">
+    <dt>How do I start Redis? Is it <code>pnpm --filter @vibey/queue-worker dev</code>? <span class="when">2026-09-09</span></dt>
+    <dd>No. Redis is a separate server program, not one of the apps. Start it in its own terminal with <code>redis-server</code> (installed at <code>/usr/local/bin/redis-server</code>, Redis 7). The queue-worker is an app that <em>uses</em> Redis; it needs its own <code>apps/queue-worker/.env</code> with the Supabase values and fails with "Missing SUPABASE_URL" without it. For brain work you do not need the worker at all: the brain import queue is processed inside the api. 📍 <code>apps/api/src/modules/brain/services/brain-import-runtime.processor.ts:14</code> <code>@Processor(AGENT_RUNTIME_BRAIN_IMPORT_QUEUE)</code> · worker error source <code>apps/queue-worker/src/modules/logger/error-reporter.ts:110</code></dd>
+  </dl>
+</div>
+
+<p class="footer">Written from the root and per-app <code>package.json</code> scripts, the <code>.env.example</code> files, and the startup notes in <code>AGENTS.md</code>. Commands were read, not run, on 2026-09-09; if one fails, check the script name in <code>package.json</code> first.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

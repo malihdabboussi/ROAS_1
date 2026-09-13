@@ -1,0 +1,841 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Brain · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat active" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🧠 The Brain</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-11</span>
+  <span>Category: <a href="index.html">System map</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a>, <a href="https://linear.app/1dscollective/issue/ROA-18/fix-brain-critical-issues">ROA-18</a>, findings <a href="https://linear.app/1dscollective/issue/ROA-29">ROA-29</a> to <a href="https://linear.app/1dscollective/issue/ROA-38">ROA-38</a></span>
+  <span>Source of truth: <code>apps/api/src/modules/brain</code>, <code>supabase/migrations</code></span>
+  <span>Text version: <code>documentation/features/brain-map.md</code></span>
+  <span>User side: <a href="../features/brain.html">Features › Brain</a></span>
+</div>
+<p class="sub">The brain is the notebook the AI helper keeps for each person, agent, campaign, customer base, and company. This page shows what is in it, how things get in, how they get read back, and the three biggest problems found. Every point has a short story and the exact place in the code or database to check it. Use the tabs: <strong>Overview</strong> is the map, <strong>Findings</strong> holds the problems and live findings.</p>
+<div class="pathnote">📍 Paths starting with <code>brain/</code> mean <code>apps/api/src/modules/brain/</code>. Paths starting with <code>migrations/</code> mean <code>supabase/migrations/</code>.</div>
+
+<div class="card" id="summary" style="margin-bottom:14px">
+  <h3>The brain in one paragraph</h3>
+  <p>The brain is five kinds of notebook: <a href="#kinds">yours, one per agent, one per campaign, one shared about customers, and one for the company</a>. Knowledge enters through <a href="#doors">eight doors</a>. Six of them write a ticket in the database, ring the Redis doorbell, get claimed by a worker, get read by Atlas, and get saved by a tool that fingerprints, extracts, embeds, and stores. Two doors, the ROAS Portal and chat, write directly. Everything lands on <a href="#flow-shelves">separate shelves</a>: memories, textbook entries, snapshots, and the layers built from them. The web app, the Chrome extension, and the chat helper <a href="#flow">read those shelves back</a>, and today the helper reads through a different copy of the search code, which is <a href="#problem-1">the biggest open problem</a>.</p>
+  <div class="where">📍 Written 2026-09-10 from sections 1 to 8 of this page; every claim above has its code path in those sections.</div>
+</div>
+
+<div class="grid g5">
+  <div class="card stat"><b>180</b><span>files in the brain folder</span></div>
+  <div class="card stat"><b>30,000</b><span>lines of code</span></div>
+  <div class="card stat"><b>75</b><span>web endpoints (doors the app knocks on)</span></div>
+  <div class="card stat"><b>45</b><span>database tables touched</span></div>
+  <div class="card stat"><b>30</b><span>database search functions</span></div>
+</div>
+
+<h2 id="kinds"><span class="n">1</span> The five kinds of brain</h2>
+<p class="sub">All five live in one table, <code>ns_brains</code>. The <code>scope</code> column on each row says which kind it is. A separate on/off flag, <code>cortex_max</code>, turns on background thinking for any kind.</p>
+<div class="where" style="margin:-8px 0 14px">🗄️ Table <code>ns_brains</code> created in <code>migrations/047_brain_consolidation.sql:8</code> · <code>scope</code> column added in <code>migrations/20260507142000_customer_brain_infra.sql:8</code></div>
+
+<div class="grid g2 stack">
+  <div class="card kind blue"><div class="em">👤</div><h3>Your own brain</h3><small>Your personal notebook. Where "save memory" goes by default.</small>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Sara tells the helper in chat: "remember, our webinar sign-ups are best on Tuesdays."</span></div>
+      <div class="sc-row"><b>What happens</b><span>The helper calls the save-memory action. The API looks up Sara's default brain by owner, personal scope, and no organization, and creates it the first time. One row is written to the memories table.</span></div>
+      <div class="sc-row"><b>What you see</b><span>The memory appears in Sara's Brain page under her personal brain, and the helper can find it later by meaning.</span></div>
+      <div class="where">📍 Code: from chat the save runs in agent-api, <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code> <code>saveMemory</code>; this folder's own resolver for the same brain is <code>brain/repositories/memory-brain-resolver.ts:9</code> <code>resolveDefaultBrainId</code><br>🗄️ Tables: <code>ns_brains</code> · <code>ns_memories</code> in <code>migrations/047_brain_consolidation.sql:29</code><br>⚠️ Tried live on 2026-09-09: the helper did <em>not</em> save. See "Live findings" below.</div>
+    </div>
+  </div>
+  <div class="card kind purple"><div class="em">🤖</div><h3>An agent's brain</h3><small>Textbook knowledge for one robot helper. The code calls it SK, Structured Knowledge.</small>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Omar uploads a 40-page sales playbook to train the agent called Pixel.</span></div>
+      <div class="sc-row"><b>What happens</b><span>The API checks Omar may train that brain, queues an SK ingest job, splits the text into chunks, asks Gemini to pull out knowledge entries, gives each entry a fingerprint, and stores them under one source row.</span></div>
+      <div class="sc-row"><b>What you see</b><span>The playbook shows as a source with a count of entries. Searching Pixel's brain returns the entries, and the "gaps" list records searches that found nothing.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/sk.controller.ts</code> <code>POST /api/brain/sk/ingest</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:100</code> <code>enqueueSkIngest</code> → <code>brain/services/sk-ingestion.service.ts</code> <code>ingest</code>; agent lookup <code>brain/repositories/memory-brain-resolver.ts:63</code><br>🗄️ Tables: <code>ns_sk_sources</code> <code>migrations/047_brain_consolidation.sql:239</code> · <code>ns_sk_entries</code> <code>:263</code> · <code>ns_sk_gaps</code> <code>:296</code></div>
+    </div>
+  </div>
+  <div class="card kind orange"><div class="em">📣</div><h3>A campaign brain</h3><small>One notebook per campaign or client.</small>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>The ROAS Portal client "Acme Dental" is imported for the first time.</span></div>
+      <div class="sc-row"><b>What happens</b><span>The import finds or creates a campaign for Acme, then makes sure a brain row with campaign scope exists for it. Client facts become memories in that brain. Campaign knowledge is also written to a separate campaign-nodes table used by the agent's campaign search.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A brain named after the campaign in the brain list, and the agent can answer questions about Acme inside that campaign.</span></div>
+      <div class="where">📍 Code: <code>brain/services/page-grader-client-import.service.ts:374</code> <code>ensureCampaignBrain</code>; <code>brain/repositories/memory-brain-resolver.ts:94</code> <code>resolveOrCreateCampaignBrainId</code><br>🗄️ Tables: <code>ns_brains</code> (scope campaign) · <code>campaign_nodes</code> in <code>migrations/048_campaign_knowledge_graph.sql:6</code></div>
+    </div>
+  </div>
+  <div class="card kind teal"><div class="em">🧑‍🤝‍🧑</div><h3>The customer brain</h3><small>A shared notebook about your customers.</small>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Sara uses "Add information" to note that customer Lina prefers email over calls, and picks Lina from the contact list.</span></div>
+      <div class="sc-row"><b>What happens</b><span>The API checks Sara's role allows writing, finds or creates the one customer brain for her workspace, checks the same text was not saved before, and writes a memory linked to Lina's contact record.</span></div>
+      <div class="sc-row"><b>What you see</b><span>The note appears in the customer view under Lina. Notes without a known contact land under "unlinked signals".</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/customer-brain.controller.ts</code> <code>POST /api/brain/customer/memories/text</code> → <code>brain/services/customer-brain-memory-write.service.ts</code> <code>addTextMemory</code>; brain lookup <code>brain/services/customer-brain.service.ts:35</code> <code>getOrCreateCustomerBrain</code><br>🗄️ Tables: <code>ns_brains</code> (scope customer) · <code>ns_memories.contact_id</code> · identity tables in <code>migrations/20260624110423_customer_brain_identity_graph.sql</code></div>
+    </div>
+  </div>
+  <div class="card kind green"><div class="em">🏢</div><h3>The company brain</h3><small>How your company works. Bosses approve what goes in.</small>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>The nightly "dream" run proposes a signal: "We always send proposals within 48 hours." An admin opens the company brain and approves it.</span></div>
+      <div class="sc-row"><b>What happens</b><span>Opening the company page creates the company brain if missing, one per organization. The approval marks the signal accepted and queues a "formation" job. That job turns the signal into a company object, an accepted truth.</span></div>
+      <div class="sc-row"><b>What you see</b><span>The signal moves from the "proposed" list to the "objects" list, and the agent can use it when answering company questions.</span></div>
+      <div class="where">📍 Code: <code>brain/services/company-cortex.service.ts:92</code> <code>getOrCreateCompanyCortex</code>; approval in <code>brain/controllers/company-cortex.controller.ts</code> <code>PATCH /api/brain/company/signals/:signalId</code> → <code>reviewCompanyCortexSignal</code><br>🗄️ Tables: one-per-org rule <code>migrations/20260518115500_company_cortex_foundation.sql:20</code> <code>idx_ns_brains_company_org</code> · <code>company_cortex_settings</code> <code>:24</code> · <code>company_cortex_objects</code> <code>migrations/20260518124000_company_cortex_objects.sql:1</code> · job queue <code>brain_ops_outbox</code> <code>migrations/20260407100000_brain_ops_outbox.sql</code></div>
+    </div>
+  </div>
+</div>
+
+<h2 id="flow"><span class="n">2</span> How things get in and get read back</h2>
+<div class="card">
+  <p><strong>Six stages, in this order.</strong> A door writes a <em>ticket</em> in the database. Redis is only the <em>doorbell</em> that tells a worker to look. A worker <em>claims</em> the ticket, Atlas <em>reads</em> the text, then a <em>save tool</em> checks the fingerprint, extracts, embeds, and inserts rows on a <em>shelf</em>. Click any door to jump to its story in section 3. Two doors (dashed) skip the ticket, the doorbell, and Atlas and write to the shelves directly.</p>
+  <div class="flow6">
+    <div class="col">
+      <div class="stagehead">Doors</div>
+      <div class="box door"><a href="#door-text">✍️ Typed or pasted text</a></div>
+      <div class="box door"><a href="#door-file">📄 Uploaded file</a></div>
+      <div class="box door"><a href="#door-link">🔗 Link</a></div>
+      <div class="box door"><a href="#door-fathom">🎙️ Fathom meeting</a></div>
+      <div class="box door"><a href="#door-fireflies">🎙️ Fireflies meeting</a></div>
+      <div class="box door"><a href="#door-slack">💬 Slack channel</a></div>
+      <div class="box door bypass"><a href="#door-portal">🗂️ ROAS Portal (Page Grader)</a><small>skips stages 1 to 4, writes straight to the shelves</small></div>
+      <div class="box door bypass"><a href="#door-chat">🗨️ Chat with the helper</a><small>skips stages 1 to 4, writes straight to the shelves</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Queue</div>
+      <div class="box work stage"><span class="sn"><b>1</b></span>Ticket in the database<small>One row in <code>brain_import_jobs</code>, status <code>queued</code>. The truth about the job lives here: status, attempts, retry time, result.</small></div>
+      <div class="box work stage"><span class="sn"><b>2</b></span>Doorbell in Redis<small>Every 3 seconds a sweep reads due tickets and drops a note per ticket into Redis. The note holds only the job id.</small></div>
+      <div class="box work stage"><span class="sn"><b>3</b></span>Claim<small>A worker flips the row to <code>processing</code>. First writer wins; that single update is the lock.</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Reader</div>
+      <div class="box work stage"><span class="sn"><b>4</b></span>Atlas reads it<small>The text goes to the Atlas agent in chunks, with a prompt that names exactly one save tool and the rule "keep only what still matters in 6 months".</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Save tool</div>
+      <div class="box work stage"><span class="sn"><b>5</b></span>Fingerprint<small>sha256 of the text. "Seen before?" If yes, stop here. Costs nothing.</small></div>
+      <div class="box work stage"><span class="sn"><b>5</b></span>Extract<small>Gemini pulls out the durable bits, each with a type and a score.</small></div>
+      <div class="box work stage"><span class="sn"><b>5</b></span>Embedding<small>768 numbers per bit so it can be found by meaning. Paid call.</small></div>
+      <div class="box work stage"><span class="sn"><b>5</b></span>Insert<small>One row per bit, with its own hash and its embedding.</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Shelves</div>
+      <div class="box store"><span class="sn"><b>6</b></span>📓 Memories</div>
+      <div class="box store">📚 SK textbook entries</div>
+      <div class="box store">💎 Snapshots (crystallized)</div>
+      <div class="box store">🧾 Evidence chunks (raw text)</div>
+      <div class="box store">🧭 Beliefs, perspectives, pages, timelines<br><small>built later from many memories</small></div>
+    </div>
+    <div class="arrow">➜</div>
+    <div class="col">
+      <div class="stagehead">Readers</div>
+      <div class="box read">🖥️ Web app search</div>
+      <div class="box read">🧩 Chrome extension</div>
+      <div class="box warn">🤖 The AI agent<br><small>uses a different copy of the search code in another app</small></div>
+    </div>
+  </div>
+  <div class="legend"><span><i style="background:var(--blue-bg);border-color:var(--blue)"></i> door</span><span><i style="background:var(--purple-bg);border-color:var(--purple)"></i> work stage</span><span><i style="background:var(--green-bg);border-color:var(--green)"></i> shelf (a table)</span><span><i style="background:var(--teal-bg);border-color:var(--teal)"></i> reader</span><span><i style="border-style:dashed"></i> skips the queue and Atlas</span></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3>One import, step by step</h3>
+  <ol class="steps">
+    <li><strong>The door writes the ticket.</strong> One row in <code>brain_import_jobs</code> with status <code>queued</code>, attempts 0, max 3. Nothing has touched Redis yet.<div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:272</code> <code>insertJob</code> · 🗄️ <code>brain_import_jobs</code> in <code>migrations/20260303120000_brain_import_jobs.sql:1</code></div></li>
+    <li><strong>The doorbell rings.</strong> Right after the insert the api asks the sweep to look. Independently, a Redis timer named <code>brain-import-sweep</code> fires every 3 seconds.<div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:306</code> <code>processDueJobs</code> · timer <code>:167-174</code> <code>installRuntimeSweep</code></div></li>
+    <li><strong>The sweep reads due tickets and drops one note per ticket into Redis.</strong> The note is <code>{ jobId }</code> with one attempt and no retries. Redis is a pointer, never the record.<div class="where">📍 <code>brain/repositories/brain-import-jobs-runtime.repository.ts:48</code> <code>findDueJobIds</code> → <code>brain/services/brain-import-jobs-runtime.base.ts:203-209</code> <code>add('brain-import-job')</code> · queue name <code>packages/api-shared/src/services/agent-runtime-queues.ts:13</code></div></li>
+    <li><strong>A worker claims the ticket.</strong> One conditional update: set <code>processing</code> where status is still <code>queued</code> or <code>retry</code>. A second worker gets zero rows and drops the note. Two workers listen on this queue: the api itself and the mission worker.<div class="where">📍 <code>brain/repositories/brain-import-jobs-runtime.repository.ts:127-140</code> <code>claimJob</code> · workers <code>brain/services/brain-import-runtime.processor.ts:14</code> and <code>apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.ts:64</code></div></li>
+    <li><strong>Atlas reads the text.</strong> Chunks of 350,000 characters. The prompt names exactly one save tool for the target brain. The call goes to agent-api, then to the OpenClaw gateway, with a 15-minute limit.<div class="where">📍 <code>brain/services/brain-import-jobs-execution.base.ts:59</code> chunking · <code>:196-249</code> <code>buildAtlasSystemPrompt</code> one tool per brain · <code>apps/api/src/modules/missions/services/gateways/mission-agent-gateway.service.ts:225</code> <code>callOpenClawForBrainJob</code></div></li>
+    <li><strong>Atlas calls the save tool.</strong> The tool lives in agent-api: <code>save_user_memory</code> for a personal brain, <code>ingest_agent_brain_text</code> for an agent brain, <code>save_customer_memory</code> for the customer brain.<div class="where">📍 <code>apps/agent-api/src/modules/artifacts/services/artifact-action.registry.ts:597-641</code></div></li>
+    <li><strong>Fingerprint first.</strong> The tool hashes the whole text and asks "seen before in this brain?". A duplicate stops here before any paid call.<div class="where">📍 <code>apps/agent-api/src/modules/brain/services/sk-ingestion.service.ts:66-73</code> · personal brain <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:67-77</code> · 🗄️ <code>ns_content_hashes</code> in <code>migrations/047_brain_consolidation.sql:420</code></div></li>
+    <li><strong>Extract, embed, insert.</strong> Gemini pulls the durable bits; each bit gets its own hash, 768 numbers from <code>gemini-embedding-2</code>, and one row on the shelf.<div class="where">📍 <code>apps/agent-api/src/modules/brain/services/sk-ingestion.service.ts:132,134,143,148</code> · model <code>brain/services/embedding.service.ts:7,10</code></div></li>
+    <li><strong>Atlas reports, the ticket closes.</strong> Atlas must end with <code>JOB_STATUS:completed</code>, <code>failed</code>, or <code>skipped</code>. The row becomes <code>succeeded</code>, or <code>retry</code> with a wait, or <code>failed</code> after 3 attempts. A notification row is written.<div class="where">📍 <code>brain/services/brain-import-jobs-execution.base.ts:278</code> · <code>brain/services/brain-import-jobs-runtime.base.ts:355</code> succeeded · <code>:404</code> failed or retry · <code>:377</code> notification</div></li>
+  </ol>
+</div>
+
+<div class="two" style="margin-top:14px">
+  <div class="card">
+    <h3>🗄️ The database is the ticket</h3>
+    <p>Everything that matters about a job is in the row: status, how many attempts, when to try again, the error, the result. Retry waits are computed here, not in Redis. If two processes share this database, they share the tickets, which is exactly Live finding 2.</p>
+    <div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:404-408</code> <code>markJobFailed</code> · backoff table <code>brain/services/brain-import-jobs.base.ts:174-183</code> · 🗄️ <code>brain_import_jobs</code> status check in <code>migrations/20260303120000_brain_import_jobs.sql:8</code></div>
+  </div>
+  <div class="card">
+    <h3>🔔 Redis is the doorbell</h3>
+    <p>Redis holds a repeating 3-second timer and one tiny note per due ticket. The note carries only the job id, one attempt, and is deleted when done. If Redis forgets everything, no job is lost: the next sweep reads the tickets again.</p>
+    <div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:167-184</code> timers · <code>:203-209</code> the note · Redis address order <code>packages/api-shared/src/services/agent-runtime-queues.ts:28</code></div>
+  </div>
+</div>
+<div class="card" style="margin-top:14px">
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Redis restarts while three tickets are queued and one is processing.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The notes in Redis vanish. The three rows still say <code>queued</code>. When the api reconnects, the 3-second timer is registered again on start and the next sweep drops three fresh notes. The processing row keeps running; if its worker died, the 20-minute stale check moves it back to <code>retry</code>.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Jobs resume within seconds. No duplicate rows, because the claim is one conditional update.</span></div>
+    <div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:20</code> <code>onModuleInit</code> · stale recovery <code>:218</code> <code>recoverStaleJobs</code>, window <code>brain/services/brain-import-jobs.base.ts:25-27</code></div>
+  </div>
+  <p style="margin-top:12px"><strong>Want the full detail?</strong> The <a href="#flow-journey">Flow tab</a> has every step with the store it touches, which door takes which road, and what each shelf really is.</p>
+</div>
+
+<h2 id="doors"><span class="n">3</span> The eight doors, one story each</h2>
+<div class="grid g2 stack">
+  <div class="card" id="door-text"><h3>✍️ Typed or pasted text</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Sara pastes her positioning statement into "Remember this".</span></div>
+      <div class="sc-row"><b>What happens</b><span>The API checks the text is not empty and the source is one of document, Dropbox, or Google Drive. A job of type document-remember is queued with a fingerprint of the text so the same paste is not queued twice while running. Atlas reads it and saves the durable parts.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A job in the import tray that turns green, then new memories in her personal brain.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/memories.controller.ts:39</code> <code>POST /api/brain/remember</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:10</code> <code>enqueueDocumentRemember</code><br>🗄️ Table: <code>brain_import_jobs</code> (<code>job_type=document_remember</code>)</div>
+    </div>
+  </div>
+  <div class="card" id="door-file"><h3>📄 Uploaded file</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Omar drops a PDF brochure and a PowerPoint deck.</span></div>
+      <div class="sc-row"><b>What happens</b><span>The API first turns the file into text: PDFs by reading their text and falling back to Gemini reading the pages as images, Word files with a converter, decks and images always by Gemini image reading. The text then goes through the same remember path as typed text.</span></div>
+      <div class="sc-row"><b>What you see</b><span>Extracted text preview, then a queued job, then memories. Scanned PDFs with no text still work because of the image fallback.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/sk.controller.ts</code> <code>POST /api/brain/sk/extract-text</code> → <code>brain/services/document-extraction.service.ts:13</code> <code>extractText</code> → <code>brain/services/gemini-ocr.service.ts</code>; then <code>brain/controllers/import-jobs.controller.ts:28</code> <code>POST /api/brain/import-jobs/remember-document</code></div>
+    </div>
+  </div>
+  <div class="card" id="door-link"><h3>🔗 Link</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Sara pastes a YouTube link to a competitor's webinar.</span></div>
+      <div class="sc-row"><b>What happens</b><span>A link-import job is queued with a fingerprint of the URL. The worker fetches the page. For YouTube it pulls the transcript; for a web page it strips the HTML down to text; for an image URL it asks Gemini to read it. That text goes to Atlas.</span></div>
+      <div class="sc-row"><b>What you see</b><span>Memories with the video's title as their source.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/memories.controller.ts:91</code> <code>POST /api/brain/remember-link</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:51</code> <code>enqueueUserLinkImport</code> → <code>brain/services/link-extraction.service.ts:17</code> <code>extract</code></div>
+    </div>
+  </div>
+  <div class="card" id="door-fathom"><h3>🎙️ Fathom meeting</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>A recorded discovery call with a lead finishes in Fathom.</span></div>
+      <div class="sc-row"><b>What happens</b><span>A Fathom-import job is queued using the meeting id as its fingerprint, so one meeting cannot be queued twice while running. If the transcript is missing, the worker fetches it from Fathom before handing the meeting to Atlas. Optionally the job targets a campaign brain instead of the personal one.</span></div>
+      <div class="sc-row"><b>What you see</b><span>Memories with the meeting title as source, and possibly a cross-brain suggestion offering to copy them into a related campaign.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/import-jobs.controller.ts:39</code> <code>POST /api/brain/import-jobs/fathom-meeting</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:72</code> <code>enqueueFathomMeetingImport</code>; transcript fetch <code>brain/services/brain-import-jobs-execution.base.ts:410</code> <code>ensureFathomTranscript</code>; suggestions <code>brain/services/brain-cross-pollinator.service.ts</code></div>
+    </div>
+  </div>
+  <div class="card" id="door-fireflies"><h3>🎙️ Fireflies meeting</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>A team meeting transcript arrives from Fireflies.</span></div>
+      <div class="sc-row"><b>What happens</b><span>Same road as Fathom, keyed by the transcript id. The transcript text is handed to Atlas, which keeps decisions and commitments and drops small talk.</span></div>
+      <div class="sc-row"><b>What you see</b><span>Memories with the meeting title as source.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/import-jobs.controller.ts:62</code> <code>POST /api/brain/import-jobs/fireflies-transcript</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:151</code> <code>enqueueFirefliesTranscriptImport</code></div>
+    </div>
+  </div>
+  <div class="card" id="door-slack"><h3>💬 Slack channel</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>The "#acme-client" channel is mapped to the Acme campaign brain with a weekly schedule.</span></div>
+      <div class="sc-row"><b>What happens</b><span>A scheduler outside this folder queues a Slack-period job for the week. The worker pulls the channel's threads for that period, labels each message with who sent it and their role, and gives the bundle to Atlas with the instruction to keep only decisions, direction, customer insight, learning, and commitments. Messages from friends and family are skipped. Some senders can trigger a second copy into the customer brain or their own brain.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A handful of memories per week, not every message. See Problem 2 for what can go wrong.</span></div>
+      <div class="where">📍 Code: <code>brain/services/brain-import-jobs-enqueue.base.ts:267</code> <code>enqueueSlackPeriodImport</code> → <code>brain/services/brain-import-jobs-input.base.ts:217</code> <code>buildSlackMissionInput</code> → Atlas rule <code>brain/services/brain-import-jobs-execution.base.ts:256</code><br>🗄️ Table: <code>slack_brain_mappings</code> in <code>migrations/20260508140700_slack_brain_mappings.sql:8</code></div>
+    </div>
+  </div>
+  <div class="card" id="door-portal"><h3>🗂️ ROAS Portal (Page Grader)</h3>
+    <p><strong>Two names, one system.</strong> "The ROAS Portal" is what users see on screen; "Page Grader" is the name in the code and the routes. It is a separate ROAS product that holds client accounts, pipeline stages, tasks, and client intel, connected from Workspace Settings › Integrations with its base URL and an API key. It does not scan websites; it exports a package of what it already knows.</p>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>An operator maps Portal client "Acme Dental" to ROAS, or the Portal pushes an update.</span></div>
+      <div class="sc-row"><b>What happens</b><span>The API receives the client package, finds or creates the campaign and its spaces, syncs offers and avatars, then runs a deterministic ingest with no Atlas: it builds memory rows from the profile, offers, avatars, strategies, and notes, skips work if the package did not change, fills in missing fingerprints, and writes evidence chunks for search. It records a green job row so the tray shows it.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A campaign, spaces with a Campaign Brief, and a brain full of Acme facts. Re-imports of an unchanged package are quick.</span></div>
+      <div class="where">📍 Code: <code>brain/controllers/page-grader-client-import.controller.ts:24</code> <code>POST /api/brain/page-grader/client-package</code> → <code>brain/services/page-grader-client-import.service.ts:52</code> <code>importPackage</code> → <code>brain/services/page-grader-brain-package-ingest.service.ts:42</code> <code>ingestPackage</code><br>🗄️ Tables: <code>ns_memories</code> · <code>ns_brain_evidence_chunks</code> in <code>migrations/20260525110600_brain_evidence_chunks.sql:4</code> · <code>brain_import_jobs</code> (<code>page_grader_brain_sync</code>)</div>
+    </div>
+  </div>
+  <div class="card" id="door-chat"><h3>🗨️ Chat with the helper</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Sara has a long chat with the helper about next quarter's offer.</span></div>
+      <div class="sc-row"><b>What happens</b><span>The conversation is sent for processing. Gemini is asked to pull out only things that "would still matter in 6 months". Items scoring under 0.6 are dropped. Each survivor gets a fingerprint, is checked against existing memories by hash, and saved. In the background, similar memories get linked and each memory is tagged with its emotion. The session is recorded so the same chat is not processed twice.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A few memories, sometimes with "supports" or "contradicts" links to older ones.</span></div>
+      <div class="where">📍 Two different roads. <strong>A "remember this" said to the helper in chat</strong> goes through agent-api, not this folder: the helper must call the <code>save_user_memory</code> action → <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code> <code>saveMemory</code> → one row in <code>ns_memories</code> under the user's default brain. <strong>A whole conversation processed afterwards</strong> uses this folder: <code>brain/controllers/memories.controller.ts:114</code> <code>POST /api/brain/process/conversation</code> → <code>brain/services/conversation-processing.service.ts:52</code> <code>processConversation</code><br>🗄️ Tables: <code>ns_memories</code> · <code>ns_memory_connections</code> <code>migrations/047_brain_consolidation.sql:64</code> · <code>ns_memory_sessions</code> <code>:83</code></div>
+    </div>
+  </div>
+</div>
+
+<h2 id="tables"><span class="n">4</span> Where it is stored</h2>
+<p class="sub">Everything hangs off the brains table. Colors show what each group of tables is for. Most tables were created in one migration, <code>migrations/047_brain_consolidation.sql</code>; the line number after each name points there unless another file is given.</p>
+<div class="pathnote">🧭 Are these separate things or stages of one flow? Separate tables. See <a href="#flow-shelves">the shelves, one by one</a> in the Flow tab.</div>
+<div class="grid g3">
+  <div class="card"><h3>📓 Core notebook</h3>
+    <span class="tag green">ns_brains :8</span><span class="tag green">ns_memories :29</span><span class="tag green">ns_memory_connections :64</span><span class="tag green">ns_memory_versions :97</span><span class="tag green">ns_memory_sessions :83</span><span class="tag green">ns_snapshots :112</span><span class="tag green">ns_snapshot_edges :152</span><span class="tag green">ns_content_hashes :420</span><span class="tag green">ns_pending_captures :357</span>
+  </div>
+  <div class="card"><h3>📚 Agent textbook (SK)</h3>
+    <span class="tag purple">ns_sk_sources :239</span><span class="tag purple">ns_sk_entries :263</span><span class="tag purple">ns_sk_gaps :296</span>
+  </div>
+  <div class="card"><h3>🧭 Thinking layer</h3>
+    <span class="tag pink">ns_emotional_responses :174</span><span class="tag pink">ns_belief_patterns :196</span><span class="tag pink">ns_perspectives :219</span><span class="tag pink">ns_narrative_pages</span><span class="tag pink">ns_narrative_links</span><span class="tag pink">brain_timelines</span><span class="tag pink">brain_timeline_items</span><span class="tag pink">brain_episodes</span><span class="tag pink">ns_brain_evidence_chunks</span>
+    <div class="where">🗄️ narrative pages and links <code>migrations/20260406130000_brain_narrative_pages.sql</code> · timelines <code>migrations/20260618143000_brain_timelines.sql</code> · episodes and final shapes <code>migrations/20260618163348_brain_temporal_runtime_repair.sql</code> · evidence chunks <code>migrations/20260525110600_brain_evidence_chunks.sql:4</code></div>
+    <p style="margin-top:10px"><strong>What fills these tables: Cortex Max.</strong> In one line: it keeps a brain thinking in the background, turning many memories into pages, timelines, and belief patterns, so the helper can answer about the big picture and how it changed over time. Crystallize, by contrast, goes deep on one text and writes one snapshot. A per-brain switch (<code>ns_brains.cortex_max</code>). Off, the brain only stores what you feed it. On, background jobs write narrative pages (the "library"), timelines, belief patterns and perspectives, and refreshed customer avatars. Switching it on queues a first full library sync; then every 10 new memories queues a library sync, every 5 changed pages a pattern analysis, and new customer memories an avatar pass. "Crystallize" forces a full rebuild. Jobs go through the brain-ops outbox and need a worker; on the local stack they never finish (see Issues).</p>
+    <div class="where">📍 switch <code>brain/services/brain-cortex-max.service.ts:80-93</code> · triggers <code>brain/services/brain-ops-hook.service.ts:102-116,205-215,260-272</code> · job kinds <code>brain_library_sync</code>, <code>brain_pattern_analysis</code>, <code>brain_timeline_synthesis</code>, <code>brain_avatar_synthesis</code> · 🗄️ <code>brain_ops_outbox</code> <code>migrations/20260407100000_brain_ops_outbox.sql</code> · user side <a href="../features/brain.html#cortex">Features › Brain § 10</a></div>
+  </div>
+  <div class="card"><h3>📋 Jobs and plumbing</h3>
+    <span class="tag blue">brain_import_jobs</span><span class="tag blue">brain_ops_outbox</span><span class="tag blue">brain_shares</span><span class="tag blue">brain_cross_suggestions</span><span class="tag blue">slack_brain_mappings</span><span class="tag blue">user_notifications</span><span class="tag blue">ns_search_feedback :435</span>
+    <div class="where">🗄️ <code>migrations/20260303120000_brain_import_jobs.sql:1</code> · <code>migrations/20260407100000_brain_ops_outbox.sql</code> · <code>migrations/20260520210300_brain_access_control.sql</code> · <code>migrations/20260424210000_brain_cross_suggestions.sql</code> · <code>migrations/20260508140700_slack_brain_mappings.sql:8</code> · <code>user_notifications</code> only in <code>scripts/roas/roas-drift-recovery.sql:41</code></div>
+  </div>
+  <div class="card"><h3>🏢 Company brain</h3>
+    <span class="tag green">company_cortex_settings</span><span class="tag green">company_cortex_signals</span><span class="tag green">company_cortex_objects</span><span class="tag green">company_cortex_object_edges</span><span class="tag green">dream_ops_settings</span>
+    <div class="where">🗄️ <code>migrations/20260518115500_company_cortex_foundation.sql:24</code> · <code>migrations/20260518124000_company_cortex_objects.sql:1</code> · <code>migrations/20260519140500_company_cortex_object_edges.sql</code> · <code>migrations/20260624203000_shared_dream_ops.sql</code></div>
+  </div>
+  <div class="card"><h3>🧑‍🤝‍🧑 Customer and campaign</h3>
+    <span class="tag teal">customer_entities</span><span class="tag teal">customer_source_identities</span><span class="tag teal">customer_avatars</span><span class="tag teal">contacts</span><span class="tag orange">campaign_nodes</span><span class="tag orange">campaigns</span><span class="tag orange">spaces</span><span class="tag orange">space_items</span><span class="tag orange">offers</span><span class="tag orange">avatars</span>
+    <div class="where">🗄️ <code>migrations/20260624110423_customer_brain_identity_graph.sql</code> · <code>migrations/20260507142000_customer_brain_infra.sql</code> · <code>migrations/048_campaign_knowledge_graph.sql:6</code> · <code>campaigns</code>, <code>contacts</code>, <code>offers</code>, <code>avatars</code> from the pre-migration <code>supabase/schema.sql</code> · spaces from <code>migrations/20260413100000_lists_mvp.sql</code> renamed in <code>migrations/20260422120000_spaces_rename_and_schema.sql</code></div>
+  </div>
+</div>
+<div class="tech card" style="margin-top:14px">
+  <p><strong>Access control.</strong> SQL function <code>can_access_brain(brain_id, level)</code> at <code>migrations/20260520210300_brain_access_control.sql:80</code> is the single row-level-security gate: owner → org role → agent creator → <code>brain_shares</code> (user, org, team). The API mirrors it in <code>brain/services/brain-permissions.service.ts</code>.</p>
+  <p><strong>Vectors.</strong> All embeddings are <code>vector(768)</code>, cosine. hnsw on memories (<code>047:58</code>), sk_entries (<code>047:290</code>), evidence chunks, beliefs, perspectives, narrative pages, customer avatars, signals, timeline items (<code>migrations/20260525221500_brain_complete_retrieval_lanes.sql</code>). ivfflat on <code>campaign_nodes</code> and <code>company_cortex_objects</code>. No index at all on <code>ns_snapshots.embedding</code>.</p>
+</div>
+
+<h2 id="surfaces"><span class="n">5</span> Who owns what inside the folder</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Area</th><th>Controllers (<code>brain/controllers/</code>)</th><th>Services (<code>brain/services/</code>)</th></tr></thead>
+    <tbody>
+      <tr><td>Memories</td><td><code>memories</code>, <code>memories-crud</code>, <code>memories-status</code></td><td><code>memories.service</code>, <code>conversation-processing.service</code></td></tr>
+      <tr><td>Search</td><td><code>search</code></td><td><code>search.service</code>, <code>brain-retrieval.service</code>, <code>brain-reranker.service</code>, <code>brain-sufficiency.service</code>, <code>feedback.service</code></td></tr>
+      <tr><td>Snapshots</td><td><code>snapshots</code>, <code>pending-captures</code></td><td><code>snapshots.service</code>, <code>crystallization.service</code>, <code>pending-captures.service</code></td></tr>
+      <tr><td>Imports</td><td><code>import-jobs</code>, <code>import-job-status</code></td><td><code>brain-import-jobs*.base</code>, <code>brain-import-job-requests.service</code>, <code>brain-import-job-status.service</code>, <code>brain-import-runtime.processor</code></td></tr>
+      <tr><td>SK</td><td><code>sk</code>, <code>sk-query</code>, <code>sk-mutations</code></td><td><code>sk.service</code>, <code>sk-ingestion.service</code>, <code>document-extraction.service</code>, <code>gemini-ocr.service</code>, <code>link-extraction.service</code></td></tr>
+      <tr><td>Graph</td><td><code>graph</code></td><td><code>graph.service</code>, <code>graph-request.service</code>, <code>graph-node-builders</code>, <code>graph-node-window</code></td></tr>
+      <tr><td>Company</td><td><code>company-cortex</code></td><td><code>company-cortex.service</code></td></tr>
+      <tr><td>Customer</td><td><code>customer-brain</code></td><td><code>customer-brain.service</code>, <code>customer-brain-memory-write.service</code></td></tr>
+      <tr><td>Cortex Max</td><td><code>brain-cortex-max</code></td><td><code>brain-cortex-max.service</code>, <code>brain-ops-hook.service</code></td></tr>
+      <tr><td>Emotional</td><td><code>emotional</code></td><td><code>emotional-intelligence.service</code>, <code>emotional-tagging.service</code></td></tr>
+      <tr><td>Cross-pollination</td><td><code>brain-cross-suggestions</code></td><td><code>brain-cross-pollinator.service</code>, <code>brain-cross-suggestions.service</code></td></tr>
+      <tr><td>Page Grader</td><td><code>page-grader-client-import</code></td><td><code>page-grader-*</code> (11 files)</td></tr>
+      <tr><td>Moving data</td><td>none here</td><td><code>brain-handoff*</code> (whole brain copy), <code>brain-node-transfer*</code> (single node copy or move)</td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:10px">Wiring: <code>brain/brain.module.ts</code>. 17 controllers, all under <code>/api/brain</code>, guarded by <code>BrainAuthGuard</code> (<code>brain/guards/brain-auth.guard.ts</code>), <code>OrgContextGuard</code>, <code>OrgRoleGuard</code>, <code>ThrottlerGuard</code>. Billed routes add <code>CreditsGuard</code>.</p>
+</div>
+
+<h2 id="flow-journey" data-tab="Flow"><span class="n">6</span> The journey of one import, every step and the store it touches</h2>
+<div class="card scroll">
+  <p>The same nine stages from the map, now with every sub-step. <strong>DB</strong> means a Postgres table, <strong>Redis</strong> means the BullMQ queue. Notice how few steps touch Redis.</p>
+  <table>
+    <thead><tr><th>#</th><th>Step</th><th>Store</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Door handler calls <code>enqueueJob</code> with user, job type, title, dedupe key, payload.</td><td></td><td><code>brain/services/brain-import-jobs-runtime.base.ts:253</code></td></tr>
+      <tr><td>2</td><td>Payload sanitized: a base64 media blob over 5 MB is dropped.</td><td></td><td><code>brain/services/brain-import-jobs-runtime.base.ts:229</code> · cap <code>brain/services/brain-import-jobs.base.ts:15</code></td></tr>
+      <tr><td>3</td><td>Dedupe pre-check: an active ticket with the same user and dedupe key already exists? Return it, stop.</td><td>DB read</td><td><code>brain/repositories/brain-import-jobs-runtime.repository.ts:109</code></td></tr>
+      <tr><td>4</td><td><strong>Insert the ticket</strong>: <code>queued</code>, attempts 0, max 3, next attempt now. A partial unique index catches a race.</td><td><strong>DB write</strong></td><td><code>brain-import-jobs-runtime.repository.ts:123</code> · index <code>migrations/20260303120000_brain_import_jobs.sql:30</code></td></tr>
+      <tr><td>5</td><td>Fire and forget: ask the sweep to look now.</td><td></td><td><code>brain-import-jobs-runtime.base.ts:306</code> → <code>:45</code></td></tr>
+      <tr><td>6</td><td>Sweep, part 1: rows stuck in <code>processing</code> for over 20 minutes go back to <code>retry</code> or <code>failed</code>.</td><td>DB read + write</td><td><code>brain-import-jobs-runtime.base.ts:218</code> · window <code>brain-import-jobs.base.ts:25-27</code></td></tr>
+      <tr><td>7</td><td>Sweep, part 2: if agent-api looks unhealthy (probed every 10 s), do nothing this round.</td><td></td><td><code>brain-import-jobs-runtime.base.ts:55</code> · probe <code>brain-import-jobs.base.ts:66</code></td></tr>
+      <tr><td>8</td><td>Sweep, part 3: read up to 15 due tickets (<code>queued</code> or <code>retry</code>, time reached).</td><td>DB read</td><td><code>brain-import-jobs-runtime.repository.ts:48</code></td></tr>
+      <tr><td>9</td><td><strong>Drop one note per ticket into Redis</strong>: name <code>brain-import-job</code>, data <code>{ jobId }</code>, one attempt, removed when done. No queue injected? Run inline and skip Redis.</td><td><strong>Redis write</strong></td><td><code>brain-import-jobs-runtime.base.ts:191-209</code></td></tr>
+      <tr><td>10</td><td>A worker pops the note. Either the api (runs it in-process) or the mission worker (forwards to agent-api over HTTP). Whoever is faster.</td><td>Redis read</td><td><code>brain/services/brain-import-runtime.processor.ts:26-37</code> · <code>apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.ts:79-101</code></td></tr>
+      <tr><td>11</td><td>Gates: agent-api unhealthy → re-note in 30 s. Retry time still in the future → re-note with that delay. This user already has one job processing → re-note in 30 s.</td><td>DB read</td><td><code>brain-import-jobs-runtime.base.ts:82,151,157</code> · per-user limit <code>brain-import-jobs-runtime.repository.ts:84</code></td></tr>
+      <tr><td>12</td><td><strong>Claim</strong>: set <code>processing</code>, attempts + 1, only if status is still <code>queued</code> or <code>retry</code>. Zero rows back means someone else won. The attempt number guards every later write.</td><td><strong>DB write</strong></td><td><code>brain-import-jobs-runtime.repository.ts:127-140</code> · guard <code>:60</code></td></tr>
+      <tr><td>13</td><td>Build the plan: Fathom transcript fetched if missing; job type mapped to target brain and content type; binary fields stripped; text cut into 350,000-character chunks with 500 overlap; chunk count saved for the progress toast.</td><td>DB write (chunks)</td><td><code>brain/services/brain-import-jobs-execution.base.ts:37-79</code> · transcript <code>:410</code></td></tr>
+      <tr><td>14</td><td><strong>Atlas reads each chunk.</strong> System prompt names one save tool for the target brain and forbids the others. Call: api → agent-api <code>/api/artifacts/openclaw/responses</code> → OpenClaw gateway, streamed, 15-minute limit.</td><td></td><td><code>brain-import-jobs-execution.base.ts:144,182,196-249</code> · <code>apps/api/src/modules/missions/services/gateways/mission-agent-gateway.service.ts:225-301</code></td></tr>
+      <tr><td>15</td><td><strong>Atlas calls the save tool</strong> in agent-api. Personal brain: <code>save_user_memory</code>. Agent brain: <code>ingest_agent_brain_text</code>. Customer brain: <code>save_customer_memory</code>. Campaign brain: <code>atlas_save_brain_context</code>, which fans out to the three above.</td><td></td><td><code>apps/agent-api/src/modules/artifacts/services/artifact-action.registry.ts:597-641</code> · fan-out <code>artifact-atlas-brain-context.service.ts:46,78,167</code></td></tr>
+      <tr><td>16</td><td><strong>Fingerprint gate</strong>: sha256 of the normalized text. Agent brain registers it in <code>ns_content_hashes</code> before any paid work. Personal brain checks <code>ns_memories.content_hash</code>. Duplicate → return "duplicate", spend nothing.</td><td>DB read + write</td><td><code>apps/agent-api/src/modules/brain/services/sk-ingestion.service.ts:66-73</code> · <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:67-77</code> · hashing <code>brain/services/content-dedupe.service.ts:14-46</code></td></tr>
+      <tr><td>17</td><td><strong>Extract</strong>: agent brain asks Gemini per chunk for entries. Personal brain has no extract step here; Atlas already picked the sentences and calls the tool once per memory.</td><td></td><td><code>sk-ingestion.service.ts:132</code></td></tr>
+      <tr><td>18</td><td><strong>Embed and insert</strong>: per item, its own hash, a duplicate check, 768 numbers from <code>gemini-embedding-2</code>, one row with the vector inline. Raw chunks also saved as evidence.</td><td><strong>DB write</strong></td><td><code>sk-ingestion.service.ts:105,134-148</code> · <code>artifact-legacy-team-brain-memory.service.ts:81,150</code> · model <code>brain/services/embedding.service.ts:7,10,179</code></td></tr>
+      <tr><td>19</td><td>Atlas ends its reply with <code>JOB_STATUS:completed</code>, <code>failed</code>, or <code>skipped</code>. Any failed chunk aborts the rest. Each finished chunk bumps the progress counter.</td><td>DB write</td><td><code>brain-import-jobs-execution.base.ts:159-174,278-281,400</code></td></tr>
+      <tr><td>20</td><td><strong>Close the ticket.</strong> Success → <code>succeeded</code>, result saved, notification row, Fathom and Fireflies also trigger cross-brain suggestions. Only Slack campaign imports are audited against the shelves first. Failure → <code>retry</code> with a wait, or <code>failed</code> after 3 attempts or when credits are out.</td><td><strong>DB write</strong></td><td><code>brain-import-jobs-runtime.base.ts:334-408</code> · audit <code>:352</code> · notification <code>:456</code></td></tr>
+    </tbody>
+  </table>
+  <p style="margin-top:12px"><strong>Retry waits</strong> (computed in the database row, never in Redis): rate limit → 15 min, 45 min, 2 h. Anything else → 1 h, 3 h, 3 h. Out of credits → no retry. When agent-api comes back after being down, up to 50 tickets that failed on a connection error are pulled forward.<span class="where">📍 <code>brain/services/brain-import-jobs.base.ts:174-191</code> · wake-up <code>:83-95</code></span></p>
+</div>
+
+<div class="grid g3" style="margin-top:14px">
+  <div class="card">
+    <h3>🔌 Redis is down</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Redis is unreachable when Sara clicks "Add to queue".</span></div>
+      <div class="sc-row"><b>What happens</b><span>Step 4 still succeeds: the ticket row is written. Step 9 fails silently in the background. The ticket waits as <code>queued</code>. When Redis is back, the next sweep drops a note and the job runs.</span></div>
+      <div class="sc-row"><b>What you see</b><span>The job sits at "queued" in the tray, then starts on its own. Nothing to redo.</span></div>
+      <div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:272,306</code></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🥊 Two workers grab the same ticket</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>The api and the mission worker both listen on the queue and both pop the note for job X.</span></div>
+      <div class="sc-row"><b>What happens</b><span>Both run step 12. The first update flips the row to <code>processing</code>. The second update matches zero rows and the worker drops the job quietly. The loser wrote nothing.</span></div>
+      <div class="sc-row"><b>What you see</b><span>One run, one result. But which process ran it is luck, so its logs may be in the other terminal. See Other finding 1.</span></div>
+      <div class="where">📍 <code>brain/repositories/brain-import-jobs-runtime.repository.ts:127-140</code></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>🎭 Atlas says "completed" but saved nothing</h3>
+    <div class="scenario">
+      <div class="sc-row"><b>Situation</b><span>Atlas answers <code>JOB_STATUS:completed</code> without ever calling the save tool.</span></div>
+      <div class="sc-row"><b>What happens</b><span>Step 20 trusts the reply for every job type except Slack campaign imports, which are the only ones checked against the shelves. The ticket turns green.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A "succeeded" job and an empty brain. This is the shape of Live findings 1 and 3.</span></div>
+      <div class="sc-row"><b>Should be</b><span>Every job type verified against the rows it claims to have written, the way Slack is.</span></div>
+      <div class="where">📍 <code>brain/services/brain-import-jobs-runtime.base.ts:334-355</code> · the one audit <code>:352-392</code></div>
+    </div>
+  </div>
+</div>
+
+<h2 id="flow-doors" data-tab="Flow"><span class="n">7</span> Which door takes which road</h2>
+<div class="card scroll">
+  <p>Six doors go through the ticket, the doorbell, and Atlas. Two doors write straight to the shelves. Each row says which save tool Atlas is told to use and which shelf the rows land on.</p>
+  <table>
+    <thead><tr><th>Door</th><th>Endpoint or trigger</th><th>Ticket type</th><th>Target brain</th><th>Road</th><th>Save tool</th><th>Shelf</th><th>Where</th></tr></thead>
+    <tbody>
+      <tr><td><a href="#door-text">Typed text, "Train brain"</a></td><td><code>POST /api/brain/import-jobs/sk-ingest</code></td><td><code>sk_ingest</code></td><td>agent</td><td>ticket → Atlas</td><td><code>ingest_agent_brain_text</code></td><td>SK sources + entries</td><td><code>apps/web/src/features/brain/components/training/training-queue-dispatch.ts:17</code> → <code>brain/controllers/import-jobs.controller.ts:119</code></td></tr>
+      <tr><td><a href="#door-text">Typed text, "Remember this"</a></td><td><code>POST /api/brain/remember</code></td><td><code>document_remember</code></td><td>user</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/memories.controller.ts:39</code></td></tr>
+      <tr><td><a href="#door-file">Uploaded file</a></td><td>text extracted in the browser first, then the same two endpoints as typed text</td><td><code>sk_ingest</code> or <code>document_remember</code></td><td>agent or user</td><td>ticket → Atlas</td><td>as above</td><td>as above</td><td><code>training-queue-dispatch.ts:53-55</code> · <code>brain/controllers/import-jobs.controller.ts:28</code></td></tr>
+      <tr><td><a href="#door-link">Link, "Train brain"</a></td><td><code>POST /api/brain/import-jobs/sk-ingest-link</code></td><td><code>sk_link_ingest</code></td><td>agent</td><td>ticket → Atlas</td><td><code>ingest_agent_brain_link</code></td><td>SK sources + entries</td><td><code>brain/controllers/import-jobs.controller.ts:131</code></td></tr>
+      <tr><td><a href="#door-link">Link, personal</a></td><td><code>POST /api/brain/remember-link</code></td><td><code>user_link_import</code></td><td>user</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/memories.controller.ts:91</code></td></tr>
+      <tr><td><a href="#door-fathom">Fathom meeting</a></td><td><code>POST /api/brain/import-jobs/fathom-meeting</code>, or the Fathom webhook</td><td><code>fathom_meeting_import</code></td><td>user, or an override</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/import-jobs.controller.ts:39</code> · <code>apps/api/src/modules/integrations/fathom/services/fathom-webhook.service.ts:116</code></td></tr>
+      <tr><td><a href="#door-fireflies">Fireflies meeting</a></td><td><code>POST /api/brain/import-jobs/fireflies-transcript</code>, or the Fireflies page</td><td><code>fireflies_transcript_import</code></td><td>user</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/import-jobs.controller.ts:62</code> · <code>apps/api/src/modules/integrations/fireflies/controllers/fireflies.controller.ts:87-91</code></td></tr>
+      <tr><td><a href="#door-slack">Slack channel</a></td><td>a scheduler, no HTTP door</td><td><code>slack_period_import</code> or <code>campaign_slack_import</code></td><td>user or campaign</td><td>ticket → Atlas, then the only shelf audit</td><td><code>save_user_memory</code> or <code>atlas_save_brain_context</code></td><td>Memories</td><td><code>apps/api/src/modules/slack/services/slack-brain-mapping.service.ts:120</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:267</code> · audit <code>brain-import-jobs-runtime.base.ts:352</code></td></tr>
+      <tr><td><a href="#door-portal">ROAS Portal (Page Grader)</a></td><td><code>POST /api/brain/page-grader/client-package</code>, a webhook, or the hourly catch-up</td><td><code>page_grader_brain_sync</code>, written <em>after</em> the work as a receipt</td><td>campaign</td><td><strong>direct</strong>, no ticket, no Redis, no Atlas</td><td>none</td><td>Memories + evidence</td><td><code>brain/services/page-grader-brain-package-ingest.service.ts:42</code> · embeds after insert <code>:104</code> · receipt row <code>:372</code></td></tr>
+      <tr><td><a href="#door-chat">Chat, whole conversation</a></td><td><code>POST /api/brain/process/conversation</code></td><td>none</td><td>user</td><td><strong>direct</strong>, no ticket, no Redis, no Atlas</td><td>none</td><td>Memories</td><td><code>brain/controllers/memories.controller.ts:114</code> → <code>brain/services/conversation-processing.service.ts:52</code></td></tr>
+      <tr><td><a href="#door-chat">Chat, "remember this" mid-chat</a></td><td>the helper calls the tool itself</td><td>none</td><td>user</td><td><strong>direct tool</strong></td><td><code>save_user_memory</code></td><td>Memories</td><td><code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code> · why it fails today: <a href="#live-1">Live finding 1</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="flow-shelves" data-tab="Flow"><span class="n">8</span> The shelves: separate tables, not stages of one flow</h2>
+<div class="card">
+  <p><strong>Short answer.</strong> Memories, SK entries, snapshots, beliefs, perspectives, pages, and timelines are different tables. A memory never turns into a snapshot. An SK entry never turns into a memory. The words <em>fact, decision, insight, story, framework, preference, event</em> are labels <em>inside</em> the memories table, not shelves of their own.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara sees a memory "we price at $99 because of support cost" and a snapshot "Premium positioning principle" and asks whether one grew into the other.</span></div>
+    <div class="sc-row"><b>What happens</b><span>No. The memory came from the document pipeline. The snapshot came from crystallize, which takes raw text and writes a fresh snapshot row; it never reads the memories table. Two shelves, two searches, same idea twice.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Both show up in search under different lanes: "memories" and "snapshots".</span></div>
+    <div class="where">📍 <code>brain/services/crystallization.service.ts:66,185</code> takes <code>input: string</code> · document pipeline <code>brain/services/document-ingestion.service.ts:155</code></div>
+  </div>
+</div>
+<div class="card scroll" style="margin-top:14px">
+  <table>
+    <thead><tr><th>Shelf</th><th>One row is</th><th>Table, migration</th><th>Filled by</th><th>Read by</th></tr></thead>
+    <tbody>
+      <tr><td>📓 Memories</td><td>One distilled sentence, with a type label, a score, a hash, and 768 numbers.</td><td><code>ns_memories</code>, <code>migrations/047_brain_consolidation.sql:29</code></td><td>Atlas via <code>save_user_memory</code>; document, chat, customer, and Page Grader pipelines</td><td><code>search_ns_memories</code> at <code>047:529</code></td></tr>
+      <tr><td>🔗 Memory links</td><td>"Supports" or "contradicts" between two memories.</td><td><code>ns_memory_connections</code>, <code>047:64</code></td><td><code>brain/repositories/memories.repository.ts:241</code></td><td><code>brain/repositories/brain-retrieval.repository.ts:219</code></td></tr>
+      <tr><td>📚 SK textbook</td><td>A source (book, PDF, transcript) and its entries (one concept or technique each).</td><td><code>ns_sk_sources</code> <code>047:239</code>, <code>ns_sk_entries</code> <code>047:263</code></td><td>Atlas via <code>ingest_agent_brain_text</code> → <code>sk-ingestion.service.ts:144</code></td><td><code>search_sk_entries</code> at <code>047:623</code></td></tr>
+      <tr><td>💎 Snapshots</td><td>One crystallized belief: claim, story, emotion, method, stress test. Richer than a memory.</td><td><code>ns_snapshots</code>, <code>047:112</code></td><td><code>brain/services/crystallization.service.ts:185</code>; accepted captures <code>brain/repositories/pending-captures.repository.ts:31</code></td><td><code>find_similar_snapshots</code> at <code>047:561</code></td></tr>
+      <tr><td>🧾 Evidence chunks</td><td>A raw slice of the original text, kept so answers can quote it.</td><td><code>ns_brain_evidence_chunks</code>, <code>migrations/20260525110600_brain_evidence_chunks.sql:4</code></td><td>side-car of crystallize <code>:189</code> and SK ingest <code>:110</code></td><td><code>search_brain_evidence_chunks</code></td></tr>
+      <tr><td>🔢 Fingerprints</td><td>"This exact text was already ingested into this brain."</td><td><code>ns_content_hashes</code>, <code>047:420</code></td><td><code>brain/repositories/content-dedupe.repository.ts:49</code></td><td>the fingerprint gate, step 16</td></tr>
+      <tr><td>🧠 Belief patterns</td><td>A recurring belief spotted across many memories. Keyed by person, not by brain.</td><td><code>ns_belief_patterns</code>, <code>047:196</code></td><td><code>brain/repositories/emotional-intelligence.repository.ts:100</code>; Atlas cognition tools</td><td><code>search_ns_belief_patterns</code></td></tr>
+      <tr><td>🪟 Perspectives</td><td>A worldview made of several beliefs.</td><td><code>ns_perspectives</code>, <code>047:219</code></td><td><code>apps/agent-api/src/modules/artifacts/repositories/artifact-brain-cognition.repository.ts:128</code></td><td><code>search_ns_perspectives</code></td></tr>
+      <tr><td>📄 Narrative pages</td><td>A wiki-style page Atlas writes from many memories.</td><td><code>ns_narrative_pages</code>, <code>migrations/20260406130000_brain_narrative_pages.sql:8</code></td><td><code>apps/agent-api/src/modules/artifacts/repositories/artifact-brain-narrative.repository.ts:149</code></td><td><code>search_narrative_pages</code></td></tr>
+      <tr><td>📅 Timelines</td><td>A dated line of events about one subject.</td><td><code>brain_timelines</code> <code>migrations/20260618143000_brain_timelines.sql:7</code>, items <code>:40</code></td><td><code>artifact-brain-narrative.repository.ts:101,128</code></td><td><code>search_brain_timeline_items</code></td></tr>
+      <tr><td>📥 Pending captures</td><td>Proposed snapshots from the extension, waiting for a yes.</td><td><code>ns_pending_captures</code>, <code>047:357</code></td><td><code>brain/repositories/pending-captures.repository.ts:8</code></td><td>the review screen</td></tr>
+      <tr><td>🎫 Import tickets</td><td>One job. Not knowledge, a work ticket.</td><td><code>brain_import_jobs</code>, <code>migrations/20260303120000_brain_import_jobs.sql:1</code></td><td>stage 1</td><td>the import tray</td></tr>
+    </tbody>
+  </table>
+</div>
+<div class="two" style="margin-top:14px">
+  <div class="card">
+    <h3>How the shelves feed each other</h3>
+    <ul>
+      <li><strong>Doors fill three shelves directly:</strong> Memories, SK textbook, Snapshots. Pending captures become Snapshots only after a person accepts.</li>
+      <li><strong>Side-cars written at the same moment:</strong> Evidence chunks (raw text) and Fingerprints.</li>
+      <li><strong>Built later, from many rows:</strong> Memories → Belief patterns → Perspectives; Memories → Narrative pages; Memories and episodes → Timelines.</li>
+      <li><strong>Never:</strong> Memory → Snapshot. SK entry → Memory. The only SK copy-out goes to the campaign graph on hand-off.</li>
+    </ul>
+    <div class="where">📍 <code>ns_belief_patterns.supporting_memories</code> <code>047:202</code> · <code>ns_perspectives.beliefs</code> <code>047:224</code> · <code>ns_narrative_pages.source_refs</code> · hand-off copy <code>brain/services/brain-handoff.service.ts:172-186</code></div>
+  </div>
+  <div class="card">
+    <h3>The seven memory labels</h3>
+    <p>Every memory row carries one of these in <code>memory_type</code>. Gemini picks the label while extracting.</p>
+    <ul>
+      <li><strong>preference</strong>: a belief, value, or opinion.</li>
+      <li><strong>decision</strong>: a choice, with its reasoning.</li>
+      <li><strong>story</strong>: an experience that shaped thinking.</li>
+      <li><strong>framework</strong>: a repeatable method or model.</li>
+      <li><strong>insight</strong>: a non-obvious lesson.</li>
+      <li><strong>fact</strong>: a milestone or data point that matters.</li>
+      <li><strong>event</strong>: a specific occurrence.</li>
+    </ul>
+    <div class="where">📍 type list <code>apps/api/src/modules/brain/types/brain.types.ts:5-12</code> · meanings in the extractor prompt <code>brain/services/document-ingestion.service.ts:348-354</code> · 🗄️ the column is free text with no check, <code>047:34</code>. See Other finding 6.</div>
+  </div>
+</div>
+
+<h2 id="problems" data-tab="Findings"><span class="n">9</span> The three biggest problems</h2>
+
+<div class="card problem p1" id="problem-1" style="margin-bottom:14px">
+  <span class="tag red">Problem 1</span>
+  <h3>The AI agent does not use this brain-reading code at all</h3>
+  <p>The agent lives in a different app and has its own separate copy of "search the brain". The two copies are built differently. A fix in one does not reach the other.</p>
+
+  <p><strong>Cause 1a. Two implementations of the same thing.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A developer lowers the similarity threshold in the web search so more memories show up, and tests it in the web app. It works.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The agent keeps using its own copy of the search with the old threshold. Nothing in the build warns that there are two.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Web search finds the memory; the helper in chat says it does not know. Same brain, two answers.</span></div>
+    <div class="sc-row"><b>Should be</b><span>One search implementation used by both, or a written rule that every change is made in both places with a shared test.</span></div>
+    <div class="where">📍 Code: <code>brain/services/brain-retrieval.service.ts</code> versus <code>apps/agent-api/src/modules/brain/services/brain-retrieval.service.ts</code> (601 lines, own repositories and lane services in the same folder). Different structure, verified by diff.</div>
+  </div>
+
+  <p><strong>Cause 1b. Only the web app and the extension call this folder's search.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Someone reports "the agent gives bad brain answers" and the team opens the brain folder in the API to debug.</span></div>
+    <div class="sc-row"><b>What happens</b><span>They are in the wrong place. The agent never passes through here. The gateway app has no brain code either; the agent's brain reads come from agent-api.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Hours lost reading code that is not on the agent's path.</span></div>
+    <div class="sc-row"><b>Should be</b><span>This page, and a note at the top of both retrieval files, saying who calls which.</span></div>
+    <div class="where">📍 Callers of this folder's search: <code>apps/web/src/features/brain/services/brain.service.ts:100</code> and <code>apps/chrome-extension/src/background/api.ts:185</code>. Agent callers: <code>apps/agent-api/src/modules/brain/services/brain-context.service.ts</code>. <code>apps/openclaw/src</code> has zero brain references.</div>
+  </div>
+
+  <p><strong>Cause 1c. The web search class is cut into four files that the type checker cannot see across.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A developer renames a parameter in one of the four base files.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The other files declare that method as "any arguments, any result", so the compiler accepts the mismatch. The bug only shows at run time.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A green build and a broken search.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Real method signatures shared through an interface, or one file.</span></div>
+    <div class="where">📍 Code: <code>brain/services/brain-retrieval-service-01.base.ts:47</code> onward, 37 <code>abstract (...args: any[]): any</code> declarations; implemented in <code>-02</code>, <code>-03</code>, <code>-04.base.ts</code>.</div>
+  </div>
+</div>
+
+<div class="card problem p2" id="problem-2" style="margin-bottom:14px">
+  <span class="tag orange">Problem 2</span>
+  <h3>The doors let in more than they should</h3>
+  <p>This is the "unwanted data" issue on ROA-18. Four causes, all confirmed in the code.</p>
+
+  <p><strong>Cause 2a. Personal Slack imports have no end date.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara maps her personal Slack channel to her own brain. The weekly import runs for 1 to 7 September, on 10 September.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The code asks Slack for "everything since 1 September" and never passes "stop at 7 September". Slack returns messages up to today. The organization path is different and passes both dates.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Memories from 8, 9, 10 September appear in this week's batch. Next week's import sees them again.</span></div>
+    <div class="sc-row"><b>Should be</b><span>The personal path passes both the start and the end of the period, like the organization path does.</span></div>
+    <div class="where">📍 Code: <code>brain/services/brain-import-jobs-input.base.ts:277</code> calls <code>pullChannelHistorySince(botToken, channelId, periodStartTs)</code>; the Slack method <code>apps/api/src/modules/slack/services/slack-service-conversation.base.ts:219</code> accepts only <code>oldestTs</code>. Org path with both bounds: same file, <code>loadPeriodThreads</code> around line 266.</div>
+  </div>
+
+  <p><strong>Cause 2b. "Worth keeping" is decided by asking Atlas nicely, not by code.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A Slack week is mostly "thanks!", "moving the call to 3pm", and one real decision.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The only filter is a paragraph in Atlas's instructions: keep decisions and insight, skip logistics and banter. If Atlas has a bad day, or a message is written to look like an instruction, the chatter gets saved. No code checks the result afterwards. The same is true for the customer-brain rule about who is allowed to be the subject of a memory.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Memories like "meeting moved to 3pm" in the brain, and nothing that flags them.</span></div>
+    <div class="sc-row"><b>Should be</b><span>A code check after Atlas replies: reject memories under a length or significance floor, and reject customer memories whose speaker role or confidence does not meet the rule.</span></div>
+    <div class="where">📍 Code: instructions built in <code>brain/services/brain-import-jobs-execution.base.ts:182</code> <code>buildAtlasSystemPrompt</code>; Slack rule at <code>:256</code>; customer rule <code>role=customer|lead|team_of_customer</code> at <code>:233</code> and confidence ≥ 0.75 at <code>:236</code>. No verification of the saved rows follows.</div>
+  </div>
+
+  <p><strong>Cause 2c. "Already imported" only looks at jobs still running.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Omar clicks "remember this link" on Monday. It succeeds. On Friday he forgets and clicks it again.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The duplicate check only looks for a queued, processing, or retrying job with the same fingerprint. Monday's job is finished, so Friday's is accepted and the whole link is processed again. Per-memory hash checks catch some repeats, but Atlas may phrase things differently the second time.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Two sets of near-identical memories with the same source title, and double credit usage.</span></div>
+    <div class="sc-row"><b>Should be</b><span>The check also looks at succeeded jobs for the same fingerprint within a window, and asks before re-importing.</span></div>
+    <div class="where">📍 Code: <code>brain/services/brain-import-jobs-runtime.base.ts:263</code> calls <code>findExistingActiveJob</code>; that query in <code>brain/repositories/brain-import-jobs-runtime.repository.ts:109-121</code> filters <code>status in (queued, processing, retry)</code><br>🗄️ Table: the unique index <code>uq_brain_import_jobs_active_dedupe</code> in <code>migrations/20260303120000_brain_import_jobs.sql:30</code> is also active-only.</div>
+  </div>
+
+  <p><strong>Cause 2d. Copying between brains never checks for duplicates.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Sara hands off her whole personal brain to the Acme campaign brain. A week later a teammate does it again.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The copy reads every row and inserts it with a new id. There is no "this content is already in the target" check, unlike the manual customer note path which checks the content hash.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Every memory, snapshot, and textbook entry twice in the campaign brain.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Skip rows whose content hash already exists in the target brain, and report how many were skipped.</span></div>
+    <div class="where">📍 Code: <code>brain/services/brain-handoff-brain-copy.service.ts:13</code> <code>copyToBrain</code> and <code>brain/services/brain-node-transfer-copy.service.ts:21</code> <code>copyRecords</code>. Compare with the hash check in <code>brain/services/customer-brain-memory-write.service.ts</code> around line 179.<br>🗄️ Table: <code>ns_content_hashes</code> <code>migrations/047_brain_consolidation.sql:420</code> exists for this purpose but is not consulted here.</div>
+  </div>
+
+  <p class="tech">Smaller, same area: the sender filter keeps a whole thread if any message from the target person is longer than 20 characters (<code>brain/services/brain-import-jobs-input.base.ts:288</code>); a failed Slack sync-cursor update is only logged (<code>brain/services/brain-import-jobs-runtime.base.ts:352-355</code>), so a period can be pulled again silently.</p>
+</div>
+
+<div class="card problem p3" id="problem-3">
+  <span class="tag yellow">Problem 3</span>
+  <h3>The database and the code disagree</h3>
+
+  <p><strong>Cause 3a. The code calls a database function that no migration creates.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A new developer sets up a fresh database from the migration files and opens the brain stats page.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The stats code asks the database to run a function that exists only if someone created it by hand on the live server. On a fresh database it is missing.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The stats request fails. On production it works, which hides the gap.</span></div>
+    <div class="sc-row"><b>Should be</b><span>A migration file that creates the function, or the code switched to the sibling function that does exist.</span></div>
+    <div class="where">📍 Code: <code>brain/repositories/memory-stats.repository.ts:44</code> calls RPC <code>find_connections_between</code><br>🗄️ Database: no <code>CREATE FUNCTION find_connections_between</code> anywhere in <code>supabase/migrations</code>. The sibling <code>find_connections_for_brain</code> is at <code>migrations/20260519140000_brain_legend_stats.sql:107</code>.</div>
+  </div>
+
+  <p><strong>Cause 3b. The notifications table was made by hand and never saved in the repo.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Same fresh database. An import job finishes and tries to notify the user.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The insert targets a table that no migration creates. It only exists because someone created it directly on the live server; a recovery script later wrote down its shape.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Notification inserts fail on any environment built from migrations.</span></div>
+    <div class="sc-row"><b>Should be</b><span>The recovery script's definition turned into a real migration.</span></div>
+    <div class="where">📍 Code: inserts in <code>brain/repositories/brain-import-jobs-runtime.repository.ts</code> and <code>brain/repositories/brain-cross-pollinator.repository.ts</code><br>🗄️ Table: <code>user_notifications</code>, defined only in <code>scripts/roas/roas-drift-recovery.sql:41</code>; later migrations only alter it.</div>
+  </div>
+
+  <p><strong>Cause 3c. There is no generated list of table shapes, so the code guesses.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A column is renamed in a migration.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Every repository declares its own idea of the row shape by hand. Nothing ties those to the real schema, so the build stays green and the query fails at run time.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A 500 error on a page that compiled fine.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Generated Supabase types checked into the repo and used by the repositories.</span></div>
+    <div class="where">📍 Code: hand-written row types such as <code>MemoryConnectionRow</code> in <code>brain/repositories/memory-stats.repository.ts</code>; <code>packages/db/src/types.ts</code> is hand-written and has no <code>ns_*</code> tables.</div>
+  </div>
+
+  <p><strong>Cause 3d. An hourly job runs and does nothing.</strong></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>The Portal pushes a client update while ROAS was down. The "catch up on Portal changes" job is supposed to pick it up within the hour.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The hourly job is registered with empty data. The worker only knows how to handle the 3-second sweep; for anything else it looks for a job id, finds none, logs a warning, and returns.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A warning line in the logs every hour and no catch-up. Portal changes wait until someone re-imports by hand.</span></div>
+    <div class="sc-row"><b>Should be</b><span>A handler for the hourly job name that runs the Portal catch-up, or remove the registration.</span></div>
+    <div class="where">📍 Code: registered in <code>brain/services/brain-import-jobs-runtime.base.ts:180</code> as <code>page-grader-brain-sync-sweep</code>; the worker <code>brain/services/brain-import-runtime.processor.ts:27</code> handles only <code>brain-import-sweep</code>.</div>
+  </div>
+
+  <div class="tech">
+    <p><strong>Also in this area:</strong></p>
+    <ul>
+      <li><code>ns_belief_patterns.brain_id</code> and <code>ns_perspectives.brain_id</code> are nullable and were backfilled only to default personal brains. Column repair at <code>migrations/20260708040000_add_brain_id_to_cognition.sql</code>; backfill at <code>migrations/20260519171800_backfill_remaining_cognition_brain_id.sql</code>.</li>
+      <li><code>brain/services/memories.service.ts:52</code> <code>createMemory</code> inserts without an embedding, so manually created memories are not searchable by meaning.</li>
+      <li><code>ns_snapshots.embedding</code> (<code>migrations/047_brain_consolidation.sql:112</code>) has no vector index; only memories (<code>:58</code>) and sk_entries (<code>:290</code>) got one in that file. <code>find_similar_snapshots</code> scans the whole table.</li>
+    </ul>
+  </div>
+</div>
+
+<h2 id="live" data-tab="Findings"><span class="n">10</span> Live findings from running the system</h2>
+<div class="card problem p1" id="live-1" style="margin-bottom:14px">
+  <span class="tag red">Live finding 1 · 2026-09-09</span> <span class="tag gray">ROA-29</span> <span class="tag gray">ROA-30</span> <span class="tag gray">ROA-31</span>
+  <h3>The helper says "remembered" but saves nothing</h3>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>On the local dev stack, logged in as <code>test@gmail.com</code>, the user typed in chat: "remember, our webinar sign-ups are best on Tuesdays." The helper replied "Noted and locked in."</span></div>
+    <div class="sc-row"><b>What happens</b><span>The helper was allowed to use the memory-save action but reached for a campaign action instead, "create awareness point". It filled the fields the docs describe, <code>title</code> and <code>body</code>. The handler demands different fields, <code>content</code> and <code>point_type</code>, so the call failed with "content is required". It retried once the same way, failed again, then tried "update campaign context", which needs a campaign, and there was none in a personal chat. Three failures. It then told the user the memory was saved.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A confident "Noted and locked in" in chat. In the database: 0 rows in <code>ns_memories</code>, 0 rows in <code>brain_import_jobs</code>. The three failed calls are recorded only inside the assistant message's <code>metadata.tool_steps</code>.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Three fixes. The awareness-point docs, schema, and handler must agree on field names. A "remember" in a personal chat should route to <code>save_user_memory</code>. And after every failed write the helper must say it failed, never "saved".</span></div>
+    <div class="where">📍 Evidence: <code>messages</code> row <code>71472b25-429f-406a-90fa-6748e728c96f</code>, conversation <code>181dd5b1-280e-4839-8e34-11fd1f4c209b</code>, agent <code>vibey</code>, model <code>anthropic/claude-sonnet-4.6</code>, dev project <code>sicxiwyukxtqicevlwuc</code><br>📍 Field mismatch: docs <code>apps/agent-api/src/modules/agent-sync/data/vibey-api-action-docs.ts:2608-2614</code> say <code>title</code>, <code>body</code> · schema <code>apps/agent-api/src/modules/artifacts/services/artifact-action-additional-schemas.ts:419-423</code> allows <code>title</code>, <code>body</code> · handler <code>apps/agent-api/src/modules/artifacts/services/artifact-north-star.service.ts:96-99</code> requires <code>content</code> and <code>point_type</code><br>📍 The action it should have used: <code>save_user_memory</code>, allowed for vibey per <code>apps/agent-api/src/modules/artifacts/services/artifact-capability.policy.ts:633</code> (<code>VIBEY_ALLOWED_ACTIONS</code>, evaluated: true), documented with a webinar example at <code>vibey-api-action-docs.ts:1267-1272</code>, handled by <code>artifact-legacy-team-brain-memory.service.ts:11</code><br>🗄️ Tables: <code>agent_awareness_points</code> (target of the wrong action, <code>artifact-north-star.repository.ts:13</code>) · <code>ns_memories</code> (target of the right one, empty)</div>
+  </div>
+
+  <p style="margin-top:14px"><strong>Second test, same day, explicit wording.</strong> "Save this to my brain: our webinar sign-ups are best on Tuesdays."</p>
+  <div class="scenario">
+    <div class="sc-row"><b>What happens</b><span>Seven tool calls, seven failures, still never the memory-save action: propose company brain signal three times (missing "truth", then missing evidence, then "org context is required" because a personal chat has no organization), add awareness point, create awareness point twice with the two different field sets, then the repeat-guard opened and blocked further tries.</span></div>
+    <div class="sc-row"><b>What you see</b><span>This time the helper admitted it: "I wasn't able to write this to the Brain directly from chat right now." It then pointed the user to Company Brain, which is the wrong place for a personal note. Memories table still 0 rows.</span></div>
+    <div class="sc-row"><b>Root cause</b><span><strong>Updated 2026-09-10:</strong> the primary cause is Live finding 4 below: a wiring gap leaves the personal-brain flag false for every chat turn, and the runtime then <em>denies</em> the helper the memory-save action, so it could not have called it. The instruction gap remains a real secondary problem: the helper is allowed to call memory-save and the action is on its tool list, but its instruction file never teaches it. Atlas's generated docs open with a "Save a memory" example; vibey's do not, because that example only appears for agents whose docs domain is "brain", and vibey's is "management". In vibey's docs the memory-save action is one name among 26 in a table row, with no rule that says "when the user says remember or save to my brain, use this". The Campaign row next to it lists the awareness-point and campaign-context actions, and vibey's own skills talk about Brain as campaign and company knowledge. So it reaches for those.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Give every conversational agent the same "remember → save_user_memory" rule and example that Atlas gets, regardless of docs domain. Fix the awareness-point field names so docs, schema, and handler agree. Keep the honest failure wording from the second reply and make it the only allowed wording after a failed write.</span></div>
+    <div class="where">📍 Evidence: <code>messages</code> row at 2026-09-09 12:07:26, seven <code>tool_steps</code> in its metadata; retrieval receipts searched company and customer scopes with 0 results<br>📍 Why vibey never learns the action: <code>apps/agent-api/src/modules/agent-sync/services/vibey-api-skill-generator.ts:284-290</code> adds the "Save a memory" quick-start only when <code>domain === 'brain'</code>; the fallback at <code>:405</code> only fires when there are no other examples. Domain per agent chosen in <code>agent-sync-policy-skill.service.ts:58-61</code>, default <code>management</code><br>📍 What vibey is actually shown: generated file <code>docker/agents/users/&lt;user-id&gt;/vibey/skills/vibey-api/SKILL.md</code> (Sep 5): Quick Start has funnel, form, offer, ad, task, calendar examples and no memory example; <code>save_user_memory</code> appears once, in the "All Actions" table line 127; the contract lives in <code>references/brain.md:235-246</code> with no routing rule. Compare Atlas: <code>docker/agents/atlas/skills/vibey-api/SKILL.md:20-23</code> opens with "Save a memory"<br>📍 Awareness-point contract the helper followed: <code>references/campaign.md:3-12</code> says <code>title</code>, <code>body</code>; the handler wants <code>content</code>, <code>point_type</code></div>
+  </div>
+</div>
+
+<div class="card problem p2" id="live-2" style="margin-bottom:14px">
+  <span class="tag orange">Live finding 2 · 2026-09-09</span>
+  <h3>Local dev shares its job queue with a cloud environment, so local brain jobs run in the cloud</h3>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>On the local stack, the user opened Train Brain, pasted one sentence for the "Test Admin" brain, and pressed "Add to queue". Then pressed Retry once.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The local api wrote the job row and pushed it onto the brain-import queue on the dev Redis hosted on Railway. A cloud-hosted copy of the api has been attached to that same Redis as a worker on that same queue for about 130 hours. Both apis raced for the job; the cloud copy won, both times. It sent the job to the cloud agent runtime named in the user's profile. Atlas ran there, the cloud agent-api created a textbook source row in the shared dev database, then failed before writing entries and left the source at "processing". The job went to retry with only Atlas's narration as the error.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The queue item shows "Retrying…". The local api, agent-api, and gateway terminals print nothing at all. The dev database gains one stuck source row per attempt (2 so far) and zero entries. The real error text exists only in the cloud runtime's logs.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Local development uses a local Redis (<code>redis-server</code>, <code>REDIS_URL=redis://localhost:6379</code>) so the local api is the only worker on its own queue and every job runs and logs on the developer's machine. Shared Redis instances must be one per environment, never shared between a laptop and a cloud deployment. The source-row "processing" state also needs a failure path, see Problem 3 and Live finding 1's ticket family.</span></div>
+    <div class="where">📍 Evidence: dev Redis <code>CLIENT LIST</code> at 14:05 UTC shows client <code>[fd12:…:11d:3ea7:9f85]</code> (Railway private network, oldest connection 130 h) holding BullMQ workers for <code>agent-runtime-queue-brain-import</code>, <code>agent-runtime-queue-brain</code>, <code>agent-runtime-queue-chat</code>, <code>agent-runtime-queue-mission</code>, <code>dream-ops</code>; local api workers appear as <code>100.64.0.x</code> through Railway's proxy on the same <code>agent-runtime-queue-brain-import</code>. Job <code>brain_import_jobs</code> <code>2732391d-a343-4210-a69e-1c94c2533b03</code>, attempts at 13:25:50 and 13:56:12 UTC, status <code>retry</code>. Source rows in <code>ns_sk_sources</code> for brain <code>4d56c1a1-…</code>, status <code>processing</code>, <code>entries_count 0</code>.<br>📍 Routing: <code>apps/api/src/modules/user-agent-api/services/user-agent-api.service.ts:78-118</code> <code>resolveTargetState</code> goes local only when <code>AGENT_API_URL</code> is unset or localhost; the cloud api has it set, so it reads the profile: <code>profiles.agent_runtime_type = shared_railway</code>, <code>profiles.agent_runtime_url = https://roas-x-1dslabs-runtimes.fly.dev</code>. Queue name in <code>apps/api/src/modules/agent-runtime/agent-runtime-queues.ts</code>; local worker <code>apps/api/src/modules/brain/services/brain-import-runtime.processor.ts:14</code>.<br>🗄️ Config: <code>apps/api/.env</code> <code>REDIS_URL</code> points at the Railway dev Redis (host <code>sakura.proxy.rlwy.net</code>).</div>
+  </div>
+</div>
+
+<div class="card problem p1" id="live-3" style="margin-bottom:14px">
+  <span class="tag red">Live finding 3 · 2026-09-10</span>
+  <h3>One crashed textbook import poisons every retry, and the retries report success</h3>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>The "Webinar timing" job from Live finding 2, now run on a fully local stack after restoring the dev database locally.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The ingest registers a fingerprint of the text for the brain <em>first</em>, then creates the source, then calls Gemini and inserts entries. The first cloud attempt registered the fingerprint and crashed after creating the source. Every later attempt found the fingerprint, took the "duplicate, nothing to do" exit in under 300 ms, told Atlas it was done, and Atlas reported "already present in the agent brain". The job was marked succeeded. Zero entries ever existed.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Three sources stuck at processing, zero entries, a job that says succeeded with "no duplicate knowledge was added". After deleting the three fingerprint rows and re-arming, the same job produced one completed source and one entry in 16 seconds.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Register the fingerprint only after the entries are committed, or remove it when the ingest fails. A "duplicate" outcome must carry evidence, the existing source id and its entry count, and the job must not be marked succeeded unless entries exist for that source.</span></div>
+    <div class="where">📍 Order of operations: <code>apps/agent-api/src/modules/brain/services/sk-ingestion.service.ts:66</code> <code>registerForBrain</code> → <code>:72-73</code> early return on duplicate → <code>:81</code> <code>createSkSource</code> → Gemini → inserts → <code>:176</code> finalize. Fingerprint logic <code>apps/agent-api/src/modules/brain/services/content-dedupe.service.ts:37-52</code>. Job success trusts Atlas's <code>JOB_STATUS:completed</code> with no row check except for Slack: <code>brain/services/brain-import-jobs-runtime.base.ts:326-339</code> <code>assertCampaignSlackImportPersisted</code> only.<br>🗄️ Evidence: local DB, <code>ns_content_hashes</code> had 3 rows for brain <code>4d56c1a1…</code> (13:25:56, 13:56:26, 14:10:56 UTC); agent-api log <code>ingest_agent_brain_text OK durationMs=281</code> at 00:00:56 local vs <code>durationMs=7054</code> at 00:02:09 after the rows were deleted; job result before: "already present", after: "Saved 1 agent-brain insight". The same copy of this logic exists in <code>brain/services/sk-ingestion.service.ts</code> (api).</div>
+  </div>
+</div>
+
+<div class="card problem p1" id="live-4" style="margin-bottom:14px">
+  <span class="tag red">Live finding 4 · 2026-09-10</span> <span class="tag green">root cause found</span> <span class="tag gray">ROA-32</span>
+  <h3>The helper never reads the personal brain before answering</h3>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Fully local stack, the day after the brain stored "webinar sign-ups are best on Tuesdays" as a textbook entry and a lead-magnet fact as a memory. The user asked the helper in chat: "when is the best day for webinary?"</span></div>
+    <div class="sc-row"><b>What happens</b><span>Before replying, the chat preloads brain context. Its receipts for this reply list only the company brain and the customer brain, both with 0 results. The personal brain, which holds the answer, was not searched. The helper made zero tool calls, so it did not search on its own either. It answered from general knowledge: "Wednesday is your best bet."</span></div>
+    <div class="sc-row"><b>What you see</b><span>A confident generic answer that contradicts the user's own stored knowledge, with no hint that the brain was consulted. Looking back, every one of the 8 chat replies stored since 2026-09-05 shows the same receipts: company and customer only, never user.</span></div>
+    <div class="sc-row"><b>Root cause</b><span>One dependency never arrives. The chat's prewarm service computes the "may this agent read the personal brain" flag and caches it for the turn. Its constructor declares the policy service as <code>AgentPolicyService | undefined</code> behind <code>@Optional()</code>. With a union type, TypeScript emits <code>Object</code> as the injection token, Nest cannot match it, and <code>@Optional()</code> injects nothing, silently. The flag therefore starts false and stays false, the turn reuses the cached false, the brain builder skips the personal brain, and the runtime hands the helper a deny list containing <code>save_user_memory</code>, <code>search_user_brain</code>, and every other personal-brain action. That single gap is also the true cause of Live finding 1: the helper never called <code>save_user_memory</code> because it was denied that turn, not only because its docs are thin. The same union type on the cache parameter means the Redis prewarm cache is never injected either, which is why every prewarm log says <code>store=memory</code>.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Declare both optional dependencies as <code>param?: Type</code> so the token is the class, or use <code>@Inject(AgentPolicyService)</code>. Add a test that boots the module and asserts the prewarm service holds a policy instance. Then a personal chat searches the personal brain first, the receipts show it, and the helper keeps its memory tools.</span></div>
+    <div class="where">📍 Evidence: <code>messages</code> row for conversation <code>f2f3c3af-03cb-4104-99e3-4d9c91452d3e</code>, 2026-09-10 10:35 UTC, <code>metadata.retrieval_receipts</code> = company:0, customer:0, <code>tool_steps</code> = 0, model <code>openai/gpt-5.6-terra</code>. Same receipt pattern on all 8 assistant rows with receipts. Stored knowledge: <code>ns_sk_entries</code> "Optimizing Webinar Sign-Ups via Tuesday Promotions", <code>ns_memories</code> lead-magnet fact.<br>📍 Where the decision is made: <code>apps/agent-api/src/modules/brain/services/brain-context.service.ts:361-384</code> computes <code>hasUserBrainAccess</code> from <code>skipUserBrain</code>, the chat's <code>userBrainAccess</code> flag, the agent policy capability <code>brain_access:personal</code>, and <code>listAllowedBrainSearchFamilies</code>; the personal builder <code>buildUserBrainContext</code> at <code>:53</code> runs only when that flag is true (<code>:488-512</code>). The chat computes the flag in <code>apps/agent-api/src/modules/chat/services/chat-stable-turn-context.service.ts:114-217</code>, starting from <code>false</code>, from a prewarm cache if present (<code>chat-prewarm-context.service.ts:314-321</code>), else from <code>agentPolicy.canAgentUseCapability(agent, 'brain_access', 'personal')</code>; any thrown policy error is caught and leaves it <code>false</code>. Policy rules: <code>apps/agent-api/src/modules/agent-policy/services/agent-policy.service.ts:172-191</code>, role default <code>read_brain_personal</code> is in vibey's role <code>vibey_ceo</code> (<code>packages/agent-policy/src/role-defaults.ts:61-93</code>, <code>system-agent-contracts.ts:50-66</code>), so the rule itself should allow it. The decisive log line is <code>full_context_start</code> with <code>effective_user_brain_access</code> (<code>brain-context.service.ts:405-411</code>).<br>📍 Proof, live: a probe that boots the real dependency graph reports <code>policyServiceResolved: true</code>, <code>inApp_canUse_brain_access_personal: true</code>, <code>chat_has_agentPolicy: true</code>, <code>stable_has_agentPolicy: true</code>, <code>prewarm_has_agentPolicy: false</code>. With <code>BRAIN_CONTEXT_TIMING_LOGS=1</code> the builder logs <code>requested_user_brain_access: false, effective_user_brain_access: false, allowed_brain_families: [user, agent, company, customer]</code>.<br>📍 The line: <code>apps/agent-api/src/modules/chat/services/chat-prewarm-context.service.ts:60-61</code> (<code>@Optional() … : ChatPrewarmCacheService | undefined</code> and <code>: AgentPolicyService | undefined</code>). Compare <code>chat-stable-turn-context.service.ts:72</code> (<code>agentPolicy?: AgentPolicyService</code>), which does resolve. Compiled tokens: <code>apps/agent-api/dist/…/chat-prewarm-context.service.js</code> <code>design:paramtypes</code> shows <code>Object, Object</code> at those positions. Flag flow: prewarm <code>:314-329</code> → cached → reused in <code>chat-stable-turn-context.service.ts:141</code> → <code>brain-context.service.ts:361-384</code> → deny list <code>chat-gateway-input.service.ts:174</code> with <code>artifact-access-policy-actions.ts:1-12</code>.<br>🗄️ Not a data problem: the policy service, the registry rows, and the role defaults all grant access; only the wiring drops it.</div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom:14px"><span class="tag yellow">Also seen live · 2026-09-09</span>
+  <p><strong>Fifteen "Crystallize beliefs and perspectives" jobs sit unfinished for 10 hours to 2 days</strong> on the personal and customer brains in the Train Brain Activity tab. These are <code>brain_ops_outbox</code> synthesis jobs, not imports. The local stack runs no worker for that queue and the cloud <code>dream-ops</code> worker on the shared Redis did not clear them, so the UI shows them spinning forever with a Cancel button and no error.</p>
+  <div class="where">📍 Enqueued by <code>brain/services/brain-ops-hook.service.ts</code> · listed by <code>brain/services/brain-import-job-status.service.ts</code> (merges <code>brain_import_jobs</code> and <code>brain_ops_outbox</code>) · 🗄️ <code>brain_ops_outbox</code> in <code>migrations/20260407100000_brain_ops_outbox.sql</code></div>
+</div>
+
+<h2 id="other" data-tab="Findings"><span class="n">11</span> Other things worth a ticket</h2>
+<div class="grid g3">
+  <div class="card"><span class="tag red">Permissions and safety</span>
+    <ul>
+      <li>A few doors show a brain's data without checking you may see that brain.<br><span class="where">📍 <code>brain/controllers/emotional.controller.ts</code> GET patterns, perspectives, avatars · <code>brain/controllers/snapshots.controller.ts</code> <code>:id</code> routes · <code>brain/controllers/memories-status.controller.ts</code> <code>health/batch</code></span></li>
+      <li>Cross-brain suggestions ignore which organization you are in.<br><span class="where">📍 <code>brain/controllers/brain-cross-suggestions.controller.ts:33</code> <code>void org</code> · <code>brain/repositories/brain-cross-pollinator.repository.ts:8-18</code> filters by owner only</span></li>
+      <li>Two doors will fetch any web address you give them, including internal ones.<br><span class="where">📍 <code>brain/controllers/sk.controller.ts:67-70</code> · <code>brain/services/link-extraction.service.ts:113-153</code>, no host allowlist</span></li>
+      <li class="tech"><code>increment_brain_counter</code> in <code>migrations/20260406130000_brain_narrative_pages.sql</code> builds a column name from caller input with <code>format('%I')</code>, no allowlist in SQL.</li>
+    </ul>
+  </div>
+  <div class="card"><span class="tag purple">Duplication and drift</span>
+    <ul>
+      <li>"Find my default brain" is written three times, slightly differently.<br><span class="where">📍 <code>brain/repositories/memory-brain-resolver.ts:9</code> · <code>brain/repositories/snapshots.repository.ts</code> · <code>brain/repositories/content-dedupe.repository.ts</code>; all ignore the request client and use the service-role client</span></li>
+      <li>Two separate "is this a duplicate" systems that do not talk to each other.<br><span class="where">🗄️ <code>ns_memories.content_hash</code> vs <code>ns_content_hashes</code> (<code>migrations/047_brain_consolidation.sql:420</code>)</span></li>
+      <li>One search function is called two different ways.<br><span class="where">📍 <code>search_ns_memories</code> in <code>brain/repositories/scholar-context.repository.ts:7-13</code> vs <code>brain/repositories/brain-retrieval.repository.ts:114-121</code></span></li>
+      <li>A file nobody uses.<br><span class="where">📍 <code>brain/services/page-grader-client-org.ts</code>, imported only by its own test; duplicates <code>findCampaignByPageGraderClient</code> in <code>page-grader-client-import.service.ts</code></span></li>
+      <li class="tech">Similarity thresholds vary per lane with no shared source: 0.25, 0.35, 0.4, 0.5, 0.6 across <code>brain/repositories/brain-retrieval*.repository.ts</code>, <code>search.repository.ts</code>, <code>scholar-context.repository.ts</code>.</li>
+    </ul>
+  </div>
+  <div class="card"><span class="tag teal">Data quality</span>
+    <ul>
+      <li>A "how many times recalled" counter is always reset to 1.<br><span class="where">📍 <code>brain/repositories/sk.repository.ts:159</code></span></li>
+      <li>Every empty search adds a new "gap" row, forever.<br><span class="where">📍 <code>brain/repositories/sk.repository.ts:28-36</code> · 🗄️ <code>ns_sk_gaps</code> <code>migrations/047_brain_consolidation.sql:296</code></span></li>
+      <li>Every accepted capture is labelled "Model" no matter what it is.<br><span class="where">📍 <code>brain/services/pending-captures.service.ts:47</code></span></li>
+      <li>Portal data is saved raw, so password-shaped fields are not hidden.<br><span class="where">📍 <code>brain/services/page-grader-brain-package-build.ts</code> skips <code>sanitizePortalBrainValue</code> from <code>page-grader-client-strategy-import.ts:285</code></span></li>
+      <li class="tech">Unbounded <code>select('*')</code> in <code>brain/repositories/brain-permissions.repository.ts:47-61</code>, <code>sk.repository.ts:38-55</code>, <code>brain-handoff.repository.ts:18-21</code>, <code>brain-graph.repository.ts:163-197</code>, <code>memories.repository.ts:339-376</code>.</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px" id="other-flow">
+  <span class="tag orange">Found while tracing the import flow, 2026-09-10</span>
+  <p style="margin-top:10px">Six more things the step-by-step trace turned up. Recorded here first; each has a Linear ticket.</p>
+
+  <p id="other-f1"><strong>Other finding 1. Two workers listen on the same queue, and which one runs a job is luck.</strong> <a class="tag blue" href="https://linear.app/1dscollective/issue/ROA-33">ROA-33</a></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>The api and the mission worker are both running against one Redis.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Both register a worker on <code>agent-runtime-queue-brain-import</code>. The api runs the job in its own process. The mission worker forwards it to agent-api over HTTP, which then calls back into the api to claim. Whoever pops the note first decides the road.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The same job runs in different places on different days. Its logs appear in one terminal or the other. Debugging a failure means checking both.</span></div>
+    <div class="sc-row"><b>Should be</b><span>One deliberate consumer per environment, written down, and the other one disabled by config.</span></div>
+    <div class="where">📍 <code>brain/services/brain-import-runtime.processor.ts:14</code> · <code>apps/mission-worker/src/modules/agent-runtime/processors/agent-runtime-brain-import.processor.ts:64,101</code> · claim-back <code>apps/agent-api/src/modules/brain-import-runtime/services/brain-import-runtime.service.ts:68</code></div>
+  </div>
+
+  <p id="other-f2"><strong>Other finding 2. The api worker drops the hourly Page Grader catch-up.</strong> <a class="tag blue" href="https://linear.app/1dscollective/issue/ROA-34">ROA-34</a></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Only the api is consuming the queue, which is the local setup.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The api registers two timers, the 3-second sweep and an hourly <code>page-grader-brain-sync-sweep</code>. Its worker only recognizes the first name. The hourly one falls through to the "job id" branch, finds no id, logs "Skipping runtime job", and returns.</span></div>
+    <div class="sc-row"><b>What you see</b><span>A warning every hour and no Page Grader catch-up. Only the mission worker knows how to handle that timer.</span></div>
+    <div class="sc-row"><b>Should be</b><span>The api worker handles the timer it registers, or does not register it.</span></div>
+    <div class="where">📍 registers <code>brain/services/brain-import-jobs-runtime.base.ts:179-184</code> · handles only the first <code>brain/services/brain-import-runtime.processor.ts:26-37</code> · the handler that exists <code>agent-runtime-brain-import.processor.ts:86</code></div>
+  </div>
+
+  <p id="other-f3"><strong>Other finding 3. A long import can be declared stale while it is still working, and run twice.</strong> <a class="tag blue" href="https://linear.app/1dscollective/issue/ROA-35">ROA-35</a></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A 900,000-character transcript is split into three chunks; each Atlas call may take up to 15 minutes.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The stale check moves any row in <code>processing</code> for more than 20 minutes back to <code>retry</code>. A three-chunk job can legitimately take 45. The row is re-claimed and the remaining chunks run again from the saved chunk counter, but the chunk in flight is paid for twice. The attempt number stops corrupt writes, not double spend.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Credits burn faster on big files; the job may show "retry" while Atlas is still busy.</span></div>
+    <div class="sc-row"><b>Should be</b><span>A stale window that scales with chunk count, or a heartbeat per chunk.</span></div>
+    <div class="where">📍 window <code>brain/services/brain-import-jobs.base.ts:25-27</code> ("must exceed 900 s") · resume point <code>brain/services/brain-import-jobs-execution.base.ts:74,82</code> · recovery <code>brain-import-jobs-runtime.base.ts:218</code></div>
+  </div>
+
+  <p id="other-f4"><strong>Other finding 4. A memory created through the plain API has no embedding, so search by meaning cannot find it.</strong> <a class="tag blue" href="https://linear.app/1dscollective/issue/ROA-36">ROA-36</a></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>A developer or a script calls the create-memory endpoint directly.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The service hashes the content, checks for a duplicate, and inserts the row. It never calls the embedding service. Every other write path embeds before inserting.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The memory is in the list but never comes back from search by meaning, until a repair pass happens to touch it.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Embed on create, like every other path.</span></div>
+    <div class="where">📍 <code>brain/services/memories.service.ts:52-89</code> <code>createMemory</code>, no <code>getEmbedding</code> call · compare <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:81</code></div>
+  </div>
+
+  <p id="other-f5"><strong>Other finding 5. The chat pipeline never registers a fingerprint for the whole conversation.</strong> <a class="tag blue" href="https://linear.app/1dscollective/issue/ROA-37">ROA-37</a></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>The same conversation is sent to the processing endpoint twice.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Every other pipeline registers a whole-text fingerprint first and stops on a duplicate. This one goes straight to Gemini, then dedupes only per extracted item by hash. Gemini is paid twice; small wording differences in the extraction slip through as new rows.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Near-duplicate memories from repeated processing, and extra model cost.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Register the conversation fingerprint in <code>ns_content_hashes</code> before extraction, like the document pipeline does.</span></div>
+    <div class="where">📍 <code>brain/services/conversation-processing.service.ts:96</code> extract first, <code>:138</code> per-item hash only · the pattern to copy <code>brain/services/document-ingestion.service.ts:70-76</code> · 🗄️ <code>ns_content_hashes</code> <code>047:420</code></div>
+  </div>
+
+  <p id="other-f6"><strong>Other finding 6. The database does not enforce memory types, source types, or snapshot types, and code and schema disagree on the defaults.</strong> <a class="tag blue" href="https://linear.app/1dscollective/issue/ROA-38">ROA-38</a></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Someone filters memories by type, or reads the snapshot type list.</span></div>
+    <div class="sc-row"><b>What happens</b><span><code>memory_type</code> and <code>source_type</code> are free text with no check. Code writes source types outside its own list (document, upload, campaign_brief, page_grader_seed, and more). <code>ns_snapshots.type</code> defaults to "Belief" in SQL, a value the code never produces; the code only knows Model, Rule, Conviction, Principle.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Filters that miss rows, type counts that do not add up, and a default that exists only in the database.</span></div>
+    <div class="sc-row"><b>Should be</b><span>One list per column, enforced by a check constraint and generated types.</span></div>
+    <div class="where">🗄️ <code>migrations/047_brain_consolidation.sql:34-35</code> memories columns · <code>:115</code> snapshot default · 📍 <code>apps/api/src/modules/brain/types/brain.types.ts:5-13,21-28</code></div>
+    </div>
+
+  <p id="other-f7"><strong>Other finding 7. On a personal brain the counters count textbook entries the canvas never draws, and the personal save tool hard-codes confidence.</strong> <span class="tag gray">no ticket yet</span></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Test Admin's personal brain holds 1 memory and 1 textbook entry (from "Train brain" run on the personal brain).</span></div>
+    <div class="sc-row"><b>What happens</b><span>The stats bar says Memories 2 and Connections 1, the legend lists Fact 1 and Technique 1, but the canvas draws one dot: the personal-brain graph route never builds textbook nodes, and the one connection is the entry's link to its source, also not drawn. Separately, every memory saved through <code>save_user_memory</code> gets confidence 0.8 and significance 0.7 unless Atlas passes a significance, so the bars in the detail panel look like judgments but are defaults.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Numbers that do not match the picture, and "70% / 80%" on every Atlas-saved memory.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Either draw textbook entries on every brain kind or count only what is drawn; and either ask Atlas for a real confidence or hide the bar when it is a default.</span></div>
+    <div class="where">📍 <code>brain/services/graph.service.ts:341-347</code> counts, <code>:358</code> nodes · textbook nodes only via <code>:140-240</code> and <code>brain/services/graph-request.service.ts:60</code> · defaults <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:112-113</code> · 🗄️ <code>migrations/20260519140000_brain_legend_stats.sql:72-75</code> emerged_from</div>
+    </div>
+
+  <p id="other-f8"><strong>Other finding 8. The share dialog cannot grant the "train" level, and re-saving an existing train share downgrades it.</strong> <span class="tag gray">no ticket yet</span></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>An org admin shares a brain and wants a teammate to be able to train it.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The dialog offers only "View only" and "Full edit". The mapping turns "Full edit" into level <code>query</code>; the database and the permission service know a third level, <code>train</code>, that the UI never writes. An existing <code>train</code> share is displayed as "Full edit", and saving it again writes <code>query</code>.</span></div>
+    <div class="sc-row"><b>What you see</b><span>No way to let a teammate train a shared brain from the app, and silent downgrades.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Three options that map one-to-one to view, query, train.</span></div>
+    <div class="where">📍 <code>apps/web/src/lib/org/org-resource-sharing.ts:23,52,56</code> · dialog <code>apps/web/src/components/org/ShareModal.tsx:24</code> · levels checked in <code>brain/services/brain-permissions.service.ts</code> · 🗄️ <code>brain_shares</code> <code>migrations/20260520210300_brain_access_control.sql</code></div>
+  </div>
+
+  <p id="other-f9"><strong>Other finding 9. The pending-captures review queue exists only as an API; no screen calls it.</strong> <span class="tag gray">no ticket yet</span></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Someone expects to review extension or OpenClaw captures before they land.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Three doors exist (create, accept, reject) and the web app has the client functions, but no component uses them. Extension captures go straight to the import queue. Rows written to the pending table by OpenClaw would wait forever.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Nothing to review anywhere.</span></div>
+    <div class="sc-row"><b>Should be</b><span>A review screen wired to the doors, or the doors and table retired.</span></div>
+    <div class="where">📍 unused client <code>apps/web/src/features/brain/services/brain.service.ts:128-136</code> · doors <code>brain/controllers/pending-captures.controller.ts:20-41</code> · 🗄️ <code>ns_pending_captures</code> <code>migrations/047_brain_consolidation.sql:357</code></div>
+    </div>
+
+  <p id="other-f10"><strong>Other finding 10. The meeting crystallize pipeline is dead code: no caller and not registered.</strong> <span class="tag gray">no ticket yet</span></p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Someone reads the service that turns a meeting transcript into a snapshot and assumes meetings are crystallized automatically.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The service exists, but nothing calls it and the module does not register it. Fathom and Fireflies meetings go through Atlas, which saves memories and may call <code>crystallize_user_brain</code> on a passage; the dedicated meeting pipeline (session-key dedupe, length gate, fingerprint, crystallize) never runs.</span></div>
+    <div class="sc-row"><b>What you see</b><span>No snapshots unless Atlas decides to make one; a file that looks like a feature but is not wired.</span></div>
+    <div class="sc-row"><b>Should be</b><span>Either wire it (register and call it from the meeting doors) or delete it so the map stops lying.</span></div>
+    <div class="where">📍 <code>brain/services/meeting-ingestion.service.ts:11</code> unused · not in <code>brain/brain.module.ts</code> · the road meetings actually take <code>brain/controllers/import-jobs.controller.ts:39,62</code> → Atlas <code>brain/services/brain-import-jobs-execution.base.ts:240-247</code></div>
+  </div>
+</div>
+
+<h2 id="olddocs" data-tab="Findings"><span class="n">12</span> Older docs to be careful with</h2>
+<div class="note">
+  Two older team docs point at old databases, not the one production database named in the project rules.
+  <div class="where">📍 <code>.docs/features/brain-feature-implementation.md</code> names Nexus Supabase <code>hmjnnznghncnyfrryssp</code> · <code>.docs/plans/customer-brain-product-architecture-drift-audit.md</code> queried <code>qfrvykscoymiwwgysvsr</code> · production per <code>CLAUDE.md</code> is <code>lhfgtsjetcardinpgouq</code> · best older tool map: <code>.docs/architecture/brain-tools-map.md</code></div>
+</div>
+
+<h2 id="related"><span class="n">13</span> Related pages</h2>
+<div class="card">
+  <ul>
+    <li><a href="../features/brain.html">Features › Brain</a>: the same brain from the user's side, screen by screen.</li>
+    <li><a href="../issues/index.html">Issues and risks</a>: the three problems above are tracked there with status and Linear links.</li>
+    <li><a href="../decisions/index.html">Decisions and plans</a>: open question on merging the two search implementations.</li>
+    <li><a href="../tests/index.html">Tests and checks</a>: how to reproduce the unwanted Slack data, to be written for ROA-18.</li>
+    <li><a href="../integrations/index.html">Integrations</a>: Slack, Fathom, Fireflies, ROAS Portal, Gemini.</li>
+  </ul>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <dl class="qa">
+    <dt>Is "The ROAS Portal" the same thing as the Page Grader? <span class="when">2026-09-11</span></dt>
+    <dd>Yes. One integration, two names: the screen says "The ROAS Portal", the code and API routes say "page-grader". It is a separate ROAS system holding client accounts, pipeline stages, tasks, and client intel. A team member with the editor role connects it in Workspace Settings › Integrations (avatar menu, or add <code>?settings=integrations</code> to any app URL) with the Portal's base URL and API key, then maps Portal clients to campaigns. After the first import the Portal pushes updates to a signed webhook and an hourly catch-up re-pulls misses. It never fetches a website; a landing page URL pasted in Train goes through the Link door instead. 📍 labels <code>apps/web/src/features/settings/components/settings-content/PageGraderClientScopeMapModal.tsx:271</code> · connect <code>apps/api/src/modules/integrations/page-grader/controllers/page-grader.controller.ts:50</code> (role <code>:51</code>) · map <code>:133</code> · import <code>:147</code> · webhook <code>apps/api/src/modules/integrations/page-grader/controllers/page-grader-webhooks.controller.ts:18</code> · package fields <code>brain/services/page-grader-brain-package-build.ts:5-22</code>, row titles <code>:197-339</code>.</dd>
+
+    <dt>What do "significance" and "confidence" mean, and who sets them? <span class="when">2026-09-10</span></dt>
+    <dd><strong>Significance</strong> is "how much will this still matter later", 0 to 1. <strong>Confidence</strong> is "how sure are we this statement is true", 0 to 1. Both are columns on every memory and textbook entry. Who fills them depends on the road:
+      <ul>
+        <li><strong>Document, upload, link, and chat pipelines:</strong> Gemini scores each extracted item while extracting. Items under the floor are thrown away: 0.5 for documents and textbook entries, 0.6 for chat. Missing confidence falls back to 0.8.</li>
+        <li><strong>Atlas saving to a personal or customer brain</strong> (<code>save_user_memory</code>): confidence is always 0.8; significance is 0.7 unless Atlas passes its own number. These are the 70% / 80% you see on Atlas-saved memories.</li>
+        <li><strong>Crystallize</strong> (snapshots): the third Gemini pass scores it; under 0.3 the snapshot is skipped.</li>
+        <li><strong>Database defaults</strong> when nothing is passed: confidence 0.8, significance 0.5 on memories; 0.5 and 0.5 on snapshots.</li>
+      </ul>
+      Search orders by meaning first; significance is used as a tie-breaker and a filter in some lanes, so a low number makes a memory harder to recall, not invisible.
+      📍 prompt definitions <code>brain/services/document-ingestion.service.ts:346-364</code> (floor 0.5 at <code>:136</code>) · chat floor 0.6 <code>brain/services/conversation-processing.service.ts:109</code>, fallback 0.8 <code>:167</code> · textbook <code>apps/agent-api/src/modules/brain/services/sk-ingestion.service.ts:158,274,285</code> · Atlas defaults <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:112-113</code> · crystallize floor <code>brain/services/crystallization.service.ts:121</code> · 🗄️ <code>ns_memories.confidence/significance</code> <code>migrations/047_brain_consolidation.sql:39-40</code>, <code>ns_snapshots</code> <code>:131-132</code>, <code>ns_sk_entries.confidence</code> <code>:274</code>.</dd>
+
+    <dt>The brain graph says "Memories 2, Connections 1" but shows one dot. Are the two memories summarized into one? What do significance 70% and confidence 80% mean? <span class="when">2026-09-10</span></dt>
+    <dd>Nothing is summarized. The counter adds two different shelves: 1 memory row ("free ROAS audit checklist", a fact) plus 1 textbook entry ("Optimizing Webinar Sign-Ups via Tuesday Promotions", a technique). The legend shows both (Fact 1, Technique 1) because the type counts are merged. But the personal-brain canvas only draws memory rows, documents, snapshots, beliefs, and perspectives; textbook entries are drawn only on the agent-brain canvas. So you see one dot. "Connections 1" is the textbook entry's link to its source note "Webinar timing", also not drawn. The 70% and 80% on that memory are not judgments: the personal save tool hard-codes confidence 0.8 and uses significance 0.7 unless Atlas passes one. See Other finding 7. 📍 counter <code>brain/services/graph.service.ts:341-347</code> · nodes drawn <code>:358</code> · textbook nodes only in <code>buildSkGraph</code> <code>:140-240</code> chosen by <code>brain/services/graph-request.service.ts:60</code> · connection count SQL <code>migrations/20260519140000_brain_legend_stats.sql:72-75</code> · defaults <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:112-113</code> · 🗄️ local rows: 1 in <code>ns_memories</code>, 1 in <code>ns_sk_entries</code>, 0 in <code>ns_memory_connections</code> for brain <code>4d56c1a1</code>.</dd>
+    <dt>How does the brain graph view help me? <span class="when">2026-09-10</span></dt>
+    <dd>It is the "did my training land?" screen. Each dot is one memory row; click it to read the sentence, its type, who wrote it (Atlas), where it came from (source and source title), and when. The three icons move it to another brain, copy it, or delete it. The legend filters by type. What it does not show today: textbook entries on a personal brain (see the answer above), and the 3 "Webinar timing" sources stuck at "processing" (<a href="#live-3">Live finding 3</a>). For a true test of what the helper can use, ask it in chat, which currently fails for the ROA-32 reason.</dd>
+
+    <dt>What is the difference between the user brain and the customer brain in training? Is "Tuesday is the best webinar day" general knowledge for the user brain? <span class="when">2026-09-10</span></dt>
+    <dd><strong>User brain</strong> is your own notebook: one per person, made on first use. It holds things you know or decided, like "webinar sign-ups are best on Tuesdays". It fills from "Remember this", chat, links, and meetings. <strong>Customer brain</strong> is one shared notebook per workspace about the people you sell to, not one brain per customer. Each note is a row linked to a contact through <code>ns_memories.contact_id</code>; notes with no known contact land under "unlinked signals". It fills from "Add information" with a contact picked, and from Atlas via <code>save_customer_memory</code>. 📍 user default <code>brain/repositories/memory-brain-resolver.ts:9</code> · customer one-per-workspace <code>brain/services/customer-brain.service.ts:35</code> <code>getOrCreateCustomerBrain</code> · 🗄️ <code>ns_brains.scope</code> user | customer.</dd>
+    <dt>Is the agent brain one per agent, and can we test what it was trained on? <span class="when">2026-09-10</span></dt>
+    <dd>Yes, one per agent (<code>ns_brains.agent_id</code>). "Train brain" on an agent sends text, files, or links as SK textbook jobs; entries land in <code>ns_sk_sources</code> and <code>ns_sk_entries</code>, not in memories. To check: search the brain (<code>GET /api/brain/search</code>) or read the rows, both shown in <a href="../tests/brain-textbook-import.html">the textbook import test</a>. Asking the agent in chat is the end-to-end test, but today it fails for a different reason, see <a href="#live-4">Live finding 4</a>. 📍 <code>brain/controllers/import-jobs.controller.ts:119</code> <code>sk-ingest</code> · web picker <code>apps/web/src/features/brain/components/training/TrainingModal.tsx:236</code> "Train &lt;agent&gt;".</dd>
+    <dt>Is the campaign brain all campaigns together, and how is it trained? <span class="when">2026-09-10</span></dt>
+    <dd>No, one brain per campaign. It is created when the campaign is created and again on the first Portal import if missing. It fills three ways: the Portal (Page Grader) package writes client facts directly; campaign uploads, links, Fathom, and Fireflies go through the ticket and Atlas with the campaign tool <code>atlas_save_brain_context</code>; and a mapped Slack channel feeds it on a schedule. Chat inside a campaign can also write to it. 📍 created <code>apps/api/src/modules/campaigns/services/campaigns-service-02.base.ts:177,201</code> <code>ensureCampaignBrain</code> · Portal <code>brain/services/page-grader-client-import.service.ts:171</code> · campaign doors <code>brain/controllers/import-jobs.controller.ts:74-107</code> · chat <code>brain/services/conversation-processing.service.ts:130</code> · 🗄️ <code>ns_brains.scope='campaign'</code>.</dd>
+
+    <dt>Does Atlas read before or after the queue? And is the fingerprint made after Atlas? <span class="when">2026-09-10</span></dt>
+    <dd>After the queue. The order is: ticket row in the database → note in Redis → a worker claims the row → Atlas reads the text → Atlas calls a save tool → the save tool fingerprints the text first (stop if seen before) → extracts → embeds → inserts. So the fingerprint comes after Atlas has read, but before any paid extraction or embedding. 📍 <code>brain/services/brain-import-jobs-runtime.base.ts:272,306</code> · <code>brain/repositories/brain-import-jobs-runtime.repository.ts:127</code> · <code>apps/agent-api/src/modules/brain/services/sk-ingestion.service.ts:66-73</code>. Full list in <a href="#flow-journey">the Flow tab</a>.</dd>
+    <dt>How do Redis and the database share the queue? <span class="when">2026-09-10</span></dt>
+    <dd>The database holds the ticket, Redis holds the doorbell. The row in <code>brain_import_jobs</code> is the only record: status, attempts, retry time, result. Redis has a 3-second timer plus one tiny note per due ticket that says only "job id X". Retries are computed in the row, never in Redis. If Redis forgets, the next sweep reads the rows again. 📍 <code>brain/services/brain-import-jobs-runtime.base.ts:167-209</code> · 🗄️ <code>migrations/20260303120000_brain_import_jobs.sql:8</code>.</dd>
+    <dt>Is the fingerprint the embedding? <span class="when">2026-09-10</span></dt>
+    <dd>No. Two different things at two different moments. The fingerprint is a sha256 of the text, a free "seen before?" check, stored in <code>ns_content_hashes</code> or the row's <code>content_hash</code>. The embedding is 768 numbers from <code>gemini-embedding-2</code>, a paid call, stored in the row's <code>embedding</code> column so search by meaning works. The old map called the fingerprint "an embedding"; fixed on 2026-09-10. 📍 <code>brain/services/content-dedupe.service.ts:14</code> · <code>brain/services/embedding.service.ts:7,10</code>.</dd>
+    <dt>Memories, snapshots, SK entries, beliefs: are those types or steps of one flow? <span class="when">2026-09-10</span></dt>
+    <dd>Separate shelves, meaning separate tables. A memory never becomes a snapshot and an SK entry never becomes a memory. Beliefs, perspectives, pages, and timelines are built later out of many memories. The words fact, decision, insight, story, framework, preference, and event are labels inside the memories table. 📍 <code>brain/services/crystallization.service.ts:66</code> takes raw text · 🗄️ <code>migrations/047_brain_consolidation.sql:29,112,263,196,219</code>. Table in <a href="#flow-shelves">the Flow tab</a>.</dd>
+
+    <dt>What is inside one memory row? <span class="when">2026-09-10</span></dt>
+    <dd>Seen on the first locally saved memory. <strong>Who and where:</strong> <code>brain_id</code> the brain it belongs to, <code>agent_id</code> the helper that wrote it (Atlas for imports), <code>speaker</code> holds the user id despite its name, <code>source_type</code>/<code>source_id</code>/<code>source_title</code> the door and the job it came through. <strong>What it says:</strong> <code>content</code> is Atlas's rewording, not the user's exact sentence; <code>memory_type</code> one of fact, decision, insight, story, framework, preference, event; <code>confidence</code> 0.8 and <code>significance</code> 0.7 are the defaults; <code>content_hash</code> is the exact-duplicate fingerprint. <strong>How it is found:</strong> <code>embedding</code> 768 numbers for search by meaning, <code>search_vector</code> the word index (title words tagged A, content words B). <strong>Emotion tags</strong> <code>source_emotion</code>, <code>emotional_valence</code>, <code>emotional_intensity</code>, <code>speaker_intent</code> are filled by a background step right after the save. <strong>Time:</strong> <code>temporal_status</code> current; event dates empty for a plain note. <code>recalled_count</code> stays 0 after a search, so search is not counted as a recall on this road. <strong>Customer columns</strong> only matter in the customer brain. 📍 Row shape <code>migrations/047_brain_consolidation.sql:29</code> plus later additions; write path <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code>; emotion step <code>brain/services/emotional-tagging.service.ts</code></dd>
+    <dt>I told the helper "remember, our webinar sign-ups are best on Tuesdays." Where is that memory placed? <span class="when">2026-09-09</span></dt>
+    <dd>Nowhere. It should have become one row in <code>ns_memories</code> under your default personal brain, written by the <code>save_user_memory</code> action in agent-api. Instead the helper called a campaign action with the wrong field names three times, every call failed, and it reported success anyway. Full trace in <a href="#live-1">Live finding 1</a>. To see where a memory <em>would</em> go: <code>ns_brains</code> row with <code>scope=user</code>, <code>is_default=true</code>, <code>org_id null</code> for your user, then <code>ns_memories.brain_id</code> pointing at it. 📍 <code>apps/agent-api/src/modules/artifacts/services/artifact-legacy-team-brain-memory.service.ts:11</code></dd>
+  </dl>
+</div>
+
+<p class="footer">Method: eight read-only mapping passes over the module, one per slice, then every claim under the three problems was re-verified directly in the source on 2026-09-08. Scenario paths were re-checked on 2026-09-09. Full text version at <code>documentation/features/brain-map.md</code>.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

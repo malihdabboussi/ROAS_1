@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- 1. Title: "<Page name> · ROAS Wiki" -->
+<title>Page name · ROAS Wiki</title>
+<!-- 2. Path to assets: "assets/" from the wiki root, "../assets/" from a category folder -->
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<!-- 3. Navigation. Copy as is. Add class="active" to the category this page belongs to. Fix the ../ depth. -->
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<!-- 4. Header block. Every page shows these four facts. -->
+<h1>🔹 Page name</h1>
+<div class="meta">
+  <span>Last updated: YYYY-MM-DD</span>
+  <span>Category: <a href="index.html">Category name</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-0">ROA-0</a></span>
+  <span>Source of truth: <code>path/to/folder-or-table</code></span>
+</div>
+<p class="sub">One or two plain sentences saying what this page is about and who should read it.</p>
+<!-- 5. If the page uses a short path prefix, say so once here. -->
+<div class="pathnote">Paths starting with <code>x/</code> mean <code>apps/x/src/...</code>.</div>
+
+<!-- 6. Body. Plain words first. Wrap deep detail in class="tech" so it only shows with the switch.
+     RULE: no point without a code path. Every point gets a scenario block with a "Where" line
+     naming the file and line, and the table and migration when a table is involved. -->
+<h2 id="s1"><span class="n">1</span> First section</h2>
+<div class="card">
+  <p><strong>The point in one line.</strong> Plain explanation.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Who is doing what.</span></div>
+    <div class="sc-row"><b>What happens</b><span>The steps, in plain words.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The result on screen or in the data.</span></div>
+    <!-- Only for problems: -->
+    <div class="sc-row"><b>Should be</b><span>What should happen instead.</span></div>
+    <div class="where">📍 Code: <code>apps/x/src/file.ts:12</code> <code>functionName</code><br>🗄️ Table: <code>table_name</code> in <code>supabase/migrations/0000_file.sql:1</code></div>
+  </div>
+</div>
+
+<!-- 7. Links to related pages in other categories. -->
+<!-- 7b. Long material goes to a second tab: add data-tab="Findings" (or another name) on the H2. -->
+<h2 id="findings" data-tab="Findings"><span class="n">3</span> Findings and evidence</h2>
+<div class="card"><p>Long findings, tickets, and evidence live here so the Overview stays short.</p></div>
+
+<h2 id="related"><span class="n">2</span> Related pages</h2>
+<div class="card">
+  <ul>
+    <li><a href="../issues/index.html">Issues and risks</a> for this area</li>
+    <li><a href="../tests/index.html">Tests and checks</a> for this area</li>
+  </ul>
+</div>
+
+<!-- 8. Questions card. Keep on every page. When someone asks about a section, write the plain answer here with the date. -->
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa">
+    <!-- <dt>Question as asked? <span class="when">2026-09-09</span></dt><dd>Plain answer. 📍 <code>path:line</code></dd> -->
+  </dl>
+</div>
+
+<p class="footer">How this page was made: one sentence on the method and what was verified.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

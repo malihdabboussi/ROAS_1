@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Textbook import test · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat active" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+<div class="wrap">
+<h1>✅ Check a textbook import end to end</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-10</span>
+  <span>Category: <a href="index.html">Tests and checks</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a>, <a href="https://linear.app/1dscollective/issue/ROA-18/fix-brain-critical-issues">ROA-18</a></span>
+  <span>Source of truth: local run on 2026-09-10 00:01 local, logs <code>/tmp/roas-api.log</code>, <code>/tmp/roas-agent-api.log</code></span>
+</div>
+<p class="sub">Proves the whole "Train Brain" road on a laptop with no clicking: a job row goes in, the local api sweeps it, Atlas runs through the local gateway, the agent backend extracts entries with Gemini, and rows land in the textbook tables. Takes about 20 seconds when everything is local.</p>
+<div class="pathnote">📍 Paths starting with <code>brain/</code> mean <code>apps/api/src/modules/brain/</code>; <code>agent-brain/</code> means <code>apps/agent-api/src/modules/brain/</code>.</div>
+
+<h2 id="pre"><span class="n">1</span> Preconditions</h2>
+<div class="card">
+  <ul>
+    <li>Your own database and your own Redis. See <a href="../start-here/index.html#localdb">Start here, section 7</a>. A shared database or Redis makes this test meaningless: another api will take the job.</li>
+    <li>api on 3001, agent-api on 3003, gateway on 18789, all started from the main checkout with Node 22 or 23 from nvm.</li>
+    <li>Gemini key present in <code>apps/api/.env</code>. The agent backend reads that file as a fallback.</li>
+    <li>No leftover fingerprint for the text you will import. See step 4.</li>
+  </ul>
+</div>
+
+<h2 id="steps"><span class="n">2</span> Steps</h2>
+<div class="card">
+  <ol>
+    <li><strong>Create a job row</strong> for the Default Brain with a short text, or re-arm an existing one:
+<pre>update brain_import_jobs set status='retry', attempts=0, next_attempt_at=now(),
+  last_error=null, result=null, started_at=null, completed_at=null where id='&lt;job id&gt;';</pre></li>
+    <li><strong>Watch the status</strong> every few seconds: <code>retry → processing → succeeded</code> within about 20 seconds.</li>
+    <li><strong>Check the rows</strong>: one new <code>ns_sk_sources</code> row with <code>status = completed</code> and <code>entries_count ≥ 1</code>, and matching <code>ns_sk_entries</code> rows.</li>
+    <li><strong>Check the logs</strong>: agent-api prints <code>[Artifact Stream] action=ingest_agent_brain_text</code> then <code>OK … durationMs=</code> several thousand. A duration under 500 ms means the dedupe early-exit fired and nothing was ingested.</li>
+  </ol>
+  <div class="where">📍 Sweep and worker: <code>brain/services/brain-import-runtime.processor.ts:27</code>, <code>brain/services/brain-import-jobs-runtime.base.ts:253</code> · hand-off to Atlas: <code>apps/api/src/modules/missions/services/gateways/mission-agent-gateway.service.ts:225</code> <code>callOpenClawForBrainJob</code> → <code>apps/api/src/modules/user-agent-api/services/user-agent-api.service.ts:78</code> <code>resolveTargetState</code> (localhost when <code>AGENT_API_URL</code> is unset) · ingest handler <code>apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestion-actions.service.ts</code> → <code>agent-brain/services/sk-ingestion.service.ts</code> <code>ingest</code><br>🗄️ <code>brain_import_jobs</code>, <code>ns_sk_sources</code>, <code>ns_sk_entries</code>, <code>ns_content_hashes</code></div>
+</div>
+
+<h2 id="pass" data-tab="Evidence"><span class="n">3</span> What a pass looks like, from the real run</h2>
+<div class="card">
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>2026-09-10 00:01 local. Job <code>2732391d…</code>, text "Save this to my brain: our webinar sign-ups are best on Tuesdays.", target Default Brain, everything local.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Re-armed at 23:01:57 UTC. Processing at +4 s. Agent-api logged the ingest call at 00:02:02 and OK at 00:02:09, 7,054 ms. Succeeded at +16 s.</span></div>
+    <div class="sc-row"><b>What you see</b><span>Job result: "Saved 1 agent-brain insight: webinar sign-ups perform best on Tuesdays…". New source <code>a5772601…</code> status completed, entries_count 1. New entry <code>c8563ec7…</code>, type technique, title "Optimizing Webinar Sign-Ups via Tuesday Promotions".</span></div>
+    <div class="where">📍 Evidence in <code>/tmp/roas-agent-api.log</code> lines at 12:02:02 AM and 12:02:09 AM; local DB rows as above.</div>
+  </div>
+</div>
+
+<h2 id="fail" data-tab="Evidence"><span class="n">4</span> The failure modes this test catches</h2>
+<div class="card">
+  <ul>
+    <li><strong>Fast fake success.</strong> Ingest returns OK in under 500 ms, no new source, job result says "already present". Cause: a leftover fingerprint in <code>ns_content_hashes</code> for this brain. The fingerprint is registered <em>before</em> the work, so one crashed attempt poisons all retries. Clear with <code>delete from ns_content_hashes where brain_id='…'</code>, then re-arm. See <a href="../system-map/brain.html#live-3">Brain, Live finding 3</a>.</li>
+    <li><strong>Silent laptop.</strong> Job goes to processing and succeeds or retries, but no local log line appears. Cause: another api on the same database took it. See <a href="../system-map/brain.html#live-2">Live finding 2</a>.</li>
+    <li><strong>Source stuck at processing, zero entries.</strong> The ingest crashed after creating the source. The reason is in the agent-api log as a line starting "Failed to". No code marks the source failed.</li>
+    <li><strong>Wrong process on a port.</strong> agent-api has no env file of its own and borrows the api's, including <code>PORT</code>. If <code>apps/api/.env</code> says 3001, a freshly started agent-api tries 3001 too. Give agent-api its own <code>apps/agent-api/.env</code> with <code>PORT=3003</code>.</li>
+    <li><strong>"Bucket not found"</strong> after every Atlas run is the transcript upload to Supabase storage, which a restored local database does not have. Harmless for this test.</li>
+  </ul>
+  <div class="where">📍 Early exit: <code>agent-brain/services/sk-ingestion.service.ts:66-73</code> (<code>registerForBrain</code> then <code>return duplicate</code>) before <code>createSkSource</code> at <code>:81</code> · fingerprint: <code>agent-brain/services/content-dedupe.service.ts:37-52</code> · env borrowing: <code>apps/agent-api/src/lib/agent-api-env.ts:5-8</code> · transcript upload: agent-api <code>SessionsStorageService</code></div>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <dl class="qa">
+    <dt>Can we test the brain without clicking through the app? <span class="when">2026-09-10</span></dt>
+    <dd>Yes. Re-arm a job row in your own database and the local sweep runs it within 3 seconds. Read the job row, the textbook tables, and the agent-api log. This page is that procedure. It only works when the database and Redis are yours alone.</dd>
+  </dl>
+</div>
+
+<p class="footer">Written from the first successful local run on 2026-09-10. Every path was read from the code that executed.</p>
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>
