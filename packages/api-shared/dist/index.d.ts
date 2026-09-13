@@ -82,8 +82,8 @@ export type { AgentToolCorrectionPlan, AgentToolErrorContract, AgentToolErrorEff
 export { normalizeAgentToolFailureFields } from './utils/agent-tool-error-normalizer';
 export type { NormalizedAgentToolFailureFields } from './utils/agent-tool-error-normalizer';
 export { looksLikeFathomSummaryMarkdown, repairBrokenMarkdownLinks, sanitizeFathomSummaryMarkdown, stripAtxHeaders, stripMarkdownEmphasis, unwrapFathomProseLinks, } from './utils/sanitize-fathom-summary-markdown';
-export { ConversationIdParamSchema, ConversationShareEntityTypeSchema, ConversationShareIdParamSchema, ConversationShareLevelSchema, PassOffConversationShareSchema, UpsertConversationShareSchema, } from './types/conversation-sharing';
-export type { ConversationIdParam, ConversationShareEntityType, ConversationShareIdParam, ConversationShareLevel, ConversationShareRecord, PassOffConversationShareDto, UpsertConversationShareDto, } from './types/conversation-sharing';
+export { AddConversationConnectionSchema, ConversationConnectionEntityTypeSchema, ConversationConnectionParamSchema, ConversationIdParamSchema, ConversationShareEntityTypeSchema, ConversationShareIdParamSchema, ConversationShareLevelSchema, PassOffConversationShareSchema, UpsertConversationShareSchema, } from './types/conversation-sharing';
+export type { AddConversationConnectionDto, ConversationConnectionEntityType, ConversationConnectionParam, ConversationIdParam, ConversationShareEntityType, ConversationShareIdParam, ConversationShareLevel, ConversationShareRecord, PassOffConversationShareDto, UpsertConversationShareDto, } from './types/conversation-sharing';
 export { CUSTOMER_INTERACTION_ROUTE_EVENT, INTERACTION_CHANNELS, INTERACTION_PARTICIPANT_ROLES, buildInteractionDedupeKey, parseInteractionEnvelope, } from './types/customer-interaction';
 export type { InteractionChannel, InteractionEnvelopeV1, InteractionIdentifier, InteractionParticipant, InteractionParticipantRole, } from './types/customer-interaction';
 export { CHAT_SCOPE_KINDS, createChatScope, describeScope, normalizeChatScopeKind, normalizeScopeId, scopesEqual, } from './types/chat-scope';
