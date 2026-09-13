@@ -40323,3 +40323,51 @@ Evidence: `SidebarHqFlyouts.tsx` is 381 lines, `SidebarSimpleSection.tsx` is 376
 Needed work: Extract focused navigation-row and flyout-state components without changing the shared sidebar contracts or route behavior.
 
 Reason not done now: The files remain below the hard component limit, and structural decomposition is outside this focused navigation change.
+
+## 2026-09-11 - [FIX] Fireflies brain import dispatches no transcript text
+
+Status: Open (fixed by Phase 1 of `.docs/plans/meeting-notetaker-system-roa-40.md`)
+
+Found while: Planning ROA-40 (meeting note-taker system).
+
+Evidence: `apps/api/src/modules/brain/services/brain-import-jobs-enqueue.base.ts:151-169` stores only `{ transcriptId }`; `brain-import-jobs-input.base.ts:81-99` spreads that payload; `brain-import-jobs-execution.base.ts:304-321` `extractContentText` falls through to `JSON.stringify(input)`, and the lazy transcript fetch at `:42-43` runs for Fathom job types only. No code in `apps/api` fetches a Fireflies transcript before Atlas dispatch.
+
+Needed work: Fetch the transcript via `FirefliesApiService.getTranscript` before enqueue and place speaker turns under `transcript` in the job payload (generic `meeting_transcript_import` in the plan).
+
+Reason not done now: ROA-40 session was planning only; code changes need approval.
+
+## 2026-09-11 - [FIX] Fathom webhook accepts unsigned or mis-signed deliveries
+
+Status: Open (fixed by Phase 0 of `.docs/plans/meeting-notetaker-system-roa-40.md`)
+
+Found while: Planning ROA-40.
+
+Evidence: `apps/api/src/modules/integrations/fathom/services/fathom-api.service.ts:138-157` compares the `x-fathom-signature` header to the stored `metadata.webhook_secret` string instead of verifying the Standard Webhooks HMAC (`webhook-id`/`webhook-timestamp`/`webhook-signature`, per developers.fathom.ai/webhooks); `fathom-webhook.service.ts:412-474` attributes unsigned events by invitee email; `fathom-webhooks.controller.ts:84-94` always returns 200.
+
+Needed work: HMAC-SHA256 over `${id}.${timestamp}.${body}` with the base64 `whsec_` secret, 5-minute window, `timingSafeEqual`; drop the payload-email fallback once the connection is identified by URL.
+
+Reason not done now: Planning-only session.
+
+## 2026-09-11 - [ARCH] Over-limit files on the ROA-40 change path
+
+Status: Open
+
+Found while: Planning ROA-40.
+
+Evidence: `apps/web/src/features/settings/components/settings-content/useIntegrations.ts` is 872 lines (hook limit 300); `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` is 835 lines (service limit 600); `apps/api/src/modules/integrations/services/integrations-core.service.ts` is 620 lines (limit 600); `integrations-overview.service.ts` is 573 (96%).
+
+Needed work: Extract the provider connect/disconnect dispatch from `useIntegrations.ts` into a per-provider map file before adding Read.ai branches; split `processFathomRecordingEvent` and its helpers out of `space-automation-service-06.base.ts` before generalizing the provider.
+
+Reason not done now: Planning-only session; decomposition is broader than ROA-40.
+
+## 2026-09-11 - [FIX] `ingest_fireflies_transcript` agent action is a no-op stub
+
+Status: Open (Phase 4 of the ROA-40 plan replaces it with `ingest_meeting_transcript`)
+
+Found while: Planning ROA-40.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestion-actions.service.ts:475` `ingestFirefliesTranscript()` takes no arguments; registered at `artifact-action.registry.ts:636`, documented with a `transcript_id` example at `agent-sync/data/vibey-api-action-docs.ts:2667`.
+
+Needed work: Replace with one provider-agnostic action following AGENTS.md §8.5 (schema, preflight, lifecycle, policy, drift tests, docs) and §8.6 error contract.
+
+Reason not done now: Planning-only session.
