@@ -93,8 +93,8 @@ export async function importFathomMeeting(
   status: 'queued' | 'processing' | 'retry' | 'succeeded' | 'failed'
   deduped?: boolean
 }> {
-  return backendPost('/api/brain/import-jobs/fathom-meeting', {
-    meeting,
+  return backendPost('/api/integrations/meetings/fathom/import', {
+    externalId: fathomExternalId(meeting),
     ...(options?.brainId ? { brainId: options.brainId } : {}),
     ...(options?.targetBrain ? { targetBrain: options.targetBrain } : {}),
   })
@@ -288,4 +288,9 @@ export async function listMeetingProviders(): Promise<MeetingProviderSummary[]> 
     '/api/integrations/meetings/providers',
   )
   return response.providers ?? []
+}
+
+function fathomExternalId(meeting: FathomMeeting): string {
+  const raw = meeting as unknown as Record<string, unknown>
+  return String(raw.recording_id ?? raw.id ?? raw.call_id ?? '')
 }

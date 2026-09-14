@@ -1,8 +1,8 @@
-import { buildErrorEnvelopeWithEscalation } from './artifact-error-classifier'
 import {
   formatPresentationContractIssues,
   type PresentationContractIssue,
 } from '../utils/presentation-html-contract.util'
+import { buildErrorEnvelopeWithEscalation } from './artifact-error-classifier'
 
 interface PostActionErrorInput {
   action: string
@@ -20,6 +20,7 @@ const BRAIN_WRITE_ACTIONS = new Set([
   'ingest_customer_brain_text',
   'ingest_agent_brain_link',
   'ingest_agent_brain_text',
+  'ingest_meeting_transcript',
 ])
 
 function isBrainWriteAction(action: string): boolean {
@@ -120,7 +121,8 @@ export function buildPresentationContractRepairResult(
             'The saved deck source can be repaired with presentation file read/write/patch actions.',
         },
         correction: {
-          summary: 'Repair the saved presentation source, then verify again before saying it is done.',
+          summary:
+            'Repair the saved presentation source, then verify again before saying it is done.',
           next_tool_preference: [
             'list_presentation_files',
             'read_presentation_file',
@@ -130,8 +132,7 @@ export function buildPresentationContractRepairResult(
         },
         fallback: null,
         agentDiagnosis: `Presentation contract verification found repairable source issues: ${issueText}`,
-        agentInstruction:
-          `Do not tell the user the presentation is done yet. presentation_id=${presentationId}. Fix these exact issues with presentation file actions, then let post-action verification pass: ${issueText}`,
+        agentInstruction: `Do not tell the user the presentation is done yet. presentation_id=${presentationId}. Fix these exact issues with presentation file actions, then let post-action verification pass: ${issueText}`,
         userExplanation: {
           intent: 'repair_presentation_source',
           sentence: 'I saved the deck draft and am tightening the source so it renders correctly.',

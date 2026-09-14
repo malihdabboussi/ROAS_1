@@ -114,16 +114,6 @@ describe('BrainImportJobsService', () => {
       },
       {
         job: baseJob({
-          job_type: 'fireflies_transcript_import',
-          title: 'FF',
-          payload: { transcriptId: 'ff-1' },
-        }),
-        expectPromptIncludes: 'Target brain: user',
-        expectPromptIncludesAction: 'save_user_memory',
-        expectBrainId: undefined as string | undefined,
-      },
-      {
-        job: baseJob({
           job_type: 'campaign_file_import',
           title: 'Camp file',
           payload: {
@@ -154,17 +144,6 @@ describe('BrainImportJobsService', () => {
         expectPromptIncludes: 'Target brain: campaign',
         expectPromptIncludesAction: 'atlas_save_brain_context',
         expectCampaignId: 'camp-f',
-        expectBrainId: undefined as string | undefined,
-      },
-      {
-        job: baseJob({
-          job_type: 'campaign_fireflies_import',
-          title: 'Camp ff',
-          payload: { campaignId: 'camp-ff', transcriptId: 't1' },
-        }),
-        expectPromptIncludes: 'Target brain: campaign',
-        expectPromptIncludesAction: 'atlas_save_brain_context',
-        expectCampaignId: 'camp-ff',
         expectBrainId: undefined as string | undefined,
       },
       {

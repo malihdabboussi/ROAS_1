@@ -39,10 +39,6 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
   ): Promise<BrainImportRuntimeExecutionPayload> {
     const payload = job.payload as Record<string, unknown>
 
-    if (job.job_type === 'fathom_meeting_import' || job.job_type === 'campaign_fathom_import') {
-      await this.ensureFathomTranscript(job, payload)
-    }
-
     const { targetBrain, contentType, campaignId, input } = await this.buildMissionInput(
       job,
       payload,
@@ -405,37 +401,5 @@ export abstract class BrainImportJobsExecutionBase extends BrainImportJobsEnqueu
     reason: string
   } {
     return interpretAtlasImportJobStatus(text, contentType)
-  }
-
-  private async ensureFathomTranscript(
-    job: BrainImportJobRecord,
-    payload: Record<string, unknown>,
-  ): Promise<void> {
-    const meeting = payload.meeting as Record<string, unknown> | undefined
-    if (!meeting) return
-
-    const transcript = meeting.transcript
-    if (Array.isArray(transcript) && transcript.length > 0) return
-
-    const recordingId = meeting.recording_id ?? meeting.id ?? meeting.call_id
-    if (!recordingId) return
-
-    try {
-      const { FathomApiService } = require('../../integrations/fathom/services/fathom-api.service')
-      const fathomApi = this.moduleRef.get(FathomApiService, { strict: false })
-      const adminClient = this.getAdminClient()
-      const fetched = await fathomApi.getRecordingTranscript(
-        adminClient,
-        job.user_id,
-        recordingId as string | number,
-      )
-      if (Array.isArray(fetched.transcript) && fetched.transcript.length > 0) {
-        meeting.transcript = fetched.transcript
-      }
-    } catch (err) {
-      this.logger.warn(
-        `Failed to fetch Fathom transcript for recording ${recordingId}: ${(err as Error).message}`,
-      )
-    }
   }
 }

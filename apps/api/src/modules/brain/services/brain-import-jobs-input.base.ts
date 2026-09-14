@@ -4,7 +4,7 @@ import type { ErrorReporter } from '@vibey/api-shared'
 import { BrainImportJobsInputRepository } from '../repositories/brain-import-jobs-input.repository'
 import { BrainImportJobsRuntimeRepository } from '../repositories/brain-import-jobs-runtime.repository'
 import { BrainImportJobsExecutionBase } from './brain-import-jobs-execution.base'
-import { buildMeetingMissionInput } from './brain-import-jobs-meeting-input'
+import { buildMeetingMissionInput, legacyFathomJobPayload } from './brain-import-jobs-meeting-input'
 import type { BrainImportJobRecord } from './brain-import-jobs.types'
 
 export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionBase {
@@ -29,75 +29,8 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
     input: Record<string, unknown>
   }> {
     switch (job.job_type) {
-      case 'fathom_meeting_import': {
-        const meeting = (payload.meeting ?? payload) as Record<string, unknown>
-        const occurredAt = this.firstString(
-          meeting.recording_start_time,
-          meeting.scheduled_start_time,
-          meeting.started_at,
-          meeting.recorded_at,
-          meeting.meeting_start,
-          meeting.created_at,
-        )
-        const occurredUntil = this.firstString(
-          meeting.recording_end_time,
-          meeting.scheduled_end_time,
-          meeting.ended_at,
-          meeting.meeting_end,
-        )
-        const overrideTarget = payload.targetBrainOverride as string | undefined
-        const effectiveTarget = (
-          overrideTarget && ['user', 'campaign', 'agent', 'customer'].includes(overrideTarget)
-            ? overrideTarget
-            : 'user'
-        ) as 'user' | 'campaign' | 'agent' | 'customer'
-        return {
-          targetBrain: effectiveTarget,
-          contentType: 'fathom_meeting',
-          title: `Analyze Fathom meeting: ${meeting.title || meeting.meeting_title || 'Untitled'}`,
-          input: {
-            target_brain: effectiveTarget,
-            content_type: 'fathom_meeting',
-            skill: 'knowledge-intake',
-            sessionKey: `fathom:${meeting.id || meeting.recording_id}`,
-            meetingTitle: meeting.title || meeting.meeting_title,
-            transcript: meeting.transcript,
-            occurred_at: occurredAt,
-            occurred_until: occurredUntil,
-            asserted_at: new Date().toISOString(),
-            temporal_source: 'fathom_payload',
-            temporal_confidence: occurredAt ? 1 : 0,
-            summary: (meeting.default_summary as Record<string, unknown>)?.markdown_formatted,
-            actionItems: Array.isArray(meeting.action_items)
-              ? (meeting.action_items as Array<{ description?: string }>)
-                  .map((a) => a.description)
-                  .filter(Boolean)
-              : undefined,
-            ...(typeof payload.brainId === 'string' && payload.brainId
-              ? { brainId: payload.brainId }
-              : {}),
-          },
-        }
-      }
-      case 'fireflies_transcript_import': {
-        const ffOverrideTarget = payload.targetBrainOverride as string | undefined
-        const ffEffectiveTarget = (
-          ffOverrideTarget && ['user', 'campaign', 'agent', 'customer'].includes(ffOverrideTarget)
-            ? ffOverrideTarget
-            : 'user'
-        ) as 'user' | 'campaign' | 'agent' | 'customer'
-        return {
-          targetBrain: ffEffectiveTarget,
-          contentType: 'fireflies_meeting',
-          title: `Analyze Fireflies transcript`,
-          input: {
-            target_brain: ffEffectiveTarget,
-            content_type: 'fireflies_meeting',
-            skill: 'knowledge-intake',
-            ...payload,
-          },
-        }
-      }
+      case 'fathom_meeting_import':
+        return buildMeetingMissionInput(job, legacyFathomJobPayload(payload))
       case 'document_remember':
         return {
           targetBrain: 'user',
@@ -176,40 +109,8 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
           },
         }
       }
-      case 'campaign_fathom_import': {
-        const cId = String(payload.campaignId ?? '')
-        const m = (payload.meeting ?? {}) as Record<string, unknown>
-        return {
-          targetBrain: 'campaign',
-          contentType: 'fathom_meeting',
-          title: `Analyze meeting for campaign: ${m.title || 'Meeting'}`,
-          campaignId: cId || undefined,
-          input: {
-            target_brain: 'campaign',
-            content_type: 'fathom_meeting',
-            skill: 'knowledge-intake',
-            ...payload,
-          },
-        }
-      }
-      case 'campaign_fireflies_import': {
-        const cId = String(payload.campaignId ?? '')
-        return {
-          targetBrain: 'campaign',
-          contentType: 'fireflies_meeting',
-          title: `Analyze transcript for campaign`,
-          campaignId: cId || undefined,
-          input: {
-            target_brain: 'campaign',
-            content_type: 'fireflies_meeting',
-            skill: 'knowledge-intake',
-            ...payload,
-          },
-        }
-      }
-      case 'meeting_transcript_import':
-      case 'campaign_meeting_import':
-        return buildMeetingMissionInput(job, payload)
+      case 'campaign_fathom_import':
+        return buildMeetingMissionInput(job, legacyFathomJobPayload(payload))
       case 'slack_period_import':
       case 'campaign_slack_import':
         return this.buildSlackMissionInput(job, payload)

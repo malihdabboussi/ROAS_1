@@ -73,6 +73,8 @@ Last Modified: September 14, 2026
 
 64. **All note takers land in the Meetings space (ROA-40 Phase 3).** `MeetingIntakeService` bridges the normalized transcript through `toRecordingEvent` into the recording-event shape the space route reads; `processFathomRecordingEvent` claims `space_external_automation_events` as `<provider>:<id>`, creates the call row with `source = <provider>` and `external_automation.provider`, and `MeetingSourceIngestionService.ingestMeetingSource` writes `meeting_recordings` with the real provider. Connecting Fireflies or Read AI bootstraps the same Meetings space Fathom uses (`MeetingsSpaceBootstrapService`). The brain training panel reads provider connectivity from `GET /api/integrations/meetings/providers`.
 
+65. **One import path only (ROA-40 Phase 4).** Provider-specific brain routes and job types are gone. Manual imports for any provider use `POST /api/integrations/meetings/:provider/import` (`campaignId` for a Campaign Brain); agents use `ingest_meeting_transcript` (provider + external_id) which calls `POST /api/internal/brain/import-jobs/meeting-transcript`. Legacy `fathom_meeting_import` / `campaign_fathom_import` rows still execute through the shared builder but nothing enqueues them. The legacy `POST /api/integrations/fathom/webhook` door is the one remaining Fathom-only path, kept until every connection is re-registered.
+
 ## Code Examples
 
 Connection check result:
@@ -215,3 +217,4 @@ Reconnect result:
 - 2026-09-14: Fireflies brain imports fetch the transcript before enqueue and use the shared `meeting_transcript_import` job; the old id-only `fireflies_transcript_import` path stays only for callers not yet moved (ROA-40 Phase 4 removes it).
 - 2026-09-14: Read AI added as a webhook-only provider on the shared meeting door; connection rows for pasted-webhook providers are managed by `MeetingIntakeRepository` so future providers of this kind need no repository of their own.
 - 2026-09-14: The Meetings-space route stays keyed on the `external_fathom_recording_ready` trigger for every provider (63 references, Flow builder contract); the trigger event carries `provider` instead. Renaming the trigger is a logged follow-up.
+- 2026-09-14: Agent action `ingest_meeting_transcript` replaces `ingest_fathom_meeting` and the no-op `ingest_fireflies_transcript`; Fireflies connection rows share the pasted-webhook helpers with Read AI.

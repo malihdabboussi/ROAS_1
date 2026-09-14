@@ -1,3 +1,4 @@
+import { normalizeFathomMeetingSource } from '../../meetings/providers/fathom-meeting-source'
 import type {
   TranscriptSourceAction,
   TranscriptSourceEvent,
@@ -49,7 +50,8 @@ export function buildMeetingMissionInput(
     throw new Error('Meeting import job payload is missing its normalized source')
   }
 
-  const isCampaign = job.job_type === 'campaign_meeting_import'
+  const isCampaign =
+    job.job_type === 'campaign_meeting_import' || job.job_type === 'campaign_fathom_import'
   const campaignId = isCampaign ? String(typed.campaignId ?? '').trim() : ''
   if (isCampaign && !campaignId) {
     throw new Error('Campaign meeting import job payload is missing campaignId')
@@ -120,4 +122,20 @@ function toTranscriptEntry(turn: TranscriptTurn): Record<string, unknown> {
 function actionText(action: TranscriptSourceAction): string {
   const owner = action.assigneeName?.trim()
   return owner ? `${owner}: ${action.sourceText}` : action.sourceText
+}
+
+/**
+ * Rows queued before the shared meeting job (`fathom_meeting_import`,
+ * `campaign_fathom_import`) carry the raw Fathom meeting. Convert them so
+ * in-flight jobs finish through the same builder; nothing enqueues them anymore.
+ */
+export function legacyFathomJobPayload(payload: Record<string, unknown>): Record<string, unknown> {
+  const meeting = (payload.meeting ?? payload) as Record<string, unknown>
+  const source = compactMeetingSource(normalizeFathomMeetingSource(meeting))
+  return {
+    ...payload,
+    provider: 'fathom',
+    externalId: source.externalRecordingId,
+    source,
+  }
 }

@@ -46,23 +46,29 @@ describe('FirefliesApiService', () => {
     getTranscript: vi.fn(),
   }
   const repo = {
-    upsertConnection: vi.fn(),
-    markDisconnected: vi.fn(),
     getStatus: vi.fn(),
     hasMemorySession: vi.fn(),
+  }
+  const connections = {
+    upsertPastedWebhookConnection: vi.fn().mockResolvedValue(undefined),
     ensureWebhookKey: vi.fn().mockResolvedValue(WEBHOOK_KEY),
+    markPastedWebhookDisconnected: vi.fn().mockResolvedValue(undefined),
   }
 
   beforeEach(() => {
     vi.clearAllMocks()
-    repo.ensureWebhookKey.mockResolvedValue(WEBHOOK_KEY)
+    connections.ensureWebhookKey.mockResolvedValue(WEBHOOK_KEY)
     adminMock.existingRows.clear()
   })
 
   it('connects by validating the API key, storing secrets, and returning the webhook address', async () => {
     fireflies.getUser.mockResolvedValue({ email: 'person@example.com', name: 'Person' })
-    repo.upsertConnection.mockResolvedValue(undefined)
-    const service = new FirefliesApiService(fireflies as never, vault as never, repo as never)
+    const service = new FirefliesApiService(
+      fireflies as never,
+      vault as never,
+      repo as never,
+      connections as never,
+    )
 
     await expect(service.connect('user-1', 'ff-key', 'a-signing-secret-1234')).resolves.toEqual({
       user: { email: 'person@example.com', name: 'Person' },
@@ -85,12 +91,21 @@ describe('FirefliesApiService', () => {
       'custom',
       {},
     )
-    expect(repo.ensureWebhookKey).toHaveBeenCalledWith('user-1')
+    expect(connections.upsertPastedWebhookConnection).toHaveBeenCalledWith('fireflies', 'user-1', {
+      connectionLabel: 'person@example.com',
+      metadata: { email: 'person@example.com', name: 'Person' },
+    })
+    expect(connections.ensureWebhookKey).toHaveBeenCalledWith('fireflies', 'user-1')
   })
 
   it('connects without a webhook secret and stores only the API key', async () => {
     fireflies.getUser.mockResolvedValue({ email: 'person@example.com', name: 'Person' })
-    const service = new FirefliesApiService(fireflies as never, vault as never, repo as never)
+    const service = new FirefliesApiService(
+      fireflies as never,
+      vault as never,
+      repo as never,
+      connections as never,
+    )
 
     await service.connect('user-1', 'ff-key')
 
@@ -100,7 +115,12 @@ describe('FirefliesApiService', () => {
   it('returns disconnected status when no Fireflies secret exists', async () => {
     vault.hasSecret.mockResolvedValue(false)
     repo.getStatus.mockResolvedValue(null)
-    const service = new FirefliesApiService(fireflies as never, vault as never, repo as never)
+    const service = new FirefliesApiService(
+      fireflies as never,
+      vault as never,
+      repo as never,
+      connections as never,
+    )
 
     await expect(service.getStatus('user-1')).resolves.toEqual({
       connected: false,
@@ -125,7 +145,12 @@ describe('FirefliesApiService', () => {
       connectedAt: '2026-09-14T00:00:00.000Z',
       webhookKey: WEBHOOK_KEY,
     })
-    const service = new FirefliesApiService(fireflies as never, vault as never, repo as never)
+    const service = new FirefliesApiService(
+      fireflies as never,
+      vault as never,
+      repo as never,
+      connections as never,
+    )
 
     await expect(service.getStatus('user-1')).resolves.toMatchObject({
       connected: true,
@@ -136,17 +161,27 @@ describe('FirefliesApiService', () => {
 
   it('refuses to store a webhook secret before the API key is connected', async () => {
     vault.hasSecret.mockResolvedValue(false)
-    const service = new FirefliesApiService(fireflies as never, vault as never, repo as never)
+    const service = new FirefliesApiService(
+      fireflies as never,
+      vault as never,
+      repo as never,
+      connections as never,
+    )
     await expect(service.updateWebhookSecret('user-1', 'a-signing-secret-1234')).rejects.toThrow(
       /not connected/,
     )
   })
 
   it('removes both secrets on disconnect', async () => {
-    const service = new FirefliesApiService(fireflies as never, vault as never, repo as never)
+    const service = new FirefliesApiService(
+      fireflies as never,
+      vault as never,
+      repo as never,
+      connections as never,
+    )
     await service.disconnect('user-1')
     expect(vault.deleteSecret).toHaveBeenCalledWith('user-1', 'fireflies', 'api_key')
     expect(vault.deleteSecret).toHaveBeenCalledWith('user-1', 'fireflies', 'webhook_secret')
-    expect(repo.markDisconnected).toHaveBeenCalledWith('user-1')
+    expect(connections.markPastedWebhookDisconnected).toHaveBeenCalledWith('fireflies', 'user-1')
   })
 })

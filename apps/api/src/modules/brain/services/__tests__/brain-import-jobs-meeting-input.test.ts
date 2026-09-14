@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { normalizeFathomMeetingSource } from '../../../meetings/providers/fathom-meeting-source'
 import { normalizeFirefliesMeetingSource } from '../../../meetings/providers/fireflies-meeting-source'
-import { buildMeetingMissionInput, compactMeetingSource } from '../brain-import-jobs-meeting-input'
+import {
+  buildMeetingMissionInput,
+  compactMeetingSource,
+  legacyFathomJobPayload,
+} from '../brain-import-jobs-meeting-input'
 import type { BrainImportJobRecord } from '../brain-import-jobs.types'
 
 function job(jobType: BrainImportJobRecord['job_type'], payload: Record<string, unknown>) {
@@ -132,5 +136,26 @@ describe('buildMeetingMissionInput', () => {
     )
     expect(compact).not.toHaveProperty('raw')
     expect(compact.externalRecordingId).toBe('rec_1')
+  })
+
+  it('maps a legacy Fathom job payload onto the shared builder', () => {
+    const legacy = {
+      meeting: {
+        recording_id: 'rec_legacy',
+        title: 'Old call',
+        transcript: [{ speaker: { display_name: 'A' }, text: 'hello' }],
+      },
+      targetBrainOverride: 'agent',
+      brainId: 'brain_1',
+    }
+    const j = job('fathom_meeting_import', legacy)
+    const result = buildMeetingMissionInput(j, legacyFathomJobPayload(legacy))
+    expect(result.targetBrain).toBe('agent')
+    expect(result.input).toMatchObject({
+      provider: 'fathom',
+      sessionKey: 'fathom:rec_legacy',
+      brainId: 'brain_1',
+      transcript: [{ speaker: { display_name: 'A' }, text: 'hello' }],
+    })
   })
 })

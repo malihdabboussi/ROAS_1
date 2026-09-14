@@ -40434,7 +40434,7 @@ Reason not done now: no licensed asset available in the repo; not needed for the
 
 ## 2026-09-14 - [REFACTOR] Move Fireflies connection rows onto the shared pasted-webhook helpers
 
-Status: Open
+Status: Done in ROA-40 Phase 4 (2026-09-14)
 
 Found while: ROA-40 Phase 2.
 

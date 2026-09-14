@@ -10,7 +10,6 @@ export const USER_BRAIN_IMPORT_JOB_TYPES: BrainImportJobType[] = [
   'document_remember',
   'user_link_import',
   'fathom_meeting_import',
-  'fireflies_transcript_import',
   'meeting_transcript_import',
 ]
 
@@ -18,7 +17,6 @@ export const USER_BRAIN_IMPORT_JOB_TYPES: BrainImportJobType[] = [
 export const CAMPAIGN_BRAIN_IMPORT_JOB_TYPES: BrainImportJobType[] = [
   'campaign_file_import',
   'campaign_fathom_import',
-  'campaign_fireflies_import',
   'campaign_meeting_import',
   'campaign_url_import',
   'page_grader_brain_sync',
@@ -31,13 +29,11 @@ export const QUEUE_VISIBLE_IMPORT_JOB_TYPES: BrainImportJobType[] = [
   'sk_ingest',
   'sk_link_ingest',
   'fathom_meeting_import',
-  'fireflies_transcript_import',
   'meeting_transcript_import',
 ]
 
 /** Meeting imports that trigger campaign cross-pollination suggestions after success. */
 export const CROSS_POLLINATION_JOB_TYPES: BrainImportJobType[] = [
   'fathom_meeting_import',
-  'fireflies_transcript_import',
   'meeting_transcript_import',
 ]

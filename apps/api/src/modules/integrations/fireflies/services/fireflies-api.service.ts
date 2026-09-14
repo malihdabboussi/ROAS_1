@@ -1,5 +1,6 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { MeetingIntakeRepository } from '../../../meetings/intake/repositories/meeting-intake.repository'
 import { buildMeetingWebhookPath } from '../../../meetings/providers/webhook-key'
 import { VaultService } from '../../../vault/services/vault.service'
 import { FirefliesIntegration } from '../integrations/fireflies.integration'
@@ -39,6 +40,7 @@ export class FirefliesApiService {
     private readonly fireflies: FirefliesIntegration,
     private readonly vault: VaultService,
     private readonly repo: FirefliesRepository,
+    private readonly connections: MeetingIntakeRepository,
     @Optional() config?: ConfigService,
   ) {
     this.apiUrl =
@@ -80,8 +82,11 @@ export class FirefliesApiService {
         {},
       )
     }
-    await this.repo.upsertConnection(userId, { email: user.email, name: user.name })
-    const webhookKey = await this.repo.ensureWebhookKey(userId)
+    await this.connections.upsertPastedWebhookConnection('fireflies', userId, {
+      connectionLabel: user.email ?? user.name ?? 'Fireflies',
+      metadata: { email: user.email, name: user.name },
+    })
+    const webhookKey = await this.connections.ensureWebhookKey('fireflies', userId)
     return { user, webhookUrl: this.buildWebhookUrl(webhookKey)! }
   }
 
@@ -99,14 +104,14 @@ export class FirefliesApiService {
       'custom',
       {},
     )
-    const webhookKey = await this.repo.ensureWebhookKey(userId)
+    const webhookKey = await this.connections.ensureWebhookKey('fireflies', userId)
     return { webhookUrl: this.buildWebhookUrl(webhookKey)! }
   }
 
   async disconnect(userId: string): Promise<void> {
     await this.vault.deleteSecret(userId, 'fireflies', FIREFLIES_API_KEY_LABEL)
     await this.vault.deleteSecret(userId, 'fireflies', FIREFLIES_WEBHOOK_SECRET_LABEL)
-    await this.repo.markDisconnected(userId)
+    await this.connections.markPastedWebhookDisconnected('fireflies', userId)
   }
 
   async getStatus(userId: string): Promise<FirefliesStatus> {

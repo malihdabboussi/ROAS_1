@@ -14,8 +14,6 @@ import { BrainAuthGuard } from '../guards/brain-auth.guard'
 import {
   BrainImportJobRequestsService,
   type CampaignFileBody,
-  type CampaignMeetingBody,
-  type FathomMeetingBody,
   type RememberDocumentBody,
   type SkIngestBody,
 } from '../services/brain-import-job-requests.service'
@@ -36,18 +34,6 @@ export class ImportJobsController {
     return this.requests.enqueueRememberDocument(user.id, body, scope)
   }
 
-  @Post('fathom-meeting')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @UseGuards(CreditsGuard)
-  async enqueueFathomMeeting(
-    @CurrentUser() user: { id: string },
-    @Body() body: FathomMeetingBody,
-    @OrgContext() scope: RequestScope,
-    @Supabase() supabase: SupabaseClient,
-  ) {
-    return this.requests.enqueueFathomMeeting(user.id, body, scope, supabase)
-  }
-
   @Post('remember-link')
   @HttpCode(HttpStatus.ACCEPTED)
   @UseGuards(CreditsGuard)
@@ -57,18 +43,6 @@ export class ImportJobsController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.requests.enqueueRememberLink(user.id, body, scope)
-  }
-
-  @Post('fireflies-transcript')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @UseGuards(CreditsGuard)
-  async enqueueFirefliesTranscript(
-    @CurrentUser() user: { id: string },
-    @Body() body: { transcriptId?: string; brainId?: string; targetBrain?: string },
-    @OrgContext() scope: RequestScope,
-    @Supabase() supabase: SupabaseClient,
-  ) {
-    return this.requests.enqueueFirefliesTranscript(user.id, body, scope, supabase)
   }
 
   @Post('campaign-file')
@@ -91,29 +65,6 @@ export class ImportJobsController {
     @OrgContext() scope: RequestScope,
   ) {
     return this.requests.enqueueCampaignUrl(user.id, body, scope)
-  }
-
-  @Post('campaign-fathom')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @UseGuards(CreditsGuard)
-  async enqueueCampaignFathom(
-    @CurrentUser() user: { id: string },
-    @Body() body: CampaignMeetingBody,
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.requests.enqueueCampaignFathom(user.id, body, scope)
-  }
-
-  @Post('campaign-fireflies')
-  @HttpCode(HttpStatus.ACCEPTED)
-  @UseGuards(CreditsGuard)
-  async enqueueCampaignFireflies(
-    @CurrentUser() user: { id: string },
-    @Body()
-    body: { campaignId?: string; transcriptId?: string; domain?: CampaignFileBody['domain'] },
-    @OrgContext() scope: RequestScope,
-  ) {
-    return this.requests.enqueueCampaignFireflies(user.id, body, scope)
   }
 
   @Post('sk-ingest')

@@ -67,10 +67,8 @@ export class ArtifactBrainScholarService {
         this.brainIngestionActionsService.ingestSkText(target, data, sessionKey),
       ingest_agent_brain_link: (data, sessionKey) =>
         this.brainIngestionActionsService.ingestSkLink(target, data, sessionKey),
-      ingest_fathom_meeting: (data, sessionKey) =>
-        this.brainIngestionActionsService.ingestFathomMeeting(target, data, sessionKey),
-      ingest_fireflies_transcript: (data, sessionKey) =>
-        this.brainIngestionActionsService.ingestFirefliesTranscript(),
+      ingest_meeting_transcript: (data, sessionKey) =>
+        this.brainIngestionActionsService.ingestMeetingTranscript(target, data, sessionKey),
       transfer_brain_node: (data, sessionKey) =>
         this.brainIngestionActionsService.transferBrainNode(target, data, sessionKey),
       transfer_brain_by_source: (data, sessionKey) =>

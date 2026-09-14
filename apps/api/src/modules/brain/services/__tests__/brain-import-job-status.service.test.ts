@@ -118,7 +118,6 @@ describe('BrainImportJobStatusService', () => {
       'document_remember',
       'user_link_import',
       'fathom_meeting_import',
-      'fireflies_transcript_import',
       'meeting_transcript_import',
     ])
     expect(importQuery.is).toHaveBeenCalledWith('payload->>brainId', null)

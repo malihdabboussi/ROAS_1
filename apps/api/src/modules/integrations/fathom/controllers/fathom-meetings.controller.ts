@@ -23,7 +23,6 @@ import {
   ZodValidationPipe,
   type RequestScope,
 } from '@vibey/api-shared'
-import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
 import type { MeetingRecordingBackfillCursor } from '../../../meetings/repositories/meeting-recording-backfill.repository'
 import { ListFathomMeetingsSchema } from '../dto/fathom.dto'
 import { FathomApiService } from '../services/fathom-api.service'
@@ -40,7 +39,6 @@ const AttachToMeetingSchema = z.object({
 export class FathomMeetingsController {
   constructor(
     private readonly api: FathomApiService,
-    private readonly importJobs: BrainImportJobsService,
     private readonly meetingBackfill: FathomMeetingWorkspaceBackfillService,
     private readonly meetingAttach: FathomMeetingWorkspaceAttachService,
   ) {}
@@ -86,26 +84,6 @@ export class FathomMeetingsController {
     if (!recordingId) throw new BadRequestException('recordingId is required')
     const result = await this.api.getRecordingSummary(supabase, user.id, recordingId)
     return { success: true, ...result }
-  }
-
-  @Post('meetings/import')
-  @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
-  @HttpCode(HttpStatus.ACCEPTED)
-  async importMeeting(
-    @CurrentUser() user: { id: string },
-    @OrgContext() scope: RequestScope,
-    @Body() body: { meeting?: Record<string, unknown> },
-  ) {
-    const meeting = body?.meeting
-    if (!meeting || typeof meeting !== 'object') {
-      throw new BadRequestException('meeting is required')
-    }
-    const queued = await this.importJobs.enqueueFathomMeetingImport(
-      user.id,
-      meeting,
-      scope.orgId ?? null,
-    )
-    return { success: true, ...queued }
   }
 
   @Post('attach-to-meeting')

@@ -11,7 +11,6 @@ const supabase = { from: vi.fn() }
 function createController() {
   const importJobs = {
     enqueueDocumentRemember: vi.fn().mockResolvedValue({ jobId: 'job-1', status: 'queued' }),
-    enqueueFathomMeetingImport: vi.fn().mockResolvedValue({ jobId: 'job-2', status: 'queued' }),
     enqueueCampaignFileImport: vi.fn().mockResolvedValue({ jobId: 'job-3', status: 'queued' }),
     enqueueSkIngest: vi.fn().mockResolvedValue({ jobId: 'job-4', status: 'queued' }),
   }
@@ -123,34 +122,6 @@ describe('ImportJobsController', () => {
     ).rejects.toBeInstanceOf(BadRequestException)
 
     expect(importJobs.enqueueDocumentRemember).not.toHaveBeenCalled()
-  })
-
-  it('checks brain train permissions before enqueueing a scoped meeting import', async () => {
-    const { controller, importJobs, brainPermissions } = createController()
-    const meeting = { id: 'meeting-1', title: 'Call' }
-
-    await expect(
-      controller.enqueueFathomMeeting(
-        user,
-        { meeting, brainId: ' brain-1 ', targetBrain: ' agent ' },
-        scope,
-        supabase as never,
-      ),
-    ).resolves.toEqual({ success: true, jobId: 'job-2', status: 'queued' })
-
-    expect(brainPermissions.assertCanTrainBrain).toHaveBeenCalledWith(
-      supabase,
-      'user-1',
-      scope,
-      'brain-1',
-    )
-    expect(importJobs.enqueueFathomMeetingImport).toHaveBeenCalledWith(
-      'user-1',
-      meeting,
-      'org-1',
-      'brain-1',
-      'agent',
-    )
   })
 
   it('trims campaign file inputs and validates source type', async () => {

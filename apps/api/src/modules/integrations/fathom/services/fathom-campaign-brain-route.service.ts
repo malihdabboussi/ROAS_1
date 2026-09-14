@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { compactMeetingSource } from '../../../brain/services/brain-import-jobs-meeting-input'
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
+import { normalizeFathomMeetingSource } from '../../../meetings/providers/fathom-meeting-source'
+import { readEmbeddedSource } from '../../../meetings/providers/transcript-source-to-recording-event'
 import type { PageGraderClientScopeEntry } from '../../page-grader/services/page-grader-api.helpers'
 import { PageGraderApiService } from '../../page-grader/services/page-grader-api.service'
 
@@ -134,9 +137,9 @@ export class FathomCampaignBrainRouteService {
         continue
       }
 
-      const queued = await this.importJobs.enqueueCampaignFathomImport(
+      const queued = await this.importJobs.enqueueCampaignMeetingImport(
         input.userId,
-        { campaignId: campaign.id, meeting: input.event },
+        { campaignId: campaign.id, source: toMeetingJobSource(input.event) },
         input.orgId,
       )
       this.logger.log(
@@ -177,9 +180,9 @@ export class FathomCampaignBrainRouteService {
     if (!campaign) return { routed: false, reason: 'no_campaign' }
     if (isSystemCampaign(campaign)) return { routed: false, reason: 'system_campaign' }
 
-    const queued = await this.importJobs.enqueueCampaignFathomImport(
+    const queued = await this.importJobs.enqueueCampaignMeetingImport(
       input.userId,
-      { campaignId: campaign.id, meeting: input.event },
+      { campaignId: campaign.id, source: toMeetingJobSource(input.event) },
       input.orgId,
     )
     this.logger.log(
@@ -293,15 +296,7 @@ export function isSystemCampaign(campaign: { name: string | null; config: unknow
   )
 }
 
-export function campaignFathomExternalId(meeting: Record<string, unknown>): string {
-  return String(
-    meeting.id || meeting.recording_id || meeting.call_id || meeting.url || meeting.title || '',
-  )
-}
-
-export function campaignFathomDedupeKey(
-  campaignId: string,
-  meeting: Record<string, unknown>,
-): string {
-  return `campaign-fathom:${campaignId}:${campaignFathomExternalId(meeting)}`
+/** The bridged event carries the normalized source; a raw Fathom event is normalized here. */
+function toMeetingJobSource(event: Record<string, unknown>) {
+  return compactMeetingSource(readEmbeddedSource(event) ?? normalizeFathomMeetingSource(event))
 }

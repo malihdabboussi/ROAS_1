@@ -203,9 +203,10 @@ export async function importCampaignKnowledgeFromFathomMeeting(
   meeting: CampaignFathomMeeting,
   domain?: KnowledgeDomain,
 ): Promise<CampaignImportEnqueueResult> {
-  return backendPost('/api/brain/import-jobs/campaign-fathom', {
+  const raw = meeting as unknown as Record<string, unknown>
+  return backendPost('/api/integrations/meetings/fathom/import', {
     campaignId,
-    meeting,
+    externalId: String(raw.recording_id ?? raw.id ?? raw.call_id ?? ''),
     domain,
   })
 }
