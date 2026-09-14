@@ -31,6 +31,7 @@ export function NoteTakerPreviewPanel({
         </p>
       </div>
       <textarea
+        id="nt-samplePayload"
         value={samplePayload}
         onChange={(e) => onSampleChange(e.target.value)}
         rows={8}

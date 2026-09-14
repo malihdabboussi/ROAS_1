@@ -3,6 +3,9 @@ export const SETTINGS_TOAST_ERRORS = {
   NOTE_TAKER_SAVE_FAILED: {
     userMessage: "Couldn't save the note taker. Check the fields and try again.",
   },
+  NOTE_TAKER_FIELDS_INVALID: {
+    userMessage: 'Some fields need attention. Check the highlighted fields.',
+  },
   NOTE_TAKER_PREVIEW_FAILED: {
     userMessage: "Couldn't test the mapping. Try again.",
   },
