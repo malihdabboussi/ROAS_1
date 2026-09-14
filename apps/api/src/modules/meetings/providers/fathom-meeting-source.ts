@@ -1,49 +1,14 @@
-export type FathomTranscriptTurn = {
-  speakerName: string
-  speakerEmail: string | null
-  timestamp: string | null
-  text: string
-}
+import type {
+  TranscriptSourceAction,
+  TranscriptSourceEvent,
+  TranscriptTurn,
+} from './transcript-source.types'
 
-export type FathomSourceAction = {
-  sourceKey: string
-  sourceText: string
-  assigneeName: string | null
-  assigneeEmail: string | null
-  recordingTimestamp: string | null
-  recordingPlaybackUrl: string | null
-  completed: boolean
-  userGenerated: boolean
-  raw: Record<string, unknown>
-  evidence?: {
-    sourceKind: 'meeting_transcript' | 'meeting_summary'
-    excerpt: string
-    speakerName: string | null
-    timestamp: string | null
-    transcriptTurnIndex: number | null
-  }
-  /** Present when the LLM judgment pass rewrote or annotated this action. */
-  refinement?: { original_text: string; why?: string }
-}
-
-export type FathomMeetingSource = {
-  provider: 'fathom'
-  externalRecordingId: string
-  providerMeetingId: string | null
-  calendarEventId: string | null
-  title: string
-  recordingUrl: string | null
-  scheduledStart: string | null
-  scheduledEnd: string | null
-  recordingStart: string | null
-  recordingEnd: string | null
-  durationSeconds: number | null
-  participantEmails: string[]
-  providerSummary: string | null
-  actions: FathomSourceAction[]
-  transcript: FathomTranscriptTurn[]
-  raw: Record<string, unknown>
-}
+// Fathom is the first implementation of the provider-agnostic transcript
+// contract; these aliases keep the historical names for existing consumers.
+export type FathomTranscriptTurn = TranscriptTurn
+export type FathomSourceAction = TranscriptSourceAction
+export type FathomMeetingSource = TranscriptSourceEvent & { provider: 'fathom' }
 
 const GENERIC_FATHOM_TITLE_RE =
   /^(impromptu(?:\s+zoom)?(?:\s+meeting|\s+call)?|untitled(?:\s+meeting)?|zoom meeting|working session(?:\s*[—-].*)?|call \(naming…\))$/i
@@ -75,6 +40,7 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
 
   return {
     provider: 'fathom',
+    kind: 'meeting',
     externalRecordingId,
     providerMeetingId: firstText(event.meeting_id, event.call_id),
     calendarEventId: firstText(
@@ -88,6 +54,9 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
       event,
     }),
     recordingUrl: httpUrl(event.url) ?? httpUrl(event.share_url),
+    sourceUrl: httpUrl(event.share_url) ?? httpUrl(event.url),
+    mediaUrl: null,
+    hostEmail: normalizedEmail(objectRecord(event.recorded_by).email ?? event.recorded_by_email),
     scheduledStart,
     scheduledEnd,
     recordingStart,

@@ -3,6 +3,11 @@ import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
+import {
+  buildMeetingWebhookPath,
+  generateWebhookKey,
+  readWebhookKey,
+} from '../../../meetings/providers/webhook-key'
 import { SpaceTemplatesService } from '../../../space-templates/services/space-templates.service'
 import { MeetingsPrecallPrepService } from '../../../spaces/services/meetings-precall-prep.service'
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
@@ -34,6 +39,13 @@ export type FathomAutoIngestSettings = {
 
 const FATHOM_ORG_BILLING_ROLES = ['owner', 'admin', 'creator', 'editor'] as const
 const FATHOM_DISCONNECT_REASON = 'The Fathom account that fed this automation was disconnected.'
+// Team plans: include shared team recordings so Meetings can label Personal vs Team.
+// my_recordings alone only delivers the connecting user's hosted calls.
+const FATHOM_WEBHOOK_TRIGGERS = [
+  'my_recordings',
+  'shared_team_recordings',
+  'my_shared_with_team_recordings',
+] as const
 
 @Injectable()
 export class FathomOAuthService {
@@ -105,39 +117,19 @@ export class FathomOAuthService {
       return []
     })
     if (teams[0]?.name) existingMeta.team_name = teams[0].name
-    let webhookMeta: {
-      webhook_secret: string
-      webhook_id: string
-      triggered_for: string[]
-    }
     if (typeof existingMeta.webhook_id === 'string' && existingMeta.webhook_id.trim().length > 0) {
       await this.fathom.deleteWebhook(tokens.access_token, existingMeta.webhook_id).catch((err) => {
         const message = err instanceof Error ? err.message : String(err)
         this.logger.warn(`Fathom old webhook delete failed during OAuth callback: ${message}`)
       })
     }
-    const destinationUrl = `${this.apiUrl.replace(/\/$/, '')}/api/integrations/fathom/webhook`
-    const triggeredFor = [
-      'my_recordings',
-      'shared_team_recordings',
-      'my_shared_with_team_recordings',
-    ] as const
-    const webhook = await this.fathom.createWebhook(tokens.access_token, {
-      destinationUrl,
-      // Team plans: include shared team recordings so Meetings can label Personal vs Team.
-      // my_recordings alone only delivers Dylan-hosted calls.
-      triggeredFor: [...triggeredFor],
-      includeTranscript: true,
-      includeSummary: true,
-      includeActionItems: true,
-    })
-    if (!webhook?.secret || !webhook?.id) {
-      throw new BadRequestException('Fathom webhook creation failed: missing webhook id or secret')
-    }
-    webhookMeta = {
+    const webhookKey = readWebhookKey(existingMeta) ?? generateWebhookKey()
+    const webhook = await this.createSharedDoorWebhook(tokens.access_token, webhookKey)
+    const webhookMeta = {
       webhook_secret: webhook.secret,
       webhook_id: webhook.id,
-      triggered_for: [...triggeredFor],
+      webhook_key: webhookKey,
+      triggered_for: [...FATHOM_WEBHOOK_TRIGGERS],
     }
 
     await this.upsertUserIntegration(parsedState.userId, tokens, webhookMeta, existingMeta, {
@@ -401,6 +393,70 @@ export class FathomOAuthService {
     }
   }
 
+  /** Fathom posts to the shared meeting door; the key in the path names this connection. */
+  private buildWebhookDestination(webhookKey: string): string {
+    return `${this.apiUrl.replace(/\/$/, '')}${buildMeetingWebhookPath('fathom', webhookKey)}`
+  }
+
+  private async createSharedDoorWebhook(accessToken: string, webhookKey: string) {
+    const webhook = await this.fathom.createWebhook(accessToken, {
+      destinationUrl: this.buildWebhookDestination(webhookKey),
+      triggeredFor: [...FATHOM_WEBHOOK_TRIGGERS],
+      includeTranscript: true,
+      includeSummary: true,
+      includeActionItems: true,
+    })
+    if (!webhook?.secret || !webhook?.id) {
+      throw new BadRequestException('Fathom webhook creation failed: missing webhook id or secret')
+    }
+    return webhook
+  }
+
+  /** Move one connected account's Fathom webhook from the legacy door to the shared door. */
+  async reregisterWebhook(
+    supabase: SupabaseClient,
+    userId: string,
+  ): Promise<{ webhookId: string; destinationUrl: string }> {
+    const token = await this.getAccessToken(supabase, userId)
+    const meta = await this.repo.getConnectedMetadata(userId)
+    const webhookKey = readWebhookKey(meta) ?? generateWebhookKey()
+    if (typeof meta.webhook_id === 'string' && meta.webhook_id.trim().length > 0) {
+      await this.fathom.deleteWebhook(token, meta.webhook_id).catch((err) => {
+        const message = err instanceof Error ? err.message : String(err)
+        this.logger.warn(`Fathom old webhook delete failed during re-registration: ${message}`)
+      })
+    }
+    const webhook = await this.createSharedDoorWebhook(token, webhookKey)
+    await this.repo.updateWebhookMetadata(userId, {
+      id: webhook.id,
+      secret: webhook.secret,
+      key: webhookKey,
+    })
+    return { webhookId: webhook.id, destinationUrl: this.buildWebhookDestination(webhookKey) }
+  }
+
+  async reregisterAllWebhooks(): Promise<{
+    total: number
+    migrated: string[]
+    failed: Array<{ userId: string; error: string }>
+  }> {
+    const admin = this.getAdminClient()
+    const rows = await this.repo.listConnectedWebhookRows()
+    const migrated: string[] = []
+    const failed: Array<{ userId: string; error: string }> = []
+    for (const row of rows) {
+      const userId = typeof row.user_id === 'string' ? row.user_id : ''
+      if (!userId) continue
+      try {
+        await this.reregisterWebhook(admin, userId)
+        migrated.push(userId)
+      } catch (err) {
+        failed.push({ userId, error: err instanceof Error ? err.message : String(err) })
+      }
+    }
+    return { total: rows.length, migrated, failed }
+  }
+
   private signState(payload: StatePayload): string {
     const encoded = Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url')
     const sig = createHmac('sha256', this.stateSecret).update(encoded).digest('base64url')
@@ -427,6 +483,7 @@ export class FathomOAuthService {
     webhookMeta?: {
       webhook_secret?: string
       webhook_id?: string
+      webhook_key?: string
       triggered_for?: string[]
     } | null,
     existingMetaHint?: Record<string, unknown>,

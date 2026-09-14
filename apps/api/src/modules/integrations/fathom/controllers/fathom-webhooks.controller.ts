@@ -15,8 +15,10 @@ import {
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Request, Response } from 'express'
 import { AuthGuard, CurrentUser, OrgContextGuard, OrgRoleGuard, Supabase } from '@vibey/api-shared'
+import { InternalAuthGuard } from '../../../funnels/guards/internal-auth.guard'
 import { CreateFathomWebhookSchema } from '../dto/fathom.dto'
 import { FathomApiService } from '../services/fathom-api.service'
+import { FathomOAuthService } from '../services/fathom-oauth.service'
 import { FathomWebhookService } from '../services/fathom-webhook.service'
 
 @Controller('integrations/fathom')
@@ -25,6 +27,7 @@ export class FathomWebhooksController {
 
   constructor(
     private readonly api: FathomApiService,
+    private readonly oauth: FathomOAuthService,
     private readonly webhookService: FathomWebhookService,
   ) {}
 
@@ -64,6 +67,19 @@ export class FathomWebhooksController {
     return { success: true }
   }
 
+  /**
+   * One-off migration: move every connected account's Fathom webhook from this
+   * legacy door to the shared meeting door. Called by
+   * `scripts/roas/reregister-fathom-webhooks.sh`.
+   */
+  @Post('internal/reregister-webhooks')
+  @UseGuards(InternalAuthGuard)
+  async reregisterWebhooks() {
+    const result = await this.oauth.reregisterAllWebhooks()
+    return { success: true, ...result }
+  }
+
+  /** Legacy door. Deleted once re-registration has run in production. */
   @Post('webhook')
   async receiveWebhook(@Req() req: Request, @Res() res: Response) {
     const rawBody = typeof req.body === 'string' ? req.body : JSON.stringify(req.body)
@@ -71,25 +87,12 @@ export class FathomWebhooksController {
       req.headers['x-webhook-signature'] ||
       '') as string
 
-    this.logger.warn(
-      `[FATHOM-DEBUG] Webhook hit. Headers: ${JSON.stringify({
-        'x-fathom-signature': req.headers['x-fathom-signature'] ? '***present***' : '***missing***',
-        'x-webhook-signature': req.headers['x-webhook-signature']
-          ? '***present***'
-          : '***missing***',
-        'content-type': req.headers['content-type'],
-      })}`,
-    )
-
     try {
       await this.webhookService.processWebhookAsync(rawBody, signature)
       res.status(200).json({ status: 'processed' })
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
-      this.logger.error(
-        `[FATHOM-DEBUG] Processing CRASHED: ${msg}`,
-        err instanceof Error ? err.stack : '',
-      )
+      this.logger.error(`Legacy Fathom webhook processing failed: ${msg}`)
       res.status(200).json({ status: 'accepted' })
     }
   }

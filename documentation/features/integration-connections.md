@@ -1,6 +1,6 @@
 # Integration Connections
 
-Last Modified: August 20, 2026
+Last Modified: September 14, 2026
 
 ## Data Flow
 
@@ -64,6 +64,8 @@ Last Modified: August 20, 2026
 58. Fathom list and attachment flows resolve one canonical purpose-first title for generic provider names such as “Impromptu Call.” Explicit Fathom `action_items` remain authoritative; when Fathom returns none but its summary has a `Next Steps` section, those provider-authored steps are normalized into canonical meeting follow-ups with their stated owners.
 59. Mine Agenda enumerates calendar connections owned by the caller plus that caller’s own Directory Workspace mailbox; teammate Workspace calendars remain Team-only. Calendar invites stay canonical when Fathom enriches them: the live provider URL remains the join link, the Fathom URL remains `related.recording_url`, same-minute duplicate Fathom rows with the same meeting identity collapse, and only the next unfinished calendar invite can render as the expanded hero.
 60. Google Docs creation is a capability of the existing `google_drive` connection, not a second OAuth connection. Agent requests for `google_docs`, `google-docs`, or Google Docs normalize to `google_drive`, discover `create_google_doc`, and call the canonical Drive export endpoint with `title` and semantic `html`. A connected Drive creates the document directly; a genuinely unavailable Drive returns the existing repair card instead of a false “Google Docs is disconnected” response.
+
+61. **Meeting note takers share one door (ROA-40 Phase 0).** Every note taker is a `TranscriptProvider` adapter registered in `MeetingProviderRegistry` (`apps/api/src/modules/meetings/providers/`). Providers post to `POST /api/integrations/meetings/webhooks/:provider/:connectionKey`; the key in the URL names the `user_integrations` row (`metadata.webhook_key`), the adapter verifies the provider signature (Fathom: Standard Webhooks HMAC over `webhook-id.webhook-timestamp.body` with the `whsec_` secret, 5-minute window), `meeting_webhook_deliveries` drops replays, and `MeetingIntakeService` fans the normalized `TranscriptSourceEvent` out to the brain import, the customer-brain outbox and the Meetings space. Fathom connect registers the new door; `POST /api/integrations/fathom/internal/reregister-webhooks` (internal token) plus `scripts/roas/reregister-fathom-webhooks.sh` move existing connections. The legacy `POST /api/integrations/fathom/webhook` only resolves the owner and delegates to the intake until every connection is re-registered.
 
 ## Code Examples
 
@@ -203,3 +205,4 @@ Reconnect result:
 - Slack Settings exposes whether a connection has full native search, historical fallback, or needs reconnecting for `search:read`.
 - Slack Pixel carries a **Client Context Bundle**: once a client is known (client channel stamp, or a client named in a DM), the prompt gets a `[Client context]` block listing the Portal client, ROAS campaign(s), Campaign Brain id(s), mapped Slack channel(s), and Spaces, plus the instruction to scope Slack retrieval by `client_id`. `SLACK_SEARCH_MESSAGES` accepts `client_id` / `client_name` / `channel_ids` and searches only that client's channels (per-channel `in:` needle, merged, per-channel coverage, `client_context` in the response); it never widens to the whole workspace and returns an `agent_instruction` instead of "absent" when the client has no mapped channel. Sources: `slack_brain_mappings` (curated) → `slack_observation_events.metadata` (page_grader_client_id / roas_campaign_id) → campaigns / ns_brains / spaces.
 - Home Agenda related-call matching is exclusive: time overlap (±45m) + exact email overlap (or strong title confidence), then a sole near-start (±10m) fallback for AI-titled / email-poor Fathom rows. A shared organizer email alone must never attach another person's recording when title confidence is weak and multiple invites compete. Related open uses Fathom `recording_url` or `/spaces?space=&item=`; never the legacy `/spaces/:id/:item` page path.
+- 2026-09-14: Meeting note takers moved onto one contract, one webhook door and one intake (ROA-40 Phase 0). Fathom verification switched from a secret-as-header string match with a payload-email fallback to Standard Webhooks HMAC; unsigned or mis-signed deliveries to the new door are rejected. Plan: `.docs/plans/meeting-notetaker-system-roa-40.md`.

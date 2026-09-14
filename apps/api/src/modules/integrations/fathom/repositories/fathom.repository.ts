@@ -206,7 +206,7 @@ export class FathomRepository {
 
   async updateWebhookMetadata(
     userId: string,
-    webhook: { id: string; secret: string },
+    webhook: { id: string; secret: string; key?: string },
   ): Promise<void> {
     const admin = this.serviceClient.client
     const { data } = await admin
@@ -224,6 +224,7 @@ export class FathomRepository {
           ...existingMeta,
           webhook_secret: webhook.secret,
           webhook_id: webhook.id,
+          ...(webhook.key ? { webhook_key: webhook.key } : {}),
         },
         updated_at: new Date().toISOString(),
       })

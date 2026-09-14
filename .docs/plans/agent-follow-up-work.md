@@ -40371,3 +40371,27 @@ Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestio
 Needed work: Replace with one provider-agnostic action following AGENTS.md §8.5 (schema, preflight, lifecycle, policy, drift tests, docs) and §8.6 error contract.
 
 Reason not done now: Planning-only session.
+
+## 2026-09-14 - [REFACTOR] Delete the legacy Fathom webhook door after re-registration
+
+Status: Open (blocked on running `scripts/roas/reregister-fathom-webhooks.sh` in production)
+
+Found while: ROA-40 Phase 0 (shared meeting webhook door).
+
+Evidence: `apps/api/src/modules/integrations/fathom/controllers/fathom-webhooks.controller.ts` `receiveWebhook` and `services/fathom-webhook.service.ts` still accept unsigned deliveries on `POST /api/integrations/fathom/webhook` because Fathom stores the destination URL registered at connect time; `fathom-api.service.ts:138` `resolveUserByWebhookSecret` exists only for that route.
+
+Needed work: run the re-registration script, confirm zero hits on the legacy route in Vercel logs, then delete the route, `FathomWebhookService`, `resolveUserByWebhookSecret`, and the `listConnectedIntegrationUserIds`/`listProfilesForUserIds` repository helpers it uses.
+
+Reason not done now: production connections would stop landing until re-registered.
+
+## 2026-09-14 - [ARCH] `fathom-oauth.service.ts` is near the service limit
+
+Status: Open
+
+Found while: ROA-40 Phase 0.
+
+Evidence: `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts` is 564 lines after adding webhook re-registration (limit 600, extract at ~500 per `.docs/guidelines/architecture/project-architecture.md` §9).
+
+Needed work: move the webhook registration and re-registration methods (`createSharedDoorWebhook`, `reregisterWebhook`, `reregisterAllWebhooks`) into a `fathom-webhook-registration.service.ts`.
+
+Reason not done now: kept Phase 0 scoped to the door change; extraction is mechanical and safe to do in Phase 4 cleanup.
