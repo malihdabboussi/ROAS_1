@@ -53,3 +53,9 @@ What: The web test setup imported `TextEncoder` from `'util'`, which resolves to
 Why: Without the setup fix no web test can run, so Phase B could not be verified; the training modal test was a real regression hidden by it.
 Impact: Web suite runs again; the remaining failing files exercise code this branch never touched and are logged as pre-existing.
 Files: apps/web/tests/setup.ts, apps/web/src/features/brain/components/training/TrainingModal.test.tsx, apps/web/tsconfig.tsbuildinfo
+
+## [2026-09-14 12:10] - [FIX]
+What: In the "Add a note taker" dialog, a Save or Test mapping that fails client-side validation now shows "Some fields need attention. Check the highlighted fields." in the footer and scrolls to and focuses the first invalid field (`nt-<field>` ids; the sample textarea gained `id="nt-samplePayload"`). Before, the errors rendered only next to the fields, which sit below the fold, so Save looked like it did nothing.
+Why: Found in the first live try on the app-runner (ROA-51): required path fields were empty and the user saw no feedback.
+Impact: Message lives in `SETTINGS_TOAST_ERRORS.NOTE_TAKER_FIELDS_INVALID`; dialog test asserts the message and the focus.
+Files: apps/web/src/features/settings/components/settings-content/more-integrations/{use-note-taker-definition-form.ts,NoteTakerPreviewPanel.tsx,MoreIntegrationsDialog.test.tsx}, apps/web/src/features/settings/config/settings-toast-errors.config.ts

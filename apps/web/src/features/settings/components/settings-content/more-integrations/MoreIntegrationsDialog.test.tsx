@@ -59,6 +59,10 @@ describe('MoreIntegrationsDialog', () => {
     // Saving with nothing filled in reports the problems and does not call the API.
     fireEvent.click(screen.getByRole('button', { name: 'Save note taker' }))
     expect(await screen.findByText('Give the tool a name')).toBeTruthy()
+    expect(
+      screen.getByText('Some fields need attention. Check the highlighted fields.'),
+    ).toBeTruthy()
+    expect(document.activeElement?.id).toBe('nt-displayName')
     expect(createNoteTakerDefinition).not.toHaveBeenCalled()
 
     type(/^Name/, 'Otter')

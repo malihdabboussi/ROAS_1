@@ -185,6 +185,16 @@ export function buildDefinitionInput(
   return { ok: true, input }
 }
 
+/** Bring the first invalid field into view; ids follow the `nt-<field>` convention. */
+function focusFirstError(errors: NoteTakerFormErrors): void {
+  if (typeof document === 'undefined') return
+  const first = Object.keys(errors).find((key) => errors[key as keyof NoteTakerFormState])
+  const element = first ? document.getElementById(`nt-${first}`) : null
+  if (!element) return
+  element.scrollIntoView?.({ block: 'center' })
+  if (element instanceof HTMLElement) element.focus()
+}
+
 export function parseSamplePayload(text: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(text) as unknown
@@ -227,13 +237,18 @@ export function useNoteTakerDefinitionForm(
     const built = buildDefinitionInput(state)
     if (!built.ok) {
       setErrors(built.errors)
+      setSubmitError(SETTINGS_TOAST_ERRORS.NOTE_TAKER_FIELDS_INVALID.userMessage)
+      focusFirstError(built.errors)
       return
     }
     const sample = parseSamplePayload(state.samplePayload)
     if (!sample) {
-      setErrors((prev) => ({ ...prev, samplePayload: 'Paste one JSON object the tool would send' }))
+      const sampleErrors = { samplePayload: 'Paste one JSON object the tool would send' }
+      setErrors((prev) => ({ ...prev, ...sampleErrors }))
+      focusFirstError(sampleErrors)
       return
     }
+    setSubmitError(null)
     setPreviewing(true)
     setPreviewError(null)
     try {
@@ -253,6 +268,8 @@ export function useNoteTakerDefinitionForm(
     const built = buildDefinitionInput(state)
     if (!built.ok) {
       setErrors(built.errors)
+      setSubmitError(SETTINGS_TOAST_ERRORS.NOTE_TAKER_FIELDS_INVALID.userMessage)
+      focusFirstError(built.errors)
       return
     }
     setSubmitting(true)
