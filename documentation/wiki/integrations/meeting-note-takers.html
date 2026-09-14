@@ -107,7 +107,7 @@
     <div class="sc-row"><b>Situation</b><span>Nate uses Read.ai and wants his meetings in ROAS.</span></div>
     <div class="sc-row"><b>What happens</b><span>In Settings › Integrations he picks Read AI. The card shows his personal ROAS webhook address with a copy button. In Read AI › Integrations › Webhooks he creates a webhook with that address and copies the signing key Read AI generates. Back in ROAS he pastes the key and presses Connect. Read AI's "Send test request" button proves the link.</span></div>
     <div class="sc-row"><b>What you see</b><span>Read AI shows as connected; the next meeting arrives on its own. Read AI webhooks need a Pro or Enterprise plan.</span></div>
-    <div class="sc-row"><b>Should be</b><span>As built, the ROAS address appears on the Manage row only after Connect, while Read AI hands out the signing key only once the webhook exists. The working order today is: create the webhook in Read AI with a placeholder address, copy the key, connect in ROAS, then edit the webhook address in Read AI. Showing the address before Connect is a logged follow-up and a Phase 5 check.</span></div>
+    <div class="sc-row"><b>Fixed 2026-09-14</b><span>The Connect dialog now shows the ROAS address before the key (<code>GET /integrations/meetings/read_ai/webhook-address</code> prepares a pending row), matching Read AI's steps: enter the URL, copy the signing key, test.</span></div>
     <div class="where">📍 Built: catalog row <code>web/lib/integrations/integration-catalog.ts:439</code> · address line <code>web/features/settings/components/settings-content/IntegrationAccountsGroup.tsx:109</code> · connect route <code>POST /integrations/read-ai/connect</code> <code>apps/api/src/modules/integrations/read-ai/controllers/read-ai.controller.ts:30</code> · signing rule from <a href="https://support.read.ai/hc/en-us/articles/16352415827219-Getting-Started-with-Webhooks">Read AI: Getting Started with Webhooks</a></div>
   </div>
 </div>
@@ -171,7 +171,6 @@
     <li>Fireflies signature encoding (hex or base64, <code>sha256=</code> prefix): capture one real delivery on a test account.</li>
     <li>Fireflies and Read.ai retry behaviour: return one 500 during the test and watch redelivery.</li>
     <li>Read.ai REST API login: not needed; Read AI ships as push-only with no past-meetings list.</li>
-    <li>Read.ai setup order: the ROAS address shows only after Connect (section 4). Confirm Read AI lets the webhook address be edited after creation.</li>
     <li>Does Fathom accept a <code>destination_url</code> with a path segment for the connection key.</li>
     <li>Where an MCP-backed fetch runs: <code>apps/agent-api/src/modules/mcp/</code> has the client; <code>apps/api</code> does not.</li>
   </ul>
