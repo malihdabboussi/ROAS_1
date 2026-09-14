@@ -1,12 +1,16 @@
 'use client'
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { SETTINGS_TOAST_ERRORS } from '@/features/settings/config/settings-toast-errors.config'
 import {
   createNoteTakerDefinition,
+  listNoteTakerTemplates,
   previewNoteTakerDefinition,
+  suggestNoteTakerDefinition,
   type NoteTakerDefinitionInput,
   type NoteTakerPreviewResult,
+  type NoteTakerSuggestion,
+  type NoteTakerTemplate,
 } from '@/lib/integrations/meeting-provider-definitions'
 
 /** Same rule as the API: dot paths, `[]` marks an array to iterate. */
@@ -195,6 +199,50 @@ function focusFirstError(errors: NoteTakerFormErrors): void {
   if (element instanceof HTMLElement) element.focus()
 }
 
+/** Fill the path and event fields from a suggestion or a template; other fields are kept. */
+export type DefinitionFields = {
+  signature?: NoteTakerDefinitionInput['signature']
+  event?: NoteTakerDefinitionInput['event']
+  fieldMap?: Partial<NoteTakerDefinitionInput['fieldMap']>
+}
+
+export function definitionToFormFields(input: DefinitionFields): Partial<NoteTakerFormState> {
+  const map: Partial<NoteTakerDefinitionInput['fieldMap']> = input.fieldMap ?? {}
+  const event: NoteTakerDefinitionInput['event'] = input.event ?? {}
+  const signature = input.signature
+  return {
+    ...(signature
+      ? signature.scheme === 'none'
+        ? { signatureScheme: 'none' as const }
+        : {
+            signatureScheme: 'hmac_sha256' as const,
+            signatureHeader: signature.header,
+            signatureEncoding: signature.encoding,
+            signaturePrefix: signature.prefix ?? '',
+            signatureKeyEncoding: signature.keyEncoding,
+          }
+      : {}),
+    eventTypePath: event.eventTypePath ?? '',
+    acceptValues: (event.acceptValues ?? []).join(', '),
+    deliveryIdPath: event.deliveryIdPath ?? '',
+    externalIdPath: map.externalId ?? '',
+    titlePath: map.title ?? '',
+    startTimePath: map.startTime ?? '',
+    endTimePath: map.endTime ?? '',
+    hostEmailPath: map.hostEmail ?? '',
+    sourceUrlPath: map.sourceUrl ?? '',
+    summaryPath: map.summary ?? '',
+    participantsPath: map.participants?.path ?? '',
+    participantEmailPath: map.participants?.email ?? '',
+    transcriptPath: map.transcript?.path ?? '',
+    transcriptSpeakerPath: map.transcript?.speaker ?? '',
+    transcriptTextPath: map.transcript?.text ?? '',
+    transcriptTimestampPath: map.transcript?.timestamp ?? '',
+    actionsPath: map.actions?.path ?? '',
+    actionTextPath: map.actions?.text ?? '',
+  }
+}
+
 export function parseSamplePayload(text: string): Record<string, unknown> | null {
   try {
     const parsed = JSON.parse(text) as unknown
@@ -216,6 +264,21 @@ export function useNoteTakerDefinitionForm(
   const [previewing, setPreviewing] = useState(false)
   const [preview, setPreview] = useState<NoteTakerPreviewResult | null>(null)
   const [previewError, setPreviewError] = useState<string | null>(null)
+  const [detecting, setDetecting] = useState(false)
+  const [detection, setDetection] = useState<NoteTakerSuggestion | null>(null)
+  const [templates, setTemplates] = useState<NoteTakerTemplate[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+    listNoteTakerTemplates()
+      .then((list) => {
+        if (!cancelled) setTemplates(list)
+      })
+      .catch(() => undefined)
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const setField = useCallback(
     <K extends keyof NoteTakerFormState>(key: K, value: NoteTakerFormState[K]) => {
@@ -231,7 +294,51 @@ export function useNoteTakerDefinitionForm(
     setSubmitError(null)
     setPreview(null)
     setPreviewError(null)
+    setDetection(null)
   }, [])
+
+  const applyTemplate = useCallback(
+    (key: string) => {
+      const template = templates.find((t) => t.key === key)
+      if (!template) return
+      setState((prev) => ({ ...prev, ...definitionToFormFields(template.definition) }))
+      setErrors({})
+      setSubmitError(null)
+      setDetection(null)
+    },
+    [templates],
+  )
+
+  /** Paste one delivery, let the API guess the paths, then run the mapping test on it. */
+  const detectFields = useCallback(async () => {
+    const sample = parseSamplePayload(state.samplePayload)
+    if (!sample) {
+      const sampleErrors = { samplePayload: 'Paste one JSON object the tool would send' }
+      setErrors((prev) => ({ ...prev, ...sampleErrors }))
+      focusFirstError(sampleErrors)
+      return
+    }
+    setDetecting(true)
+    setPreviewError(null)
+    setSubmitError(null)
+    try {
+      const suggestion = await suggestNoteTakerDefinition(sample)
+      setDetection(suggestion)
+      const next = { ...state, ...definitionToFormFields(suggestion) }
+      setState(next)
+      setErrors({})
+      const built = buildDefinitionInput(next)
+      if (built.ok) setPreview(await previewNoteTakerDefinition(built.input, sample))
+    } catch (err) {
+      setPreviewError(
+        err instanceof Error && err.message
+          ? err.message
+          : SETTINGS_TOAST_ERRORS.NOTE_TAKER_DETECT_FAILED.userMessage,
+      )
+    } finally {
+      setDetecting(false)
+    }
+  }, [state])
 
   const runPreview = useCallback(async () => {
     const built = buildDefinitionInput(state)
@@ -300,5 +407,10 @@ export function useNoteTakerDefinitionForm(
     preview,
     previewError,
     runPreview,
+    detecting,
+    detection,
+    detectFields,
+    templates,
+    applyTemplate,
   }
 }

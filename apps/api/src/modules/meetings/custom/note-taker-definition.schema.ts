@@ -78,6 +78,10 @@ export const NoteTakerDefinitionInputSchema = z.object({
 
 export const NoteTakerDefinitionUpdateSchema = NoteTakerDefinitionInputSchema.partial()
 
+export const NoteTakerSuggestSchema = z.object({
+  samplePayload: z.record(z.unknown()),
+})
+
 export const NoteTakerPreviewSchema = z.object({
   definition: NoteTakerDefinitionInputSchema,
   samplePayload: z.record(z.unknown()),

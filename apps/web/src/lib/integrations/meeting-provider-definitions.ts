@@ -75,7 +75,35 @@ export type NoteTakerPreviewResult =
     }
   | { ok: false; slug: string; error: string }
 
+export type NoteTakerSuggestion = {
+  fieldMap: Partial<NoteTakerDefinitionInput['fieldMap']>
+  event: NoteTakerDefinitionInput['event']
+  detected: string[]
+  missing: Array<'externalId' | 'transcript'>
+}
+
+export type NoteTakerTemplate = {
+  key: string
+  label: string
+  description: string
+  definition: Omit<NoteTakerDefinitionInput, 'displayName'> & { displayName?: string }
+}
+
 const DEFINITIONS_PATH = '/api/integrations/meetings/definitions'
+
+/** Guess the field map from one sample delivery (platform admins). */
+export async function suggestNoteTakerDefinition(
+  samplePayload: Record<string, unknown>,
+): Promise<NoteTakerSuggestion> {
+  return backendPost<NoteTakerSuggestion>(`${DEFINITIONS_PATH}/suggest`, { samplePayload })
+}
+
+export async function listNoteTakerTemplates(): Promise<NoteTakerTemplate[]> {
+  const res = await backendGet<{ success: boolean; templates?: NoteTakerTemplate[] }>(
+    `${DEFINITIONS_PATH}/templates`,
+  )
+  return res?.templates ?? []
+}
 
 export async function listNoteTakerDefinitions(): Promise<NoteTakerListing[]> {
   const res = await backendGet<{ success: boolean; definitions?: NoteTakerListing[] }>(

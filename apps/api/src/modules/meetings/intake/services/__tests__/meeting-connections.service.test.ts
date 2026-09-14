@@ -25,6 +25,7 @@ describe('MeetingConnectionsService', () => {
   let connections: Record<string, ReturnType<typeof vi.fn>>
   let definitions: { findBySlug: ReturnType<typeof vi.fn> }
   let vault: Record<string, ReturnType<typeof vi.fn>>
+  let registry: { resolve: ReturnType<typeof vi.fn> }
   let service: MeetingConnectionsService
 
   beforeEach(() => {
@@ -41,10 +42,30 @@ describe('MeetingConnectionsService', () => {
       deleteSecret: vi.fn().mockResolvedValue(undefined),
       hasSecret: vi.fn().mockResolvedValue(true),
     }
+    registry = {
+      resolve: vi.fn(async (id: string) =>
+        id === 'read_ai'
+          ? {
+              identity: {
+                id: 'read_ai',
+                auth: 'signing_key',
+                manifest: { displayName: 'Read AI', personalOnly: true, logoKey: 'read_ai' },
+              },
+              push: {},
+            }
+          : id === 'fathom'
+            ? {
+                identity: { id: 'fathom', auth: 'oauth2', manifest: { displayName: 'Fathom' } },
+                push: {},
+              }
+            : null,
+      ),
+    }
     service = new MeetingConnectionsService(
       connections as never,
       definitions as never,
       vault as never,
+      registry as never,
       {
         get: (key: string) => (key === 'PUBLIC_API_URL' ? 'https://api.roas.io/' : undefined),
       } as never,
@@ -59,6 +80,22 @@ describe('MeetingConnectionsService', () => {
       connectionLabel: 'Otter',
     })
     expect(connections.upsertPastedWebhookConnection).not.toHaveBeenCalled()
+  })
+
+  it('hands out the address for built-in pasted-webhook tools, but not OAuth ones', async () => {
+    await expect(service.webhookAddress('read_ai', 'user_1')).resolves.toEqual({
+      webhookUrl: `https://api.roas.io/api/integrations/meetings/webhooks/read_ai/${KEY}`,
+    })
+    expect(connections.ensurePendingWebhookConnection).toHaveBeenCalledWith('read_ai', 'user_1', {
+      connectionLabel: 'Read AI',
+    })
+    expect(definitions.findBySlug).not.toHaveBeenCalled()
+    await expect(service.webhookAddress('fathom', 'user_1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    )
+    await expect(service.webhookAddress('slack', 'user_1')).rejects.toBeInstanceOf(
+      NotFoundException,
+    )
   })
 
   it('connects with a secret stored under the slug and returns the same address', async () => {

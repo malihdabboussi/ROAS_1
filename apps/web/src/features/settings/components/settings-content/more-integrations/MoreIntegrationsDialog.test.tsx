@@ -4,10 +4,14 @@ import { MoreIntegrationsDialog } from './MoreIntegrationsDialog'
 
 const createNoteTakerDefinition = vi.fn()
 const previewNoteTakerDefinition = vi.fn()
+const suggestNoteTakerDefinition = vi.fn()
+const listNoteTakerTemplates = vi.fn()
 
 vi.mock('@/lib/integrations/meeting-provider-definitions', () => ({
   createNoteTakerDefinition: (...args: unknown[]) => createNoteTakerDefinition(...args),
   previewNoteTakerDefinition: (...args: unknown[]) => previewNoteTakerDefinition(...args),
+  suggestNoteTakerDefinition: (...args: unknown[]) => suggestNoteTakerDefinition(...args),
+  listNoteTakerTemplates: (...args: unknown[]) => listNoteTakerTemplates(...args),
 }))
 
 function type(label: string | RegExp, value: string) {
@@ -18,6 +22,25 @@ describe('MoreIntegrationsDialog', () => {
   beforeEach(() => {
     createNoteTakerDefinition.mockReset()
     previewNoteTakerDefinition.mockReset()
+    suggestNoteTakerDefinition.mockReset()
+    listNoteTakerTemplates.mockReset()
+    listNoteTakerTemplates.mockResolvedValue([
+      {
+        key: 'generic_turns',
+        label: 'Simple: speakers and text',
+        description: 'flat',
+        definition: {
+          signature: {
+            scheme: 'hmac_sha256',
+            header: 'X-Signature',
+            encoding: 'hex',
+            keyEncoding: 'utf8',
+          },
+          event: {},
+          fieldMap: { externalId: 'id', transcript: { path: 'transcript[]', text: 'text' } },
+        },
+      },
+    ])
   })
   afterEach(() => cleanup())
 
@@ -108,5 +131,75 @@ describe('MoreIntegrationsDialog', () => {
     type('Text inside each turn', 'text')
     fireEvent.click(screen.getByRole('button', { name: 'Save note taker' }))
     expect(await screen.findByText('A note taker named "Otter" already exists')).toBeTruthy()
+  })
+
+  it('fills the paths from a pasted sample and runs the mapping test', async () => {
+    suggestNoteTakerDefinition.mockResolvedValue({
+      fieldMap: {
+        externalId: 'session_id',
+        title: 'title',
+        transcript: { path: 'transcript.speaker_blocks[]', text: 'words', speaker: 'speaker.name' },
+      },
+      event: {
+        eventTypePath: 'trigger',
+        acceptValues: ['meeting_end'],
+        deliveryIdPath: 'request_id',
+      },
+      detected: ['meeting id at session_id', 'transcript turns at transcript.speaker_blocks[]'],
+      missing: [],
+    })
+    previewNoteTakerDefinition.mockResolvedValue({
+      ok: true,
+      slug: 'nt_x',
+      result: {
+        externalId: 'S1',
+        title: 'Kickoff',
+        recordingStart: null,
+        recordingEnd: null,
+        hostEmail: null,
+        participantEmails: [],
+        transcriptTurns: 1,
+        firstTurn: { speakerName: 'Ana', text: 'Hello' },
+        actions: [],
+        summaryPreview: null,
+        sourceUrl: null,
+      },
+    })
+    render(<MoreIntegrationsDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Note taker' }))
+    type(/^Name/, 'Read style')
+    type('Header that carries the signature', 'X-Read-Signature')
+    fireEvent.change(screen.getByLabelText('Sample delivery JSON'), {
+      target: {
+        value:
+          '{"session_id":"S1","trigger":"meeting_end","request_id":"r1","title":"Kickoff","transcript":{"speaker_blocks":[{"speaker":{"name":"Ana"},"words":"Hello"}]}}',
+      },
+    })
+    fireEvent.click(screen.getByRole('button', { name: 'Detect fields' }))
+    await waitFor(() => expect(screen.getByTestId('detection-note')).toBeTruthy())
+    expect((screen.getByLabelText(/^Meeting id/) as HTMLInputElement).value).toBe('session_id')
+    expect((screen.getByLabelText(/^List of transcript turns/) as HTMLInputElement).value).toBe(
+      'transcript.speaker_blocks[]',
+    )
+    expect((screen.getByLabelText(/^Accepted values/) as HTMLInputElement).value).toBe(
+      'meeting_end',
+    )
+    await waitFor(() => expect(screen.getByTestId('preview-result')).toBeTruthy())
+    expect(previewNoteTakerDefinition).toHaveBeenCalledTimes(1)
+    expect(screen.getByText(/Found: meeting id at session_id/)).toBeTruthy()
+  })
+
+  it('applies a template from the dropdown', async () => {
+    render(<MoreIntegrationsDialog open onOpenChange={vi.fn()} onCreated={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Note taker' }))
+    const select = await screen.findByLabelText('Start from a template')
+    fireEvent.change(select, { target: { value: 'generic_turns' } })
+    expect((screen.getByLabelText(/^Meeting id/) as HTMLInputElement).value).toBe('id')
+    expect((screen.getByLabelText(/^List of transcript turns/) as HTMLInputElement).value).toBe(
+      'transcript[]',
+    )
+    expect((screen.getByLabelText(/^Header that carries/) as HTMLInputElement).value).toBe(
+      'X-Signature',
+    )
   })
 })

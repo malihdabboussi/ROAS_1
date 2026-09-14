@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   buildDefinitionInput,
+  definitionToFormFields,
   EMPTY_NOTE_TAKER_FORM,
   parseSamplePayload,
   type NoteTakerFormState,
@@ -108,5 +109,38 @@ describe('parseSamplePayload', () => {
     expect(parseSamplePayload('[1]')).toBeNull()
     expect(parseSamplePayload('nope')).toBeNull()
     expect(parseSamplePayload('')).toBeNull()
+  })
+})
+
+describe('definitionToFormFields', () => {
+  it('round-trips a full definition through the form state', () => {
+    const built = buildDefinitionInput(filled)
+    if (!built.ok) throw new Error('fixture must be valid')
+    const { displayName: _name, ...rest } = built.input
+    const again = buildDefinitionInput({
+      ...EMPTY_NOTE_TAKER_FORM,
+      displayName: 'Otter',
+      ...definitionToFormFields(rest),
+    })
+    expect(again).toEqual({
+      ok: true,
+      input: { ...built.input, description: undefined, logoUrl: undefined },
+    })
+  })
+
+  it('fills only paths and event from a suggestion, leaving the signature alone', () => {
+    const fields = definitionToFormFields({
+      fieldMap: { externalId: 'id', transcript: { path: 'turns[]', text: 'text' } },
+      event: { deliveryIdPath: 'rid' },
+    })
+    expect(fields).toMatchObject({
+      externalIdPath: 'id',
+      transcriptPath: 'turns[]',
+      transcriptTextPath: 'text',
+      deliveryIdPath: 'rid',
+      acceptValues: '',
+      titlePath: '',
+    })
+    expect(fields).not.toHaveProperty('signatureScheme')
   })
 })

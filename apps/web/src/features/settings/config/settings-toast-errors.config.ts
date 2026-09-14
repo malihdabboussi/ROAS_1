@@ -6,6 +6,9 @@ export const SETTINGS_TOAST_ERRORS = {
   NOTE_TAKER_FIELDS_INVALID: {
     userMessage: 'Some fields need attention. Check the highlighted fields.',
   },
+  NOTE_TAKER_DETECT_FAILED: {
+    userMessage: "Couldn't read that sample. Check it is one JSON object and try again.",
+  },
   NOTE_TAKER_PREVIEW_FAILED: {
     userMessage: "Couldn't test the mapping. Try again.",
   },

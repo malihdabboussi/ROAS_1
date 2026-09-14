@@ -3,52 +3,42 @@
 import type { NoteTakerPreviewResult } from '@/lib/integrations/meeting-provider-definitions'
 
 type Props = {
-  samplePayload: string
-  error?: string
+  hasSample: boolean
   previewing: boolean
   preview: NoteTakerPreviewResult | null
   previewError: string | null
-  onSampleChange: (value: string) => void
   onRunPreview: () => void
 }
 
-/** Paste one delivery the tool would send and see what ROAS would import from it. */
+/** Run the current mapping over the sample pasted at the top of the form and show what would be imported. */
 export function NoteTakerPreviewPanel({
-  samplePayload,
-  error,
+  hasSample,
   previewing,
   preview,
   previewError,
-  onSampleChange,
   onRunPreview,
 }: Props) {
   return (
     <div className="space-y-spacing-3">
       <div>
-        <p className="body-2 text-foreground font-medium">Test with a sample delivery</p>
+        <p className="body-2 text-foreground font-medium">Check the mapping</p>
         <p className="body-4 text-muted-foreground">
-          Paste the JSON the tool sends for one finished meeting. Nothing is saved by the test.
+          Runs the paths above over the sample delivery pasted at the top. Nothing is saved by the
+          test.
         </p>
       </div>
-      <textarea
-        id="nt-samplePayload"
-        value={samplePayload}
-        onChange={(e) => onSampleChange(e.target.value)}
-        rows={8}
-        placeholder='{"session_id": "abc", "title": "Kickoff", "transcript": {"speaker_blocks": [{"speaker": {"name": "Ana"}, "words": "Hello"}]}}'
-        className={`input-glass body-3 w-full font-mono ${error ? 'border-destructive' : ''}`}
-        aria-label="Sample delivery JSON"
-      />
-      {error ? <p className="body-4 text-destructive">{error}</p> : null}
       <div className="gap-spacing-2 flex items-center">
         <button
           type="button"
           onClick={onRunPreview}
-          disabled={previewing}
+          disabled={previewing || !hasSample}
           className="button-glass-neutral rounded-spacing-2 px-spacing-3 py-spacing-2 body-3 disabled:opacity-50"
         >
           {previewing ? 'Testing…' : 'Test mapping'}
         </button>
+        {!hasSample ? (
+          <span className="body-4 text-muted-foreground">Paste a sample delivery first.</span>
+        ) : null}
       </div>
       {previewError ? <p className="body-4 text-destructive">{previewError}</p> : null}
       {preview && !preview.ok ? (
