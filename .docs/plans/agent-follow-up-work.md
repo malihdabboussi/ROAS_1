@@ -40479,3 +40479,15 @@ Evidence: "uses authoritative provider actions instead of generating extra Fatho
 Needed work: align the test with the current `meeting_workspace_actions_authoritative` behavior or fix the regression it describes.
 
 Reason not done now: pre-existing and outside ROA-40.
+
+## 2026-09-14 - [FIX] Read AI webhook address is shown only after Connect
+
+Status: Open (check during ROA-50 live run)
+
+Found while: Writing the wiki Features page for ROA-40.
+
+Evidence: `apps/web/src/features/settings/components/settings-content/IntegrationAccountsGroup.tsx:109` renders the address from `resolveMeetingWebhookUrl`, which needs `metadata.webhook_key` (`apps/web/src/lib/integrations/meeting-webhook-url.ts:17`); that key is minted by `ensureWebhookKey` inside `ReadAiApiService.connect` (`apps/api/src/modules/integrations/read-ai/services/read-ai-api.service.ts:54`). Read AI generates the signing key when the webhook is created, and creating the webhook needs the address, so the card's instruction ("create a webhook pointing at the ROAS address shown on the card and paste its signing key here", `integration-catalog.ts:443`) cannot be followed in that order on a first connect.
+
+Needed work: Mint the connection key before the key is pasted (for example a `GET /integrations/read-ai/webhook-address` that creates a pending connection row, or show the address on the catalog card via a preflight call), and confirm in the live run whether Read AI allows editing a webhook's address after creation (workaround: create with placeholder, connect, then edit).
+
+Reason not done now: Found after Phase 4 closed; it needs a real Read AI account to confirm the provider side before choosing the fix.
