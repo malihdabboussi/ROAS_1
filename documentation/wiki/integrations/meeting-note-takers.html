@@ -124,7 +124,7 @@
       <tr><td>Agent action</td><td>Vibey fetches through a tool and hands it over</td><td><code>ingest_meeting_transcript</code></td></tr>
     </tbody>
   </table></div>
-  <p>A plug-in declares which of four capability groups it has: <em>identity</em> (name, login style), <em>push</em> (verify and parse a delivery), <em>pull</em> (list recent, fetch one, poll since a cursor), <em>normalize</em>. Login style can be OAuth, an API key, a pasted signing key, or an MCP session. Adding a tool later is one plug-in class, one catalog row, and one seed migration.</p>
+  <p>A plug-in declares which of four capability groups it has: <em>identity</em> (name, login style), <em>push</em> (verify and parse a delivery), <em>pull</em> (list recent, fetch one, poll since a cursor), <em>normalize</em>. Login style can be OAuth, an API key, a pasted signing key, or an MCP session. Adding a tool later is one plug-in class, one catalog row, and one seed migration, or, since ROA-51, no code at all for a tool that pushes JSON: a platform admin describes it under Settings › Integrations › More integrations and a generic plug-in runs the stored definition. See <a href="../features/meeting-note-takers.html#add-tool">Features › Meeting note takers, section 7</a>.</p>
   <p class="tech" style="margin-top:10px">Contract and registry (built): <code>meetings/providers/transcript-source.types.ts</code>, <code>transcript-provider.contract.ts:100</code>, <code>meeting-provider.registry.ts:14</code>. Poll sweep follows <code>brain/services/brain-import-jobs-runtime.base.ts:167</code>. MCP is a pull transport; where its client runs (api or agent-api) is an open question in the plan.</p>
 </div>
 

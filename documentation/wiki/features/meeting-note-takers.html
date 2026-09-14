@@ -27,7 +27,7 @@
 <div class="meta">
   <span>Last updated: 2026-09-14</span>
   <span>Category: <a href="index.html">Features</a></span>
-  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a> · phases <a href="https://linear.app/1dscollective/issue/ROA-45">ROA-45</a> to <a href="https://linear.app/1dscollective/issue/ROA-50">ROA-50</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a> · phases <a href="https://linear.app/1dscollective/issue/ROA-45">ROA-45</a> to <a href="https://linear.app/1dscollective/issue/ROA-50">ROA-50</a> · custom note takers <a href="https://linear.app/1dscollective/issue/ROA-51">ROA-51</a></span>
   <span>Source of truth: <code>apps/api/src/modules/meetings</code>, <code>apps/api/src/modules/integrations/{fathom,fireflies,read-ai}</code>, <code>documentation/features/integration-connections.md</code> items 61 to 65</span>
   <span>How it works inside: <a href="../integrations/meeting-note-takers.html">Integrations › Meeting note takers</a></span>
 </div>
@@ -36,7 +36,7 @@
 
 <div class="card" id="summary" style="margin-bottom:14px">
   <h3>In one paragraph</h3>
-  <p>You connect <strong>Fathom</strong>, <strong>Fireflies</strong> or <strong>Read AI</strong> once in Settings › Integrations. From then on, every meeting that tool records arrives in ROAS on its own: it becomes a <strong>call row in the Meetings space</strong> with a transcript document and the follow-ups, it becomes <strong>memories in your brain</strong>, and it reaches the <strong>customer brain</strong> for the people who were on the call. You can also import a past meeting by hand from the Brain training panel, or ask <strong>Vibey</strong> to import one. All three tools go through the same door, so they behave the same way and a fourth tool can be added without touching the screens you use.</p>
+  <p>You connect <strong>Fathom</strong>, <strong>Fireflies</strong> or <strong>Read AI</strong> once in Settings › Integrations. From then on, every meeting that tool records arrives in ROAS on its own: it becomes a <strong>call row in the Meetings space</strong> with a transcript document and the follow-ups, it becomes <strong>memories in your brain</strong>, and it reaches the <strong>customer brain</strong> for the people who were on the call. You can also import a past meeting by hand from the Brain training panel, or ask <strong>Vibey</strong> to import one. All three tools go through the same door, so they behave the same way. A platform admin can add a <strong>fourth tool without code</strong>: press <strong>More integrations</strong>, pick Note taker, describe how the tool posts its meetings, test it on a sample, save. It then appears in the Library for everyone (<a href="#add-tool">section 7</a>).</p>
 </div>
 
 <h2 id="connect"><span class="n">1</span> Connect a note taker in Settings</h2>
@@ -129,7 +129,20 @@
   </div>
 </div>
 
-<h2 id="findings" data-tab="Findings"><span class="n">7</span> Findings and evidence</h2>
+<h2 id="add-tool"><span class="n">7</span> Add a new note taker without code (platform admins)</h2>
+<div class="card">
+  <p><strong>The point.</strong> A note taker that posts JSON to an address can be added from Settings by describing it: what it is called, how it signs its deliveries, which event to accept, and where the meeting fields live in its JSON. The same door, brain import and Meetings route handle it from then on. Only platform admins see the button; everyone sees the result.</p>
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Dylan (platform admin) wants Otter meetings in ROAS. Otter is not in the Library.</span></div>
+    <div class="sc-row"><b>What happens</b><span>In Settings › Integrations he presses <strong>More integrations</strong>. A row of type cards appears: Note taker is clickable, the other kinds (Social media, CRM, Payments, ...) say Coming soon. He picks Note taker and fills the form: name and logo; the signature rule (which header carries the HMAC, hex or base64, an optional prefix such as <code>sha256=</code>, or "no signature"); which event to accept (for tools that also post "meeting started" pings) and the delivery-id field; and the field map, written as dot paths with <code>[]</code> for lists, for example <code>transcript.speaker_blocks[].words</code>. He pastes one real Otter delivery into "Test with a sample delivery" and presses Test mapping: the panel shows the meeting id, title, number of transcript turns, the first turn, attendees and action items it found. He presses Save note taker.</span></div>
+    <div class="sc-row"><b>What you see</b><span>The dialog closes, the Library refreshes, and Otter sits under Productivity with its logo for every user. A user who presses Connect sees their personal ROAS address to paste into Otter first, then pastes Otter's secret and connects. Deliveries then flow like any other note taker.</span></div>
+    <div class="where">📍 Screen: button <code>web/features/settings/components/settings-content/IntegrationsView.tsx</code> (rendered when <code>isPlatformAdmin</code>) · dialog <code>web/features/settings/components/settings-content/more-integrations/MoreIntegrationsDialog.tsx</code> · type cards <code>more-integrations/integration-type-cards.ts</code> · form <code>more-integrations/NoteTakerDefinitionForm.tsx</code>, field map <code>NoteTakerFieldMapSection.tsx</code>, test panel <code>NoteTakerPreviewPanel.tsx</code>, validation and API body <code>use-note-taker-definition-form.ts</code> · Library row from a definition <code>web/lib/integrations/meeting-provider-definitions.ts</code> <code>definitionToIntegration</code> · address before Connect <code>settings-content/MeetingWebhookAddressNote.tsx</code><br>📍 Calls: <code>GET/POST /integrations/meetings/definitions</code>, <code>POST .../definitions/preview</code> <code>api/meetings/intake/controllers/meeting-provider-definitions.controller.ts</code> (writes need the platform admin role) · <code>GET /integrations/meetings/:provider/webhook-address</code>, <code>POST .../connect</code>, <code>POST .../disconnect</code> <code>api/meetings/intake/controllers/meeting-connections.controller.ts</code> · generic plug-in <code>api/meetings/custom/custom-webhook-transcript-provider.ts</code>, field map reader <code>api/meetings/custom/json-path-lite.ts</code>, resolver on the registry <code>api/meetings/custom/custom-note-taker.resolver.ts</code><br>🗄️ Tables: <code>meeting_provider_definitions</code> <code>migrations/20260915090000_meeting_provider_definitions.sql:6</code> · one <code>integrations_available</code> row per definition (id = the tool's <code>nt_</code> slug) · <code>vault_secrets</code> label <code>signing_key</code> under the slug</div>
+  </div>
+  <p style="margin-top:10px"><strong>Limits today.</strong> A defined tool must push JSON to an address; tools that need a login page or polling still need a code plug-in. Defined tools have no past-meetings list in Train and Vibey cannot import from them by id yet. Both are logged follow-ups.</p>
+  <p class="tech" style="margin-top:10px">Ids of defined tools start with <code>nt_</code>; <code>api/meetings/providers/transcript-source.types.ts</code> widens <code>MeetingProviderId</code> to built-ins plus that prefix, and <code>meeting-provider.registry.ts</code> <code>resolve()</code> asks the resolver for them with one database read per delivery, so an admin edit is visible on every API instance at once. Signature schemes: HMAC-SHA256 over the raw body (hex or base64, optional prefix, secret as text or base64) or none; Fathom-style Standard Webhooks is a logged follow-up.</p>
+</div>
+
+<h2 id="findings" data-tab="Findings"><span class="n">8</span> Findings and evidence</h2>
 <div class="card">
   <h3>What each tool gives you</h3>
   <div class="scroll"><table>
@@ -158,6 +171,7 @@
     <li>Apply <code>migrations/20260914090000_meeting_webhook_deliveries.sql</code> and <code>migrations/20260914100000_read_ai_integration.sql</code> to the production project.</li>
     <li>Run <code>scripts/roas/reregister-fathom-webhooks.sh</code> once after deploy so existing Fathom connections post to the new door; then the legacy door <code>fathom-webhooks.controller.ts:83</code> can be deleted.</li>
     <li>Add the Read AI logo asset under <code>apps/web/public/Integrations/</code> (logged follow-up).</li>
+    <li>Apply <code>migrations/20260915090000_meeting_provider_definitions.sql</code> before using More integrations.</li>
   </ul>
   <h3>Not verified in code, to confirm live</h3>
   <ul>
@@ -167,7 +181,7 @@
   </ul>
 </div>
 
-<h2 id="related"><span class="n">8</span> Related pages</h2>
+<h2 id="related"><span class="n">9</span> Related pages</h2>
 <div class="card">
   <ul>
     <li><a href="../integrations/meeting-note-takers.html">Integrations › Meeting note takers</a>: the plug-in design, the three problems the old code had, how any future tool joins, provider facts from official docs.</li>
