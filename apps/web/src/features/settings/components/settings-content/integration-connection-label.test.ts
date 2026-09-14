@@ -24,6 +24,25 @@ function connection(
 }
 
 describe('integration connection labels', () => {
+  it('labels a note taker defined from Settings by the email on its row, else by its name', () => {
+    expect(
+      getIntegrationConnectionDisplayLabel({
+        userIntegration: connection('nt_otter', { metadata: { email: 'ana@example.com' } }),
+        integration: integration('nt_otter', 'Otter'),
+        accountIndex: 1,
+        accountCount: 1,
+      }),
+    ).toBe('ana@example.com')
+    expect(
+      getIntegrationConnectionDisplayLabel({
+        userIntegration: connection('nt_otter'),
+        integration: integration('nt_otter', 'Otter'),
+        accountIndex: 1,
+        accountCount: 1,
+      }),
+    ).toBe('Otter')
+  })
+
   it('uses the same fallback before and during rename', () => {
     expect(
       getIntegrationConnectionDisplayLabel({

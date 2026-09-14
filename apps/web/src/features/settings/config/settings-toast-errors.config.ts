@@ -1,5 +1,14 @@
 /** User-facing toast messages for settings/workspace errors */
 export const SETTINGS_TOAST_ERRORS = {
+  NOTE_TAKER_SAVE_FAILED: {
+    userMessage: "Couldn't save the note taker. Check the fields and try again.",
+  },
+  NOTE_TAKER_PREVIEW_FAILED: {
+    userMessage: "Couldn't test the mapping. Try again.",
+  },
+  NOTE_TAKER_ADDRESS_FAILED: {
+    userMessage: "Couldn't prepare your webhook address. Close and try again.",
+  },
   INTEGRATION_CONNECT_FAILED: {
     userMessage: "Couldn't connect. Try again.",
   },

@@ -1,4 +1,4 @@
-import { TextEncoder as NodeTextEncoder, TextDecoder } from 'util'
+import { TextEncoder as NodeTextEncoder, TextDecoder } from 'node:util'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { expect, vi } from 'vitest'
 

@@ -1,13 +1,14 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { ChevronDown, Plus, Search } from 'lucide-react'
+import { ChevronDown, LayoutGrid, Plus, Search } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/navigation/tabs'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
 import { isIntegrationsLibraryComingSoon } from '@/lib/integrations/is-integrations-library-coming-soon'
 import type { Integration, IntegrationsTab, UserIntegration } from './integrations.types'
 import { IntegrationsLibrary } from './IntegrationsLibrary'
 import { IntegrationsManage } from './IntegrationsManage'
+import { MoreIntegrationsDialog } from './more-integrations/MoreIntegrationsDialog'
 import { OrgConnectedAccountsPanel } from './OrgConnectedAccountsPanel'
 import type { ConnectIntegrationOptions } from './useIntegrations'
 import { WordpressConnectDialog } from './WordpressConnectDialog'
@@ -23,6 +24,9 @@ interface IntegrationsViewProps {
   connectingProvider: string | null
   searchQuery: string
   canManageOrgShared: boolean
+  /** Platform admins can define new integrations from the Library ("More integrations"). */
+  isPlatformAdmin?: boolean
+  onDefinitionsChanged?: () => void | Promise<void>
   onSearchChange: (value: string) => void
   onTabChange: (tab: IntegrationsTab) => void
   onConnect: (
@@ -89,6 +93,8 @@ export function IntegrationsView({
   connectingProvider,
   searchQuery,
   canManageOrgShared,
+  isPlatformAdmin = false,
+  onDefinitionsChanged,
   onSearchChange,
   onTabChange,
   onConnect,
@@ -104,6 +110,7 @@ export function IntegrationsView({
 }: IntegrationsViewProps) {
   const [addMenuOpen, setAddMenuOpen] = useState(false)
   const [addMenuSearch, setAddMenuSearch] = useState('')
+  const [moreIntegrationsOpen, setMoreIntegrationsOpen] = useState(false)
   const [wordpressDialogIntegration, setWordpressDialogIntegration] = useState<Integration | null>(
     null,
   )
@@ -244,6 +251,17 @@ export function IntegrationsView({
               ) : null}
             </div>
           ) : null}
+          {isPlatformAdmin ? (
+            <button
+              type="button"
+              onClick={() => setMoreIntegrationsOpen(true)}
+              className="button-glass-neutral gap-spacing-2 rounded-spacing-2 px-spacing-3 flex h-9 items-center"
+              data-tour="integrations-more"
+            >
+              <LayoutGrid className="icon-xs" />
+              <span className="body-3">More integrations</span>
+            </button>
+          ) : null}
           <IntegrationsSearchInput
             value={searchQuery}
             onChange={onSearchChange}
@@ -301,6 +319,17 @@ export function IntegrationsView({
         <TabsContent value="org">
           <OrgConnectedAccountsPanel />
         </TabsContent>
+      ) : null}
+
+      {isPlatformAdmin ? (
+        <MoreIntegrationsDialog
+          open={moreIntegrationsOpen}
+          onOpenChange={setMoreIntegrationsOpen}
+          onCreated={() => {
+            void onDefinitionsChanged?.()
+            onTabChange('library')
+          }}
+        />
       ) : null}
 
       <WordpressConnectDialog

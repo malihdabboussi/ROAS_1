@@ -40527,3 +40527,15 @@ Evidence: `apps/api/src/modules/meetings/intake/services/meeting-connections.ser
 Needed work: Let the generic connect route accept built-in pasted-webhook providers (`read_ai`, later `fireflies`) by reading their signature needs from the plug-in, then delete `read-ai-api.service.ts` and the web branch.
 
 Reason not done now: Out of ROA-51's scope; Read AI keeps working through its own route meanwhile.
+
+## 2026-09-14 - [FIX] Web test files fail on code this branch never touched
+
+Status: Open
+
+Found while: ROA-51 Phase B, after the web test setup was repaired (`apps/web/tests/setup.ts` now imports from `node:util`).
+
+Evidence: Running vitest in `apps/web` on branch `claude/roa-40-modular-meeting-system`: failing tests in `src/features/spaces/hooks/use-ensure-all-meetings-columns.test.ts`, `src/components/work-views/AllMeetingsNativeList.test.tsx`, `src/features/spaces/lib/normalize-space-schema.test.ts`, `src/features/home/components/HomeTaskDetailHost.test.tsx`, `src/features/agency-clients/LaunchesPage.test.tsx`, `src/components/client-scope/ClientScopeSelector.test.tsx`, `src/features/studio/services/studio-search-api.service.test.ts`, `src/components/spaces/cells/SpaceFieldIdCell.test.tsx`, `src/components/shell/shell-right-panel-files.logic.test.ts`, `src/components/deliverables/DeliverablePreviewEntityFull.test.tsx`, `tests/components.test.tsx`. None of the files they import changed on this branch (branch diff against d6224553 for apps/web).
+
+Needed work: Triage each against main now that the suite runs; most look like assertions that drifted from the component (column lists, labels, a missing mock export).
+
+Reason not done now: Outside ROA-51; the suite had been silently broken so the drift accumulated unnoticed.
