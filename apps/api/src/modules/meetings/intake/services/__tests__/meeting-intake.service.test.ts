@@ -143,6 +143,20 @@ describe('MeetingIntakeService', () => {
       expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
     })
 
+    it('acknowledges an ignorable delivery with 200 and processes nothing', async () => {
+      const parse = provider.push!.parse
+      provider.push!.parse = (rawBody, headers) => {
+        const parsed = parse(rawBody, headers)
+        return parsed ? { ...parsed, eventType: 'meeting_start', ignore: true } : null
+      }
+      await expect(webhook(transcriptEvent)).resolves.toEqual({
+        status: 200,
+        body: { success: true, status: 'ignored', eventType: 'meeting_start' },
+      })
+      expect(deliveries.claim).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
+    })
+
     it('answers 400 when the body cannot be parsed into a meeting', async () => {
       await expect(webhook({ title: 'no id' })).resolves.toMatchObject({ status: 400 })
     })

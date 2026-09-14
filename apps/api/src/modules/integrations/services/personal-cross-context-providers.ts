@@ -11,6 +11,7 @@
 export const PERSONAL_CROSS_CONTEXT_PROVIDERS = new Set([
   'fathom',
   'fireflies',
+  'read_ai',
   'page_grader',
   'openai_codex',
   'anthropic_claude',

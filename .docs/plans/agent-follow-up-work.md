@@ -40419,3 +40419,27 @@ Evidence: `apps/api/src/modules/brain/services/__tests__/type-c-services.charact
 Needed work: the lazy `require` in `getSlackObservationService` needs a mock in that test (or the require should be replaced by module injection).
 
 Reason not done now: unrelated to the meeting intake change.
+
+## 2026-09-14 - [STYLE] Read AI logo asset missing
+
+Status: Open
+
+Found while: ROA-40 Phase 2.
+
+Evidence: `apps/web/src/lib/integrations/integration-logo.ts` has no `read_ai` case and `apps/web/public/Integrations/` has no Read AI image, so the Library and Manage cards show the initials "RE".
+
+Needed work: add `apps/web/public/Integrations/ReadAI.png` (confirm brand-asset licensing first) and a `case 'read_ai'` in `integration-logo.ts`.
+
+Reason not done now: no licensed asset available in the repo; not needed for the integration to work.
+
+## 2026-09-14 - [REFACTOR] Move Fireflies connection rows onto the shared pasted-webhook helpers
+
+Status: Open
+
+Found while: ROA-40 Phase 2.
+
+Evidence: `apps/api/src/modules/integrations/fireflies/repositories/fireflies.repository.ts` (`upsertConnection`, `ensureWebhookKey`, `markDisconnected`) duplicates `MeetingIntakeRepository.upsertPastedWebhookConnection` / `ensureWebhookKey` / `markPastedWebhookDisconnected` added for Read AI.
+
+Needed work: switch `FirefliesApiService` to the shared helpers (keeping `email`/`name` metadata) and delete the duplicated methods.
+
+Reason not done now: Fireflies has extra metadata and a passing test suite; consolidation belongs in the Phase 4 cleanup.

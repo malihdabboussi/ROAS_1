@@ -98,6 +98,13 @@ export class MeetingIntakeService {
       return { status: 400, body: { success: false, error: 'Unreadable webhook body' } }
     }
 
+    if (parsed.ignore) {
+      return {
+        status: 200,
+        body: { success: true, status: 'ignored', eventType: parsed.eventType },
+      }
+    }
+
     const claim = await this.deliveries.claim({
       provider: input.provider,
       connectionId: connection.id,

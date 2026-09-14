@@ -543,6 +543,12 @@ export function useIntegrations() {
         })
         await loadData()
         return { completedSynchronously: true }
+      } else if (provider === 'read_ai') {
+        const signingKey = connectionData?.signing_key?.trim() || apiKey
+        if (!signingKey) throw new Error('Signing key required')
+        await backendPost('/api/integrations/read-ai/connect', { signingKey })
+        await loadData()
+        return { completedSynchronously: true }
       } else if (provider === 'cursor') {
         if (!connectionData?.api_key) throw new Error('API key required')
         await backendPost('/api/integrations/cursor/connect', {
@@ -665,6 +671,8 @@ export function useIntegrations() {
         await backendPost('/api/integrations/wordpress/disconnect', {})
       } else if (provider === 'fireflies') {
         await backendPost('/api/integrations/fireflies/disconnect', {})
+      } else if (provider === 'read_ai') {
+        await backendPost('/api/integrations/read-ai/disconnect', {})
       } else if (provider === 'cursor') {
         await backendPost('/api/integrations/cursor/disconnect', {
           connectionId: userIntegration.id,

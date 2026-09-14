@@ -45,7 +45,7 @@ export class IntegrationsComposioService {
       forceNewCamel === true ||
       forceNewCamel === 'true'
 
-    const PERSONAL_ONLY = ['fathom', 'fireflies']
+    const PERSONAL_ONLY = ['fathom', 'fireflies', 'read_ai']
     if (
       this.orgScope.isOrgContext(scope) &&
       PERSONAL_ONLY.includes(integrationId) &&

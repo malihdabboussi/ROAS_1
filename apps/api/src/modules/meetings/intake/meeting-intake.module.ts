@@ -19,6 +19,6 @@ import { MeetingIntakeService } from './services/meeting-intake.service'
     MeetingIntakeService,
     MeetingImportService,
   ],
-  exports: [MeetingIntakeService, MeetingImportService],
+  exports: [MeetingIntakeService, MeetingImportService, MeetingIntakeRepository],
 })
 export class MeetingIntakeModule {}

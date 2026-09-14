@@ -436,6 +436,24 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     is_active: true,
   },
   {
+    id: 'read_ai',
+    provider: 'read_ai',
+    name: 'Read AI',
+    description:
+      'Connect Read AI so meeting reports, transcripts, and action items flow into your brain and Meetings. In Read AI → Integrations → Webhooks, create a webhook pointing at the ROAS address shown on the card and paste its signing key here. Needs a Read AI Pro or Enterprise plan.',
+    category: 'productivity',
+    auth_type: 'api_key',
+    connection_fields: [
+      {
+        name: 'signing_key',
+        label: 'Webhook signing key',
+        placeholder: 'Copied from the webhook you created in Read AI',
+        required: true,
+      },
+    ],
+    is_active: true,
+  },
+  {
     id: 'github',
     provider: 'github',
     name: 'GitHub',

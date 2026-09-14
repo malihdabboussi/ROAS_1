@@ -38,6 +38,8 @@ export type WebhookParseResult = {
   eventType: string
   /** Full event when the delivery carries the meeting inline; null when only a ping. */
   inlineEvent: Record<string, unknown> | null
+  /** True for deliveries to acknowledge but not process (for example a meeting-start ping). */
+  ignore?: boolean
 }
 
 export type MeetingListItem = {
