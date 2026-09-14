@@ -70,7 +70,7 @@ export class MeetingIntakeService {
     if (!isMeetingProviderId(input.provider) || !WEBHOOK_KEY_PATTERN.test(input.connectionKey)) {
       return { status: 404, body: { success: false, error: 'Unknown webhook' } }
     }
-    const provider = this.registry.get(input.provider)
+    const provider = await this.registry.resolve(input.provider)
     if (!provider?.push) {
       return { status: 404, body: { success: false, error: 'Unknown webhook' } }
     }
@@ -141,7 +141,8 @@ export class MeetingIntakeService {
     externalId: string
     inlineEvent: Record<string, unknown> | null
   }): Promise<IntakeResult> {
-    const provider = this.registry.require(input.provider)
+    const provider = await this.registry.resolve(input.provider)
+    if (!provider) throw new Error(`Meeting provider not registered: ${input.provider}`)
     const connection = await this.repository.findConnectionForUser(input.provider, input.userId)
     if (!connection) return { status: 'skipped', reason: 'not_connected' }
     return this.intake({

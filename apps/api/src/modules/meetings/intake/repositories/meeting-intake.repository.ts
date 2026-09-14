@@ -103,6 +103,61 @@ export class MeetingIntakeRepository {
     if (error) throw new Error(`Failed to save ${provider} connection: ${error.message}`)
   }
 
+  /** Any row for this user and provider, whatever its status (status screens, address before connect). */
+  async findAnyConnectionForUser(
+    provider: MeetingProviderId,
+    userId: string,
+  ): Promise<MeetingConnection | null> {
+    const { data, error } = await this.serviceClient.client
+      .from('user_integrations')
+      .select(CONNECTION_COLUMNS)
+      .eq('integration_id', provider)
+      .eq('user_id', userId)
+      .is('org_id', null)
+      .maybeSingle()
+    if (error) throw new Error(`Failed to resolve meeting connection: ${error.message}`)
+    return data ? toConnection(data as Record<string, unknown>, provider) : null
+  }
+
+  /**
+   * Creates a `pending` row when none exists so a webhook key can be minted
+   * before the user connects. Never touches a connected or disconnected row.
+   */
+  async ensurePendingWebhookConnection(
+    provider: MeetingProviderId,
+    userId: string,
+    input: { connectionLabel: string },
+  ): Promise<void> {
+    const admin = this.serviceClient.client
+    const { data: existing } = await admin
+      .from('user_integrations')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('integration_id', provider)
+      .is('org_id', null)
+      .maybeSingle()
+    if (existing) return
+    const now = new Date().toISOString()
+    const { error } = await admin.from('user_integrations').insert({
+      user_id: userId,
+      org_id: null,
+      integration_id: provider,
+      provider,
+      status: 'pending',
+      access_token: null,
+      refresh_token: null,
+      token_expires_at: null,
+      connected_at: null,
+      error_message: null,
+      metadata: {},
+      connection_label: input.connectionLabel,
+      scope_mode: 'personal',
+      is_default: false,
+      updated_at: now,
+    })
+    if (error) throw new Error(`Failed to prepare ${provider} connection: ${error.message}`)
+  }
+
   /** Returns the connection's webhook key, creating one the first time. */
   async ensureWebhookKey(provider: MeetingProviderId, userId: string): Promise<string> {
     const metadata = await this.readPersonalMetadata(provider, userId)

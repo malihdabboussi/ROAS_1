@@ -1,6 +1,6 @@
 import type { MeetingProviderId, TranscriptSourceEvent } from './transcript-source.types'
 
-export const MEETING_PROVIDER_DISPLAY_NAMES: Record<MeetingProviderId, string> = {
+export const MEETING_PROVIDER_DISPLAY_NAMES: Partial<Record<MeetingProviderId, string>> = {
   fathom: 'Fathom',
   fireflies: 'Fireflies',
   read_ai: 'Read AI',
@@ -8,7 +8,8 @@ export const MEETING_PROVIDER_DISPLAY_NAMES: Record<MeetingProviderId, string> =
 
 /** The transcript document body stored on the meeting's transcript space item. */
 export function renderTranscriptDocument(source: TranscriptSourceEvent): string {
-  const providerName = MEETING_PROVIDER_DISPLAY_NAMES[source.provider] ?? source.provider
+  const providerName =
+    source.providerDisplayName ?? MEETING_PROVIDER_DISPLAY_NAMES[source.provider] ?? source.provider
   const link = source.recordingUrl ?? source.sourceUrl
   const metadata = [
     `<p><strong>Provider:</strong> ${escapeHtml(providerName)}</p>`,

@@ -31,7 +31,7 @@ export class MeetingImportService {
   ) {}
 
   async importToBrain(input: ImportMeetingInput) {
-    const provider = this.registry.get(input.provider)
+    const provider = await this.registry.resolve(input.provider)
     if (!provider?.pull) {
       throw new BadRequestException(`${input.provider} cannot fetch meetings on demand`)
     }

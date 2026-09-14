@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { OrgScopeService } from '@vibey/api-shared'
 import { ComposioService } from '../../composio/services/composio.service'
+import { MeetingProviderDefinitionsRepository } from '../../meetings/custom/meeting-provider-definitions.repository'
 import { VaultService } from '../../vault/services/vault.service'
 import { IntegrationsRepository } from '../repositories/integrations.repository'
 import { IntegrationsComposioHealthService } from './integrations-composio-health.service'
@@ -75,6 +76,7 @@ export class IntegrationsOverviewService {
     private readonly core: IntegrationsCoreService,
     private readonly orgAccounts: IntegrationsOrgAccountsService,
     private readonly composioHealth: IntegrationsComposioHealthService,
+    private readonly noteTakerDefinitions: MeetingProviderDefinitionsRepository,
   ) {}
 
   async getOverview(
@@ -88,7 +90,9 @@ export class IntegrationsOverviewService {
     groupedIntegrations?: Array<Record<string, unknown>>
     providerModes?: Record<string, 'legacy' | 'composio'>
   }> {
-    const integrationIds = [...INTEGRATION_IDS_FOR_OVERVIEW]
+    // Note takers defined from Settings are personal, pasted-webhook integrations too.
+    const noteTakerIds = await this.noteTakerDefinitions.listActiveSlugs()
+    const integrationIds = [...INTEGRATION_IDS_FOR_OVERVIEW, ...noteTakerIds]
 
     const baseQuery = this.repository
       .table(supabase, 'user_integrations')
@@ -117,7 +121,7 @@ export class IntegrationsOverviewService {
         .select(
           'id, user_id, org_id, integration_id, provider, status, agent_enabled, metadata, scope_mode, is_default, connection_label, connected_at, updated_at',
         )
-        .in('integration_id', personalCrossContextOverviewIds())
+        .in('integration_id', [...personalCrossContextOverviewIds(), ...noteTakerIds])
         .eq('user_id', user.id)
         .is('org_id', null)
       if (personalRows) {

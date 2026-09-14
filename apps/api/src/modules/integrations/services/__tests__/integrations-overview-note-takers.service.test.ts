@@ -14,19 +14,20 @@ function makeQuery(result: Record<string, unknown>) {
   return query
 }
 
-describe('IntegrationsOverviewService Higgsfield visibility', () => {
-  it('queries and returns a connected workspace Higgsfield row', async () => {
-    const higgsfieldRow = {
-      id: 'higgsfield-connection',
+/** Note takers defined from Settings are not in the fixed overview id list; they come from the definitions table. */
+describe('IntegrationsOverviewService defined note takers', () => {
+  it('queries user rows for every active nt_ slug, including personal rows inside an org', async () => {
+    const otterRow = {
+      id: 'otter-connection',
       user_id: 'user-1',
-      org_id: 'org-1',
-      integration_id: 'higgsfield',
-      provider: 'higgsfield',
+      org_id: null,
+      integration_id: 'nt_otter',
+      provider: 'nt_otter',
       status: 'connected',
       agent_enabled: true,
-      metadata: { execution_mode: 'native_mcp' },
-      scope_mode: 'org_shared',
-      is_default: true,
+      metadata: { webhook_key: 'k'.repeat(24) },
+      scope_mode: 'personal',
+      is_default: false,
     }
     const overviewIds: string[][] = []
     const repository = {
@@ -34,7 +35,7 @@ describe('IntegrationsOverviewService Higgsfield visibility', () => {
         if (table === 'project_composio_toolkit_config') {
           return makeQuery({ data: [], error: null })
         }
-        const query = makeQuery({ data: [higgsfieldRow], error: null })
+        const query = makeQuery({ data: [otterRow], error: null })
         query.in = vi.fn((_column: string, ids: string[]) => {
           overviewIds.push(ids)
           return query
@@ -48,17 +49,14 @@ describe('IntegrationsOverviewService Higgsfield visibility', () => {
       repository as never,
       { getConnectedAccount: vi.fn(), listConnectedAccounts: vi.fn(async () => []) } as never,
       {
-        applyScope: vi.fn(async () => ({ data: [higgsfieldRow], error: null })),
+        applyScope: vi.fn(async () => ({ data: [], error: null })),
         isOrgContext: vi.fn(() => true),
       } as never,
       { hasSecret: vi.fn(async () => false) } as never,
-      {
-        resolveConnectionIdentity: vi.fn(),
-        updateIntegrationById: vi.fn(),
-      } as never,
+      { resolveConnectionIdentity: vi.fn(), updateIntegrationById: vi.fn() } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
-      { listActiveSlugs: vi.fn(async () => []) } as never,
+      { listActiveSlugs: vi.fn(async () => ['nt_otter']) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -66,12 +64,15 @@ describe('IntegrationsOverviewService Higgsfield visibility', () => {
       userId: 'user-1',
     } as never)
 
-    expect(overviewIds.some((ids) => ids.includes('higgsfield'))).toBe(true)
-    expect(result.connectedProviders).toContain('higgsfield')
+    // Both the scoped query and the personal-in-org query carry the slug.
+    expect(overviewIds).toHaveLength(2)
+    expect(overviewIds.every((ids) => ids.includes('nt_otter'))).toBe(true)
+    expect(overviewIds[0]).toContain('fathom')
+    expect(result.connectedProviders).toContain('nt_otter')
     expect(result.integrations).toEqual([
       expect.objectContaining({
-        id: 'higgsfield-connection',
-        integration_id: 'higgsfield',
+        id: 'otter-connection',
+        integration_id: 'nt_otter',
         status: 'connected',
       }),
     ])

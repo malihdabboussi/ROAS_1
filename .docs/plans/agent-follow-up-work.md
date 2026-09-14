@@ -40491,3 +40491,39 @@ Evidence: `apps/web/src/features/settings/components/settings-content/Integratio
 Needed work: Mint the connection key before the key is pasted (for example a `GET /integrations/read-ai/webhook-address` that creates a pending connection row, or show the address on the catalog card via a preflight call), and confirm in the live run whether Read AI allows editing a webhook's address after creation (workaround: create with placeholder, connect, then edit).
 
 Reason not done now: Found after Phase 4 closed; it needs a real Read AI account to confirm the provider side before choosing the fix.
+
+## 2026-09-14 - [FEATURE] Defined note takers are push-only; no pull, no Train list, no Vibey import
+
+Status: Open
+
+Found while: ROA-51 Phase A (custom note takers from Settings).
+
+Evidence: `apps/api/src/modules/meetings/custom/custom-webhook-transcript-provider.ts` implements only the `push` capability group; `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts:3892` limits `ingest_meeting_transcript.provider` to the three built-in ids; the Train panel lists only providers with `listRecent`.
+
+Needed work: Optional `pull` config on a definition (bearer token, list endpoint, fetch endpoint with path templates) so a defined tool can appear in Train and be imported by Vibey; then widen the agent schema's allowed values to accept `nt_` ids from `GET /integrations/meetings/providers`.
+
+Reason not done now: The user scoped v1 to no-code webhook tools; pull needs a per-tool REST shape that the dialog does not collect yet.
+
+## 2026-09-14 - [FEATURE] Signature schemes for defined note takers stop at HMAC over the body
+
+Status: Open
+
+Found while: ROA-51 Phase A.
+
+Evidence: `apps/api/src/modules/meetings/custom/note-taker-definition.schema.ts` `NoteTakerSignatureSchema` offers `none` and `hmac_sha256` over the raw body. Fathom-style Standard Webhooks (`id.timestamp.body` with a `whsec_` key and a time window) exists only in `apps/api/src/modules/integrations/fathom/providers/fathom-webhook-signature.ts`.
+
+Needed work: Add a `standard_webhooks` scheme to the definition schema and reuse `verifyStandardWebhookSignature`; add a `timestampHeader` plus tolerance option for tools that sign `timestamp.body`.
+
+Reason not done now: No target tool needed it in v1; adding it later is one union member and one branch in `verifyDefinedSignature`.
+
+## 2026-09-14 - [REFACTOR] Read AI connect could reuse the generic note-taker connect route
+
+Status: Open
+
+Found while: ROA-51 Phase A.
+
+Evidence: `apps/api/src/modules/meetings/intake/services/meeting-connections.service.ts` implements status, webhook-address (pre-connect), connect and disconnect for any `nt_` provider; `apps/api/src/modules/integrations/read-ai/services/read-ai-api.service.ts` duplicates the same steps for `read_ai` and lacks the pre-connect address (the ordering gap logged 2026-09-14).
+
+Needed work: Let the generic connect route accept built-in pasted-webhook providers (`read_ai`, later `fireflies`) by reading their signature needs from the plug-in, then delete `read-ai-api.service.ts` and the web branch.
+
+Reason not done now: Out of ROA-51's scope; Read AI keeps working through its own route meanwhile.
