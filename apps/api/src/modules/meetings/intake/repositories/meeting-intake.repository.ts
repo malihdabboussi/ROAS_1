@@ -63,82 +63,21 @@ export class MeetingIntakeRepository {
   }
 
   /**
-   * Connection for a provider the user wires by pasting our webhook address
-   * into the provider's own settings (Read.ai). No tokens, one row per user.
-   */
-  async upsertPastedWebhookConnection(
-    provider: MeetingProviderId,
-    userId: string,
-    input: { connectionLabel: string; metadata?: Record<string, unknown> },
-  ): Promise<void> {
-    const admin = this.serviceClient.client
-    const now = new Date().toISOString()
-    const existingMeta = await this.readPersonalMetadata(provider, userId)
-    const webhookKey = readWebhookKey(existingMeta)
-    const row = {
-      user_id: userId,
-      integration_id: provider,
-      provider,
-      status: 'connected',
-      access_token: null,
-      refresh_token: null,
-      token_expires_at: null,
-      connected_at: now,
-      error_message: null,
-      metadata: { ...(input.metadata ?? {}), ...(webhookKey ? { webhook_key: webhookKey } : {}) },
-      connection_label: input.connectionLabel,
-      scope_mode: 'personal',
-      updated_at: now,
-    }
-    const { data: existing } = await admin
-      .from('user_integrations')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('integration_id', provider)
-      .is('org_id', null)
-      .maybeSingle()
-    const { error } = existing
-      ? await admin.from('user_integrations').update(row).eq('id', existing.id)
-      : await admin.from('user_integrations').insert({ ...row, org_id: null, is_default: false })
-    if (error) throw new Error(`Failed to save ${provider} connection: ${error.message}`)
-  }
-
-  /** Any row for this user and provider, whatever its status (status screens, address before connect). */
-  async findAnyConnectionForUser(
-    provider: MeetingProviderId,
-    userId: string,
-  ): Promise<MeetingConnection | null> {
-    const { data, error } = await this.serviceClient.client
-      .from('user_integrations')
-      .select(CONNECTION_COLUMNS)
-      .eq('integration_id', provider)
-      .eq('user_id', userId)
-      .is('org_id', null)
-      .maybeSingle()
-    if (error) throw new Error(`Failed to resolve meeting connection: ${error.message}`)
-    return data ? toConnection(data as Record<string, unknown>, provider) : null
-  }
-
-  /**
-   * Creates a `pending` row when none exists so a webhook key can be minted
-   * before the user connects. Never touches a connected or disconnected row.
+   * Pasted-webhook providers (Read AI, Fireflies, defined note takers) have
+   * one personal row per user. Earlier flows could leave duplicates; every
+   * helper below therefore picks one canonical row (connected, then pending,
+   * then newest) and works by row id, and connect collapses the rest so the
+   * door finds exactly one connected row for the key.
    */
   async ensurePendingWebhookConnection(
     provider: MeetingProviderId,
     userId: string,
     input: { connectionLabel: string },
   ): Promise<void> {
-    const admin = this.serviceClient.client
-    const { data: existing } = await admin
-      .from('user_integrations')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('integration_id', provider)
-      .is('org_id', null)
-      .maybeSingle()
-    if (existing) return
+    const rows = await this.listPersonalRows(provider, userId)
+    if (rows.length > 0) return
     const now = new Date().toISOString()
-    const { error } = await admin.from('user_integrations').insert({
+    const { error } = await this.serviceClient.client.from('user_integrations').insert({
       user_id: userId,
       org_id: null,
       integration_id: provider,
@@ -158,55 +97,128 @@ export class MeetingIntakeRepository {
     if (error) throw new Error(`Failed to prepare ${provider} connection: ${error.message}`)
   }
 
-  /** Returns the connection's webhook key, creating one the first time. */
+  async upsertPastedWebhookConnection(
+    provider: MeetingProviderId,
+    userId: string,
+    input: { connectionLabel: string; metadata?: Record<string, unknown> },
+  ): Promise<void> {
+    const admin = this.serviceClient.client
+    const now = new Date().toISOString()
+    const rows = await this.listPersonalRows(provider, userId)
+    const canonical = rows[0]
+    const webhookKey = rows.map((row) => readWebhookKey(row.metadata)).find(Boolean) ?? null
+    const row = {
+      user_id: userId,
+      integration_id: provider,
+      provider,
+      status: 'connected',
+      access_token: null,
+      refresh_token: null,
+      token_expires_at: null,
+      connected_at: now,
+      error_message: null,
+      metadata: { ...(input.metadata ?? {}), ...(webhookKey ? { webhook_key: webhookKey } : {}) },
+      connection_label: input.connectionLabel,
+      scope_mode: 'personal',
+      updated_at: now,
+    }
+    const { error } = canonical
+      ? await admin.from('user_integrations').update(row).eq('id', canonical.id)
+      : await admin.from('user_integrations').insert({ ...row, org_id: null, is_default: false })
+    if (error) throw new Error(`Failed to save ${provider} connection: ${error.message}`)
+    await this.retireDuplicateRows(rows.slice(1), now)
+  }
+
+  /** The canonical personal row whatever its status (status screens, address before connect). */
+  async findAnyConnectionForUser(
+    provider: MeetingProviderId,
+    userId: string,
+  ): Promise<MeetingConnection | null> {
+    const canonical = (await this.listPersonalRows(provider, userId))[0]
+    if (!canonical) return null
+    return {
+      id: canonical.id,
+      userId,
+      orgId: null,
+      provider,
+      status: canonical.status,
+      metadata: canonical.metadata,
+    }
+  }
+
+  /** Returns the connection's webhook key, creating one on the canonical row the first time. */
   async ensureWebhookKey(provider: MeetingProviderId, userId: string): Promise<string> {
-    const metadata = await this.readPersonalMetadata(provider, userId)
-    const existing = readWebhookKey(metadata)
+    const rows = await this.listPersonalRows(provider, userId)
+    const existing = rows.map((row) => readWebhookKey(row.metadata)).find(Boolean)
     if (existing) return existing
+    const canonical = rows[0]
+    if (!canonical) throw new Error(`No ${provider} connection row to store a webhook key on`)
     const webhookKey = generateWebhookKey()
     const { error } = await this.serviceClient.client
       .from('user_integrations')
       .update({
-        metadata: { ...metadata, webhook_key: webhookKey },
+        metadata: { ...canonical.metadata, webhook_key: webhookKey },
         updated_at: new Date().toISOString(),
       })
-      .eq('user_id', userId)
-      .eq('integration_id', provider)
-      .is('org_id', null)
+      .eq('id', canonical.id)
     if (error) throw new Error(`Failed to store ${provider} webhook key: ${error.message}`)
     return webhookKey
   }
 
-  /** Keeps the webhook key so the address pasted into the provider survives a reconnect. */
+  /** Keeps the webhook key on the canonical row so the address pasted into the provider survives a reconnect. */
   async markPastedWebhookDisconnected(provider: MeetingProviderId, userId: string): Promise<void> {
-    const webhookKey = readWebhookKey(await this.readPersonalMetadata(provider, userId))
+    const rows = await this.listPersonalRows(provider, userId)
+    const canonical = rows[0]
+    if (!canonical) return
+    const now = new Date().toISOString()
+    const webhookKey = rows.map((row) => readWebhookKey(row.metadata)).find(Boolean) ?? null
     await this.serviceClient.client
       .from('user_integrations')
       .update({
         status: 'disconnected',
         error_message: null,
         metadata: webhookKey ? { webhook_key: webhookKey } : {},
-        updated_at: new Date().toISOString(),
+        updated_at: now,
       })
-      .eq('user_id', userId)
-      .eq('integration_id', provider)
+      .eq('id', canonical.id)
+    await this.retireDuplicateRows(rows.slice(1), now)
   }
 
-  private async readPersonalMetadata(
+  /** Personal rows for a provider, canonical first: connected, then pending, then newest. */
+  private async listPersonalRows(
     provider: MeetingProviderId,
     userId: string,
-  ): Promise<Record<string, unknown>> {
-    const { data } = await this.serviceClient.client
+  ): Promise<Array<{ id: string; status: string; metadata: Record<string, unknown> }>> {
+    const { data, error } = await this.serviceClient.client
       .from('user_integrations')
-      .select('metadata')
+      .select('id, status, metadata, updated_at')
       .eq('user_id', userId)
       .eq('integration_id', provider)
       .is('org_id', null)
-      .maybeSingle()
-    const metadata = data?.metadata
-    return metadata && typeof metadata === 'object' && !Array.isArray(metadata)
-      ? (metadata as Record<string, unknown>)
-      : {}
+      .order('updated_at', { ascending: false })
+    if (error) throw new Error(`Failed to read ${provider} connections: ${error.message}`)
+    const rank = (status: string) => (status === 'connected' ? 0 : status === 'pending' ? 1 : 2)
+    return ((data ?? []) as Array<Record<string, unknown>>)
+      .map((row) => ({
+        id: String(row.id),
+        status: String(row.status ?? ''),
+        metadata:
+          row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata)
+            ? (row.metadata as Record<string, unknown>)
+            : {},
+      }))
+      .sort((a, b) => rank(a.status) - rank(b.status))
+  }
+
+  /** Duplicates never receive deliveries: disconnected, and without the key. */
+  private async retireDuplicateRows(rows: Array<{ id: string }>, now: string): Promise<void> {
+    for (const row of rows) {
+      const { error } = await this.serviceClient.client
+        .from('user_integrations')
+        .update({ status: 'disconnected', error_message: null, metadata: {}, updated_at: now })
+        .eq('id', row.id)
+      if (error) throw new Error(`Failed to retire duplicate connection: ${error.message}`)
+    }
   }
 
   async enqueueBrainOpsOutboxRows(rows: Array<Record<string, unknown>>): Promise<void> {
