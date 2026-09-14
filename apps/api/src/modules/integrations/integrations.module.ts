@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ComposioModule } from '../composio/composio.module'
+import { CustomNoteTakersModule } from '../meetings/custom/custom-note-takers.module'
 import { SpacesModule } from '../spaces/spaces.module'
 import { ActiveCampaignModule } from './activecampaign/activecampaign.module'
 import { AnthropicClaudeModule } from './anthropic-claude/anthropic-claude.module'
@@ -49,6 +50,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
 
 @Module({
   imports: [
+    CustomNoteTakersModule,
     ConfigModule,
     ComposioModule,
     SpacesModule,

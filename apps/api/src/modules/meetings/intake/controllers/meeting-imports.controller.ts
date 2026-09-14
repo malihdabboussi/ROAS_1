@@ -37,8 +37,9 @@ export class MeetingImportsController {
   /** Every registered note taker, what it can do, and whether the caller has it connected. */
   @Get('providers')
   async listProviders(@CurrentUser() user: { id: string }) {
+    const capabilitiesList = await this.registry.listCapabilities()
     const providers = await Promise.all(
-      this.registry.capabilities().map(async (capabilities) => ({
+      capabilitiesList.map(async (capabilities) => ({
         ...capabilities,
         connected: Boolean(await this.repository.findConnectionForUser(capabilities.id, user.id)),
       })),

@@ -12,6 +12,8 @@ export const INTERACTION_CHANNELS = [
   'fathom',
   'fireflies',
   'read_ai',
+  /** Any note taker defined from Settings (`nt_` providers). */
+  'meeting',
 ] as const
 
 export type InteractionChannel = (typeof INTERACTION_CHANNELS)[number]

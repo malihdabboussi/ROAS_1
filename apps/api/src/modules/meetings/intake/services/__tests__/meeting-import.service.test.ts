@@ -13,7 +13,7 @@ const event = {
 
 describe('MeetingImportService', () => {
   let provider: TranscriptProvider
-  let registry: { get: ReturnType<typeof vi.fn> }
+  let registry: { get: ReturnType<typeof vi.fn>; resolve: ReturnType<typeof vi.fn> }
   let repository: Record<string, ReturnType<typeof vi.fn>>
   let importJobs: Record<string, ReturnType<typeof vi.fn>>
   let brainPermissions: { assertCanTrainBrain: ReturnType<typeof vi.fn> }
@@ -29,7 +29,7 @@ describe('MeetingImportService', () => {
       pull: { fetch: vi.fn().mockResolvedValue(normalizeFathomMeetingSource(event)) },
       normalize: normalizeFathomMeetingSource,
     }
-    registry = { get: vi.fn(() => provider) }
+    registry = { get: vi.fn(() => provider), resolve: vi.fn(async () => provider) }
     repository = {
       getServiceClient: vi.fn(() => ({ admin: true })),
       findConnectionForUser: vi.fn().mockResolvedValue({
@@ -131,7 +131,7 @@ describe('MeetingImportService', () => {
       }),
     ).rejects.toThrow(/not connected/)
 
-    registry.get.mockReturnValueOnce({ ...provider, pull: undefined })
+    registry.resolve.mockResolvedValueOnce({ ...provider, pull: undefined })
     await expect(
       service.importToBrain({
         provider: 'fathom',

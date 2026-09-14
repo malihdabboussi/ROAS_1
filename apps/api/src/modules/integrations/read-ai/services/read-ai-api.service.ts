@@ -1,7 +1,11 @@
 import { BadRequestException, Injectable, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { MeetingIntakeRepository } from '../../../meetings/intake/repositories/meeting-intake.repository'
-import { buildMeetingWebhookPath, readWebhookKey } from '../../../meetings/providers/webhook-key'
+import {
+  buildMeetingWebhookUrl,
+  readWebhookKey,
+  resolvePublicApiUrl,
+} from '../../../meetings/providers/webhook-key'
 import { VaultService } from '../../../vault/services/vault.service'
 import { isValidReadAiSigningKey } from '../providers/read-ai-webhook-signature'
 
@@ -38,17 +42,11 @@ export class ReadAiApiService {
     private readonly connections: MeetingIntakeRepository,
     @Optional() config?: ConfigService,
   ) {
-    this.apiUrl =
-      config?.get<string>('PUBLIC_API_URL') ||
-      config?.get<string>('API_URL') ||
-      config?.get<string>('BACKEND_URL') ||
-      process.env.PUBLIC_API_URL ||
-      'http://localhost:3001'
+    this.apiUrl = resolvePublicApiUrl((key) => config?.get<string>(key) ?? process.env[key])
   }
 
   private buildWebhookUrl(webhookKey: string | null): string | null {
-    if (!webhookKey) return null
-    return `${this.apiUrl.replace(/\/$/, '')}${buildMeetingWebhookPath('read_ai', webhookKey)}`
+    return buildMeetingWebhookUrl(this.apiUrl, 'read_ai', webhookKey)
   }
 
   async connect(userId: string, signingKey: string): Promise<{ webhookUrl: string }> {

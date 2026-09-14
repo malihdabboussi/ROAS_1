@@ -10,6 +10,14 @@ import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/
 import { invalidateCachedFetch } from '@/lib/cache/keyed-fetch-cache'
 import { buildComposioProxyCallbackUrl } from '@/lib/integrations/composio-oauth'
 import { getAvailableIntegrations } from '@/lib/integrations/integration-catalog'
+import {
+  connectDefinedNoteTaker,
+  definitionToIntegration,
+  disconnectDefinedNoteTaker,
+  isDefinedNoteTakerId,
+  listNoteTakerDefinitions,
+  type NoteTakerListing,
+} from '@/lib/integrations/meeting-provider-definitions'
 import { SETTINGS_TOAST_ERRORS } from '../../config/settings-toast-errors.config'
 import type { Integration, UserIntegration } from './integrations.types'
 
@@ -70,6 +78,7 @@ export function useIntegrations() {
   const [userIntegrations, setUserIntegrations] = useState<UserIntegration[]>([])
   const [providerModes, setProviderModes] = useState<Record<string, string>>({})
   const [billingStatus, setBillingStatus] = useState<BillingStatusResponse | null>(null)
+  const [noteTakerDefinitions, setNoteTakerDefinitions] = useState<NoteTakerListing[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const { isOrgContext, hasMinRole } = useOrgStore()
@@ -83,9 +92,17 @@ export function useIntegrations() {
   )
 
   const availableIntegrations: Integration[] = useMemo(
-    () => getAvailableIntegrations(isPlatformAdmin),
-    [isPlatformAdmin],
+    () => [
+      ...getAvailableIntegrations(isPlatformAdmin),
+      ...noteTakerDefinitions.map(definitionToIntegration),
+    ],
+    [isPlatformAdmin, noteTakerDefinitions],
   )
+
+  /** Note takers defined from Settings; refreshed after an admin saves one. */
+  const reloadDefinitions = useCallback(async () => {
+    setNoteTakerDefinitions(await listNoteTakerDefinitions().catch(() => []))
+  }, [])
 
   const loadData = useCallback(async () => {
     setIsLoading(true)
@@ -96,7 +113,7 @@ export function useIntegrations() {
       const setIntegration = (item: UserIntegration) => {
         integrationsById.set(item.id, item)
       }
-      const [overview, slackStatus, composioAccounts, billing] = await Promise.all([
+      const [overview, slackStatus, composioAccounts, billing, definitions] = await Promise.all([
         backendGet<IntegrationsOverviewResponse>('/api/integrations/overview').catch(() => null),
         isOrg
           ? Promise.resolve(null)
@@ -107,8 +124,10 @@ export function useIntegrations() {
               () => null,
             ),
         billingApi.getStatus().catch(() => null),
+        listNoteTakerDefinitions().catch(() => [] as NoteTakerListing[]),
       ])
       setBillingStatus(billing)
+      setNoteTakerDefinitions(definitions)
 
       const overviewIntegrations = overview?.integrations ?? []
       const providerModeLookup = overview?.providerModes ?? {}
@@ -533,6 +552,10 @@ export function useIntegrations() {
         )
         if (!res?.authorizeUrl) throw new Error('Missing authorizeUrl')
         window.open(res.authorizeUrl, '_blank', 'noopener,noreferrer')
+      } else if (isDefinedNoteTakerId(provider)) {
+        await connectDefinedNoteTaker(provider, connectionData?.secret?.trim() || apiKey)
+        await loadData()
+        return { completedSynchronously: true }
       } else if (provider === 'fireflies') {
         const firefliesApiKey = connectionData?.api_key?.trim() || apiKey
         if (!firefliesApiKey) throw new Error('API key required')
@@ -669,6 +692,8 @@ export function useIntegrations() {
         await backendPost('/api/integrations/fathom/disconnect', {})
       } else if (provider === 'wordpress') {
         await backendPost('/api/integrations/wordpress/disconnect', {})
+      } else if (isDefinedNoteTakerId(provider)) {
+        await disconnectDefinedNoteTaker(provider)
       } else if (provider === 'fireflies') {
         await backendPost('/api/integrations/fireflies/disconnect', {})
       } else if (provider === 'read_ai') {
@@ -776,6 +801,8 @@ export function useIntegrations() {
     changeIntegrationScope,
     renameIntegrationConnection,
     canManageOrgShared,
+    isPlatformAdmin,
+    reloadDefinitions,
   }
 }
 

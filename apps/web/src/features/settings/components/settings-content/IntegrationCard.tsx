@@ -3,10 +3,12 @@
 import { useState } from 'react'
 import { useWorkspaceSettingsModal } from '@/features/settings/contexts/WorkspaceSettingsModalContext'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
+import { isDefinedNoteTakerId } from '@/lib/integrations/meeting-provider-definitions'
 import { ConfirmDialog } from './ConfirmDialog'
 import { IntegrationCardActions } from './IntegrationCardActions'
 import { IntegrationCardDialogs } from './IntegrationCardDialogs'
 import type { Integration, UserIntegration } from './integrations.types'
+import { MeetingWebhookAddressNote } from './MeetingWebhookAddressNote'
 import { WordpressConnectDialog } from './WordpressConnectDialog'
 
 interface IntegrationCardProps {
@@ -162,7 +164,8 @@ export function IntegrationCard({
     }
   }
 
-  const logoPath = getLogoPath(integration.provider)
+  const logoPath = integration.logo_url ?? getLogoPath(integration.provider)
+  const definedNoteTaker = isDefinedNoteTakerId(integration.provider)
 
   const logoBlock = (
     <div className="flex-shrink-0">
@@ -340,6 +343,11 @@ export function IntegrationCard({
         composioConnecting={composioConnecting}
         setComposioConnecting={setComposioConnecting}
         onComposioContinue={handleComposioContinue}
+        apiKeyPreface={
+          definedNoteTaker && showApiKeyModal ? (
+            <MeetingWebhookAddressNote provider={integration.provider} name={integration.name} />
+          ) : undefined
+        }
       />
     </div>
   )

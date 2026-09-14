@@ -58,6 +58,7 @@ describe('IntegrationsOverviewService Higgsfield visibility', () => {
       } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {

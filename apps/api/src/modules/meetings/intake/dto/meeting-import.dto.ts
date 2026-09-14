@@ -1,7 +1,13 @@
 import { z } from 'zod'
-import { MEETING_PROVIDER_IDS } from '../../providers/transcript-source.types'
+import {
+  isMeetingProviderId,
+  type MeetingProviderId,
+} from '../../providers/transcript-source.types'
 
-export const MeetingProviderParamSchema = z.enum(MEETING_PROVIDER_IDS)
+export const MeetingProviderParamSchema = z
+  .string()
+  .refine(isMeetingProviderId, 'Unknown provider')
+  .transform((value) => value as MeetingProviderId)
 
 export const ImportMeetingSchema = z.object({
   externalId: z.string().min(1).max(500),

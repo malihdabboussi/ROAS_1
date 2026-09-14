@@ -6,12 +6,35 @@
  * customer-brain envelope, Meetings space) consumes only this shape.
  */
 
-export const MEETING_PROVIDER_IDS = ['fathom', 'fireflies', 'read_ai'] as const
+/** Note takers shipped as code plug-ins. */
+export const BUILT_IN_MEETING_PROVIDER_IDS = ['fathom', 'fireflies', 'read_ai'] as const
 
-export type MeetingProviderId = (typeof MEETING_PROVIDER_IDS)[number]
+export type BuiltInMeetingProviderId = (typeof BUILT_IN_MEETING_PROVIDER_IDS)[number]
+
+/**
+ * Note takers defined from Settings ("More integrations") carry an `nt_` prefix.
+ * The slug is the `integrations_available.id` and the vault provider name.
+ */
+export const CUSTOM_MEETING_PROVIDER_PREFIX = 'nt_'
+export const CUSTOM_MEETING_PROVIDER_ID_PATTERN = /^nt_[a-z0-9_]{2,40}$/
+
+export type CustomMeetingProviderId = `${typeof CUSTOM_MEETING_PROVIDER_PREFIX}${string}`
+
+export type MeetingProviderId = BuiltInMeetingProviderId | CustomMeetingProviderId
+
+export function isBuiltInMeetingProviderId(value: unknown): value is BuiltInMeetingProviderId {
+  return (
+    typeof value === 'string' &&
+    (BUILT_IN_MEETING_PROVIDER_IDS as readonly string[]).includes(value)
+  )
+}
+
+export function isCustomMeetingProviderId(value: unknown): value is CustomMeetingProviderId {
+  return typeof value === 'string' && CUSTOM_MEETING_PROVIDER_ID_PATTERN.test(value)
+}
 
 export function isMeetingProviderId(value: unknown): value is MeetingProviderId {
-  return typeof value === 'string' && (MEETING_PROVIDER_IDS as readonly string[]).includes(value)
+  return isBuiltInMeetingProviderId(value) || isCustomMeetingProviderId(value)
 }
 
 /** Meetings are the first kind; the shape leaves room for calls, recordings and uploads. */
@@ -47,6 +70,8 @@ export type TranscriptSourceAction = {
 
 export type TranscriptSourceEvent = {
   provider: MeetingProviderId
+  /** Human name for providers that have no built-in display name (custom note takers). */
+  providerDisplayName?: string
   kind: TranscriptSourceKind
   externalRecordingId: string
   providerMeetingId: string | null

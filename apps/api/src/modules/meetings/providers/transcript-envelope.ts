@@ -1,5 +1,5 @@
 import type { InteractionEnvelopeV1, InteractionParticipant } from '@vibey/api-shared'
-import type { TranscriptSourceEvent } from './transcript-source.types'
+import { isBuiltInMeetingProviderId, type TranscriptSourceEvent } from './transcript-source.types'
 
 /**
  * Normalized transcript in, customer-signal interaction envelope out.
@@ -30,7 +30,8 @@ export function buildTranscriptEnvelope(
 
   return {
     v: 1,
-    channel: source.provider,
+    // Built-in tools keep their own channel; defined note takers share one.
+    channel: isBuiltInMeetingProviderId(source.provider) ? source.provider : 'meeting',
     source_id: source.externalRecordingId,
     title: source.title,
     window: { from: startedAt, to: endedAt },

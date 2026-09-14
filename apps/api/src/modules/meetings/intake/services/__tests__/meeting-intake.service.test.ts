@@ -31,7 +31,11 @@ const transcriptEvent = {
 }
 
 describe('MeetingIntakeService', () => {
-  let registry: { get: ReturnType<typeof vi.fn>; require: ReturnType<typeof vi.fn> }
+  let registry: {
+    get: ReturnType<typeof vi.fn>
+    require: ReturnType<typeof vi.fn>
+    resolve: ReturnType<typeof vi.fn>
+  }
   let repository: Record<string, ReturnType<typeof vi.fn>>
   let deliveries: { claim: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> }
   let importJobs: { enqueueMeetingTranscriptImport: ReturnType<typeof vi.fn> }
@@ -74,7 +78,11 @@ describe('MeetingIntakeService', () => {
         afterSpaceRoute: vi.fn().mockResolvedValue(undefined),
       },
     }
-    registry = { get: vi.fn(() => provider), require: vi.fn(() => provider) }
+    registry = {
+      get: vi.fn(() => provider),
+      require: vi.fn(() => provider),
+      resolve: vi.fn(async () => provider),
+    }
     repository = {
       getServiceClient: vi.fn(() => admin),
       findConnectionByWebhookKey: vi.fn().mockResolvedValue(connection()),

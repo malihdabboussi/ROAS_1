@@ -11,13 +11,19 @@ import { z } from 'zod'
 import type { RequestScope } from '@vibey/api-shared'
 import { InternalAuthGuard } from '../../funnels/guards/internal-auth.guard'
 import { MeetingImportService } from '../../meetings/intake/services/meeting-import.service'
-import { MEETING_PROVIDER_IDS } from '../../meetings/providers/transcript-source.types'
+import {
+  isMeetingProviderId,
+  type MeetingProviderId,
+} from '../../meetings/providers/transcript-source.types'
 import { InternalRepository } from '../repositories/internal.repository'
 
 const InternalMeetingImportSchema = z.object({
   user_id: z.string().min(1),
   org_id: z.string().nullable().optional(),
-  provider: z.enum(MEETING_PROVIDER_IDS),
+  provider: z
+    .string()
+    .refine(isMeetingProviderId, 'Unknown provider')
+    .transform((value) => value as MeetingProviderId),
   external_id: z.string().min(1).max(500),
   brainId: z.string().optional(),
   targetBrain: z.enum(['user', 'campaign', 'agent', 'customer']).optional(),

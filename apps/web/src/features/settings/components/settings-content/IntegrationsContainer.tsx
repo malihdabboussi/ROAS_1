@@ -61,6 +61,8 @@ export function IntegrationsContainer() {
     changeIntegrationScope,
     renameIntegrationConnection,
     canManageOrgShared,
+    isPlatformAdmin,
+    reloadDefinitions,
   } = useIntegrations()
 
   const finishOAuthConnect = useCallback(
@@ -376,6 +378,8 @@ export function IntegrationsContainer() {
         onChangeScope={handleChangeScope}
         onRename={handleRename}
         canManageOrgShared={canManageOrgShared}
+        isPlatformAdmin={isPlatformAdmin}
+        onDefinitionsChanged={reloadDefinitions}
         autoOpenSocialReportingPickerId={autoOpenSocialReportingPickerId}
         autoOpenSocialReportingPickerPlatform={autoOpenSocialReportingPickerPlatform}
       />

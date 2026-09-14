@@ -87,6 +87,7 @@ describe('IntegrationsOverviewService', () => {
       } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -210,6 +211,7 @@ describe('IntegrationsOverviewService', () => {
       } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -350,6 +352,7 @@ describe('IntegrationsOverviewService', () => {
       } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -363,9 +366,9 @@ describe('IntegrationsOverviewService', () => {
     expect(connectedCalendar).toHaveLength(2)
     expect(connectedCalendar.map((row) => row.id).sort()).toEqual(['ui-keep', 'ui-other'])
     expect(
-      calendarRows.filter((row) => String(row.id ?? '').startsWith('ui-dup-')).every(
-        (row) => row.status === 'disconnected',
-      ),
+      calendarRows
+        .filter((row) => String(row.id ?? '').startsWith('ui-dup-'))
+        .every((row) => row.status === 'disconnected'),
     ).toBe(true)
     expect(updateIntegrationById).toHaveBeenCalledWith(
       expect.anything(),
@@ -450,6 +453,7 @@ describe('IntegrationsOverviewService', () => {
       } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -468,8 +472,7 @@ describe('IntegrationsOverviewService', () => {
       ]),
     )
     const connectionIds = calendarRows.map(
-      (row) =>
-        (row.metadata as Record<string, unknown> | undefined)?.composio_connected_account_id,
+      (row) => (row.metadata as Record<string, unknown> | undefined)?.composio_connected_account_id,
     )
     expect(connectionIds.sort()).toEqual(['ca-1', 'ca-2'])
   })
@@ -518,6 +521,7 @@ describe('IntegrationsOverviewService', () => {
       { mapComposioToolkitToIntegrationId: vi.fn() } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -583,6 +587,7 @@ describe('IntegrationsOverviewService', () => {
       { mapComposioToolkitToIntegrationId: vi.fn(() => null) } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {
@@ -644,6 +649,7 @@ describe('IntegrationsOverviewService', () => {
       { mapComposioToolkitToIntegrationId: vi.fn(() => null) } as never,
       {} as never,
       { syncExpiredConnectedRows: vi.fn(async () => new Map()) } as never,
+      { listActiveSlugs: vi.fn(async () => []) } as never,
     )
 
     const result = await service.getOverview({} as never, { id: 'user-1' }, {

@@ -28,11 +28,10 @@ const CUSTOMER_MEMORY_TYPES = new Set([
   'event',
 ])
 
-const SOURCE_TYPE_BY_CHANNEL: Record<InteractionChannel, string> = {
-  telegram: 'telegram_chat',
-  widget: 'widget_chat',
-  fathom: 'fathom_call',
-}
+const CHAT_CHANNELS = new Set<InteractionChannel>(['telegram', 'widget'])
+/** telegram_chat, widget_chat; every meeting note taker (built-in or defined) is `<channel>_call`. */
+const sourceTypeFor = (channel: InteractionChannel) =>
+  `${channel}_${CHAT_CHANNELS.has(channel) ? 'chat' : 'call'}`
 
 interface ExtractedCustomerMemory {
   content: string
@@ -95,9 +94,7 @@ function sourceTypeForIdentifier(channel: InteractionChannel, kind: string): str
 export class CustomerInteractionExtractionService {
   private readonly logger = new Logger(CustomerInteractionExtractionService.name)
 
-  constructor(
-    @Optional() private readonly billingClient?: MissionWorkerBillingClientService,
-  ) {}
+  constructor(@Optional() private readonly billingClient?: MissionWorkerBillingClientService) {}
 
   async extractAndSave(
     client: SupabaseLikeClient,
@@ -164,7 +161,7 @@ export class CustomerInteractionExtractionService {
       return { status: 'skipped', memories_created: 0, memory_ids: [] }
     }
 
-    const sourceType = SOURCE_TYPE_BY_CHANNEL[input.envelope.channel]
+    const sourceType = sourceTypeFor(input.envelope.channel)
     const sourceIdentity = this.sourceIdentityForEnvelope(input.envelope)
     const identity = await this.resolveCustomerIdentity(client, input, sourceIdentity)
     if ('error' in identity) {
@@ -311,7 +308,7 @@ export class CustomerInteractionExtractionService {
     }
 
     return {
-      sourceType: SOURCE_TYPE_BY_CHANNEL[envelope.channel],
+      sourceType: sourceTypeFor(envelope.channel),
       sourceId: envelope.source_id,
       identityKind: 'source_id',
       sourceLabel: envelope.title,
@@ -341,9 +338,7 @@ export class CustomerInteractionExtractionService {
           entity_type: input.contactId ? 'contact' : 'source_identity',
           display_name:
             sourceIdentity.sourceLabel ??
-            (input.contactId
-              ? `Contact ${input.contactId.slice(0, 8)}`
-              : sourceIdentity.sourceId),
+            (input.contactId ? `Contact ${input.contactId.slice(0, 8)}` : sourceIdentity.sourceId),
           primary_contact_id: input.contactId ?? null,
           confidence: input.contactId ? 1 : 0.65,
           metadata: {

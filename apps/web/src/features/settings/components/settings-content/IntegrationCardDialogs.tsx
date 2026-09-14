@@ -32,6 +32,7 @@ type IntegrationCardDialogsProps = {
   composioConnecting: boolean
   setComposioConnecting: (value: boolean) => void
   onComposioContinue: () => void | Promise<void>
+  apiKeyPreface?: React.ReactNode
 }
 
 export function IntegrationCardDialogs(props: IntegrationCardDialogsProps) {
@@ -48,6 +49,7 @@ export function IntegrationCardDialogs(props: IntegrationCardDialogsProps) {
         setConnectionFields={props.setConnectionFields}
         submittingKey={props.submittingKey}
         onSubmit={props.onApiKeySubmit}
+        preface={props.apiKeyPreface}
       />
       <IntegrationOpenAICodexConnectDialog
         open={props.showOpenAICodexModal}
