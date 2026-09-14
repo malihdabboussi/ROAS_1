@@ -29,6 +29,9 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
     input: Record<string, unknown>
   }> {
     switch (job.job_type) {
+      case 'meeting_transcript_import':
+      case 'campaign_meeting_import':
+        return buildMeetingMissionInput(job, payload)
       case 'fathom_meeting_import':
         return buildMeetingMissionInput(job, legacyFathomJobPayload(payload))
       case 'document_remember':

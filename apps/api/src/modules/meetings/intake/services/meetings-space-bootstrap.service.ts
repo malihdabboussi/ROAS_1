@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
 import { SpaceTemplatesService } from '../../../space-templates/services/space-templates.service'
 import { MeetingsPrecallPrepService } from '../../../spaces/services/meetings-precall-prep.service'
+import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
 import {
   ensureMeetingsSpaceForScope,
   type MeetingsSpaceBootstrapResult,
@@ -15,6 +16,7 @@ export class MeetingsSpaceBootstrapService {
   constructor(
     private readonly meetingsPrecallPrep: MeetingsPrecallPrepService,
     private readonly spaceTemplates: SpaceTemplatesService,
+    private readonly spaceAutomation: SpaceAutomationService,
   ) {}
 
   ensureMeetingsSpace(
@@ -28,6 +30,8 @@ export class MeetingsSpaceBootstrapService {
         this.meetingsPrecallPrep.resolveMeetingsSpaceId(client, userId, orgId),
       instantiate: (client, createScope, templateKey, options) =>
         this.spaceTemplates.instantiate(client, createScope, templateKey, options as never),
+      ensureRecordingRoute: (client, routeScope, spaceId) =>
+        this.spaceAutomation.ensureMeetingLogAutomation(client, routeScope, spaceId),
     })
   }
 

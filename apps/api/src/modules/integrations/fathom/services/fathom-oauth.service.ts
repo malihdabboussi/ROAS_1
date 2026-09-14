@@ -270,6 +270,9 @@ export class FathomOAuthService {
           meetingsPrecallPrep.resolveMeetingsSpaceId(client, userId, orgId),
         instantiate: (client, createScope, templateKey, options) =>
           spaceTemplates.instantiate(client, createScope, templateKey, options as never),
+        ensureRecordingRoute: (client, routeScope, spaceId) =>
+          this.spaceAutomation?.ensureMeetingLogAutomation(client, routeScope, spaceId) ??
+          Promise.resolve(),
       })
     } catch (err) {
       if (err instanceof BadRequestException) throw err

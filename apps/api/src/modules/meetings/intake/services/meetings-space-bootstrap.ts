@@ -27,11 +27,20 @@ export async function ensureMeetingsSpaceForScope(input: {
     userId: string,
     orgId: string | null,
   ) => Promise<string | null>
+  /** Reused spaces may predate the meeting-log rule; install it when missing. */
+  ensureRecordingRoute?: (
+    supabase: SupabaseClient,
+    scope: RequestScope,
+    spaceId: string,
+  ) => Promise<unknown>
 }): Promise<MeetingsSpaceBootstrapResult> {
   const { supabase, scope } = input
   // Prefer org Meetings when connected in org context; else personal-account.
   const existingId = await input.resolveMeetingsSpaceId(supabase, scope.userId, scope.orgId ?? null)
-  if (existingId) return { id: existingId, action: 'reuse' }
+  if (existingId) {
+    await input.ensureRecordingRoute?.(supabase, scope, existingId)
+    return { id: existingId, action: 'reuse' }
+  }
 
   const targetOrgId = scope.orgId ?? null
   const createScope: RequestScope = targetOrgId ? scope : { ...scope, orgId: null, orgRole: null }
