@@ -1,4 +1,4 @@
-export declare const INTERACTION_CHANNELS: readonly ["telegram", "widget", "fathom"];
+export declare const INTERACTION_CHANNELS: readonly ["telegram", "widget", "fathom", "fireflies", "read_ai", "meeting"];
 export type InteractionChannel = (typeof INTERACTION_CHANNELS)[number];
 export declare const INTERACTION_PARTICIPANT_ROLES: readonly ["customer", "team", "unknown"];
 export type InteractionParticipantRole = (typeof INTERACTION_PARTICIPANT_ROLES)[number];

@@ -19,6 +19,33 @@ export declare const ConversationIdParamSchema: z.ZodObject<{
     id: string;
 }>;
 export type ConversationIdParam = z.infer<typeof ConversationIdParamSchema>;
+export declare const ConversationConnectionEntityTypeSchema: z.ZodEnum<["campaign", "space"]>;
+export type ConversationConnectionEntityType = z.infer<typeof ConversationConnectionEntityTypeSchema>;
+export declare const AddConversationConnectionSchema: z.ZodObject<{
+    entity_type: z.ZodEnum<["campaign", "space"]>;
+    entity_id: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    entity_type: "campaign" | "space";
+    entity_id: string;
+}, {
+    entity_type: "campaign" | "space";
+    entity_id: string;
+}>;
+export type AddConversationConnectionDto = z.infer<typeof AddConversationConnectionSchema>;
+export declare const ConversationConnectionParamSchema: z.ZodObject<{
+    id: z.ZodString;
+    entityType: z.ZodEnum<["campaign", "space"]>;
+    entityId: z.ZodString;
+}, "strip", z.ZodTypeAny, {
+    id: string;
+    entityType: "campaign" | "space";
+    entityId: string;
+}, {
+    id: string;
+    entityType: "campaign" | "space";
+    entityId: string;
+}>;
+export type ConversationConnectionParam = z.infer<typeof ConversationConnectionParamSchema>;
 export declare const UpsertConversationShareSchema: z.ZodObject<{
     entity_type: z.ZodEnum<["user", "org"]>;
     entity_id: z.ZodString;
@@ -26,15 +53,15 @@ export declare const UpsertConversationShareSchema: z.ZodObject<{
     notify: z.ZodOptional<z.ZodBoolean>;
     note: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    entity_type: "org" | "user";
+    entity_type: "user" | "org";
     entity_id: string;
-    level: "admin" | "edit" | "view";
+    level: "view" | "edit" | "admin";
     notify?: boolean | undefined;
     note?: string | undefined;
 }, {
-    entity_type: "org" | "user";
+    entity_type: "user" | "org";
     entity_id: string;
-    level: "admin" | "edit" | "view";
+    level: "view" | "edit" | "admin";
     notify?: boolean | undefined;
     note?: string | undefined;
 }>;
@@ -45,13 +72,13 @@ export declare const PassOffConversationShareSchema: z.ZodObject<{
     note: z.ZodOptional<z.ZodString>;
     notify: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    user_id: string;
-    level: "admin" | "edit" | "view";
+    level: "view" | "edit" | "admin";
     notify: boolean;
+    user_id: string;
     note?: string | undefined;
 }, {
     user_id: string;
-    level?: "admin" | "edit" | "view" | undefined;
+    level?: "view" | "edit" | "admin" | undefined;
     notify?: boolean | undefined;
     note?: string | undefined;
 }>;
