@@ -71,6 +71,8 @@ Last Modified: September 14, 2026
 
 63. **Read AI (ROA-40 Phase 2).** Pasted-webhook provider: the user creates a webhook in Read AI → Integrations → Webhooks pointing at the address shown on the ROAS card (`/api/integrations/meetings/webhooks/read_ai/<key>`) and pastes the signing key into ROAS (`POST /api/integrations/read-ai/connect`, vault label `signing_key`). Deliveries are verified with `X-Read-Signature` (hex HMAC-SHA256 with the base64 key), `meeting_start` pings are acknowledged and ignored, `request_id` is the replay id, and the report body is normalized without any API call (`apps/api/src/modules/meetings/providers/read-ai-meeting-source.ts`). Read AI is personal-only and has no manual import list. Requires a Read AI Pro or Enterprise plan.
 
+64. **All note takers land in the Meetings space (ROA-40 Phase 3).** `MeetingIntakeService` bridges the normalized transcript through `toRecordingEvent` into the recording-event shape the space route reads; `processFathomRecordingEvent` claims `space_external_automation_events` as `<provider>:<id>`, creates the call row with `source = <provider>` and `external_automation.provider`, and `MeetingSourceIngestionService.ingestMeetingSource` writes `meeting_recordings` with the real provider. Connecting Fireflies or Read AI bootstraps the same Meetings space Fathom uses (`MeetingsSpaceBootstrapService`). The brain training panel reads provider connectivity from `GET /api/integrations/meetings/providers`.
+
 ## Code Examples
 
 Connection check result:
@@ -212,3 +214,4 @@ Reconnect result:
 - 2026-09-14: Meeting note takers moved onto one contract, one webhook door and one intake (ROA-40 Phase 0). Fathom verification switched from a secret-as-header string match with a payload-email fallback to Standard Webhooks HMAC; unsigned or mis-signed deliveries to the new door are rejected. Plan: `.docs/plans/meeting-notetaker-system-roa-40.md`.
 - 2026-09-14: Fireflies brain imports fetch the transcript before enqueue and use the shared `meeting_transcript_import` job; the old id-only `fireflies_transcript_import` path stays only for callers not yet moved (ROA-40 Phase 4 removes it).
 - 2026-09-14: Read AI added as a webhook-only provider on the shared meeting door; connection rows for pasted-webhook providers are managed by `MeetingIntakeRepository` so future providers of this kind need no repository of their own.
+- 2026-09-14: The Meetings-space route stays keyed on the `external_fathom_recording_ready` trigger for every provider (63 references, Flow builder contract); the trigger event carries `provider` instead. Renaming the trigger is a logged follow-up.

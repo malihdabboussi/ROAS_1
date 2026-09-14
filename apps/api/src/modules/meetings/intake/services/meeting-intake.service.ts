@@ -13,6 +13,7 @@ import type {
   TranscriptProvider,
   WebhookHeaders,
 } from '../../providers/transcript-provider.contract'
+import { toRecordingEvent } from '../../providers/transcript-source-to-recording-event'
 import {
   isMeetingProviderId,
   type MeetingProviderId,
@@ -267,14 +268,11 @@ export class MeetingIntakeService {
     ctx: ProviderContext,
     source: TranscriptSourceEvent,
   ): Promise<IntakeSpaceRoute> {
-    // Phase 0: only Fathom-shaped events reach the Meetings space route;
-    // Phase 3 bridges every provider through a normalized recording event.
-    if (source.provider !== 'fathom') return null
     try {
       const result = await this.spaceAutomation.processFathomRecordingEvent(
         ctx.supabase,
         ctx.userId,
-        source.raw,
+        toRecordingEvent(source),
       )
       return (result ?? null) as IntakeSpaceRoute
     } catch (err) {

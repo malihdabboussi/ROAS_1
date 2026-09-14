@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import {
-  normalizeFathomMeetingSource,
-  renderFathomTranscriptDocument,
-} from './fathom-meeting-source'
+import { normalizeFathomMeetingSource } from './fathom-meeting-source'
+import { renderTranscriptDocument } from './transcript-document'
 
 describe('Fathom meeting source normalization', () => {
   it('preserves recording windows, participants, summary, and stable provider actions', () => {
@@ -70,7 +68,7 @@ describe('Fathom meeting source normalization', () => {
       transcript,
     })
 
-    const document = renderFathomTranscriptDocument(source)
+    const document = renderTranscriptDocument(source)
 
     expect(source.transcript).toHaveLength(500)
     expect(document).toContain('Turn 0')

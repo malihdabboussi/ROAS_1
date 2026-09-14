@@ -272,3 +272,20 @@ export async function retryImportJob(jobId: string): Promise<void> {
 export async function dismissImportJob(jobId: string): Promise<void> {
   await backendDelete(`/api/brain/import-jobs/${jobId}/dismiss`)
 }
+
+export type MeetingProviderSummary = {
+  id: 'fathom' | 'fireflies' | 'read_ai'
+  connected: boolean
+  push: boolean
+  pull: boolean
+  listRecent: boolean
+  manifest: { displayName: string; personalOnly: boolean; logoKey: string }
+}
+
+/** Every registered note taker, what it can do, and whether the caller has it connected. */
+export async function listMeetingProviders(): Promise<MeetingProviderSummary[]> {
+  const response = await backendGet<{ success: boolean; providers: MeetingProviderSummary[] }>(
+    '/api/integrations/meetings/providers',
+  )
+  return response.providers ?? []
+}

@@ -218,6 +218,8 @@ export type TriggerEvent =
       attendees?: Array<Record<string, unknown>>
       url?: string | null
       fathom_owner_user_id?: string
+      /** Note taker that produced the recording (fathom, fireflies, read_ai). */
+      provider?: string
       meeting_workspace_actions_authoritative?: boolean
     }
   | {
@@ -297,9 +299,12 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
     event: Record<string, unknown>,
   ): Promise<Record<string, unknown>> {
     const meeting = this.extractFathomSummary(event)
-    const eventId = `fathom:${meeting.meetingId}`
+    // Every note taker lands on the same Meetings route; the provider only
+    // changes identity (claim key, item source) not the flow.
+    const provider = meeting.provider
+    const eventId = `${provider}:${meeting.meetingId}`
     const payloadSummary = {
-      provider: 'fathom',
+      provider,
       trigger_slug: 'FATHOM_RECORDING_READY',
       meeting_id: meeting.meetingId,
       title: meeting.title,
@@ -310,9 +315,9 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
 
     const claim = await this.externalEventsRepo.claimFathomExternalEvent(supabase, {
       composio_event_id: eventId,
-      provider: 'fathom',
+      provider,
       trigger_slug: 'FATHOM_RECORDING_READY',
-      connected_account_id: `fathom:${userId}`,
+      connected_account_id: `${provider}:${userId}`,
       payload_summary: payloadSummary,
       user_id: userId,
     })
@@ -384,7 +389,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
             : null)
         if (existingCall?.id) {
           if (this.meetingSourceIngestion) {
-            await this.meetingSourceIngestion.ingestFathomSource(supabase, {
+            await this.meetingSourceIngestion.ingestMeetingSource(supabase, {
               meetingItemId: String(existingCall.id),
               spaceId,
               userId: runUserId,
@@ -407,6 +412,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
             attendees: meeting.attendees,
             url: meeting.url,
             fathom_owner_user_id: userId,
+            provider,
             meeting_workspace_actions_authoritative: false,
           }
           const queuedExisting = await this.enqueueAutomationRuntimeJob(
@@ -519,14 +525,19 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
             title: provisionalTitle,
             // Keep description as the short purpose summary; full transcript lives in custom_data.
             description: meeting.summary || null,
-            source: 'fathom',
+            source: provider,
             ...(hasProcessingStatus ? { status: 'processing' as const } : {}),
             custom_data: {
               entry_type: 'call',
               call_kind: callKind,
               call_kind_source: 'automatic',
               ...(meeting.callDate ? { call_date: meeting.callDate } : {}),
-              ...(meeting.url ? { recording_url: meeting.url, fathom_url: meeting.url } : {}),
+              ...(meeting.url
+                ? {
+                    recording_url: meeting.url,
+                    ...(provider === 'fathom' ? { fathom_url: meeting.url } : {}),
+                  }
+                : {}),
               ...(meeting.summary ? { summary: meeting.summary } : {}),
               ...(meeting.transcriptText ? { transcript_text: meeting.transcriptText } : {}),
               ...(optionIds.length > 0 ? { attendees: optionIds } : {}),
@@ -537,12 +548,12 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
                 ? { unresolved_speakers: resolvedAttendees.unresolvedSpeakers }
                 : {}),
               external_automation: {
-                provider: 'fathom',
                 trigger_slug: 'FATHOM_RECORDING_READY',
                 meeting_id: meeting.meetingId,
                 recorded_by_email: meeting.recordedByEmail,
                 transcript_entries: meeting.transcriptEntries,
                 fathom_owner_user_id: userId,
+                provider,
                 attendees_from_speakers: resolvedAttendees.usedSpeakers,
                 call_kind: callKind,
               },
@@ -600,7 +611,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
         )
 
         if (this.meetingSourceIngestion) {
-          await this.meetingSourceIngestion.ingestFathomSource(supabase, {
+          await this.meetingSourceIngestion.ingestMeetingSource(supabase, {
             meetingItemId: String(item.id),
             spaceId,
             userId: runUserId,
@@ -632,6 +643,7 @@ export abstract class SpaceAutomationServiceBase06 extends SpaceAutomationServic
           attendees: meeting.attendees,
           url: meeting.url,
           fathom_owner_user_id: userId,
+          provider,
           // Keep Meetings-space follow_up space_items as the shared action-item
           // surface (Home Meeting Workspace links to those same rows). Do not
           // suppress agent_suggest_tasks just because meeting_actions ingest exists.

@@ -3,6 +3,7 @@ import { BadRequestException, Injectable, Logger, Optional } from '@nestjs/commo
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { RequestScope } from '@vibey/api-shared'
+import { ensureMeetingsSpaceForScope } from '../../../meetings/intake/services/meetings-space-bootstrap'
 import {
   buildMeetingWebhookPath,
   generateWebhookKey,
@@ -259,71 +260,21 @@ export class FathomOAuthService {
     if (!this.meetingsPrecallPrep || !this.spaceTemplates) {
       throw new BadRequestException('Personal Dashboard setup is unavailable')
     }
-    // Prefer org Meetings when connected in org context; else personal-account.
-    const existingId = await this.meetingsPrecallPrep.resolveMeetingsSpaceId(
-      supabase,
-      scope.userId,
-      scope.orgId ?? null,
-    )
-    if (existingId) return { id: existingId, action: 'reuse' }
-
-    const targetOrgId = scope.orgId ?? null
-    const createScope: RequestScope = targetOrgId ? scope : { ...scope, orgId: null, orgRole: null }
-    const campaignId = targetOrgId
-      ? await this.findGeneralCampaignId(supabase, scope.userId, targetOrgId)
-      : await this.findPersonalCampaignId(supabase, scope.userId)
-    const created = await this.spaceTemplates.instantiate(
-      supabase,
-      createScope,
-      'personal-dashboard',
-      {
-        title: targetOrgId ? 'Meetings' : 'Personal Dashboard',
-        visibility: targetOrgId ? 'team' : 'private',
-        include_tasks: true,
-        include_docs: true,
-        include_channel: false,
-        include_automations: true,
-        ...(campaignId ? { campaign_id: campaignId } : {}),
-      },
-    )
-    const id = String((created as { id?: unknown }).id ?? '')
-    if (!id) throw new BadRequestException('Personal Dashboard setup did not return a Space')
-    return { id, action: 'create' }
-  }
-
-  private async findPersonalCampaignId(
-    supabase: SupabaseClient,
-    userId: string,
-  ): Promise<string | null> {
-    const { data, error } = await supabase
-      .from('campaigns')
-      .select('id')
-      .eq('user_id', userId)
-      .is('org_id', null)
-      .contains('config', { system_kind: 'personal' })
-      .is('deleted_at', null)
-      .neq('status', 'archived')
-      .maybeSingle()
-    if (error || !data?.id) return null
-    return String(data.id)
-  }
-
-  private async findGeneralCampaignId(
-    supabase: SupabaseClient,
-    userId: string,
-    orgId: string,
-  ): Promise<string | null> {
-    const { data, error } = await supabase
-      .from('campaigns')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('org_id', orgId)
-      .contains('config', { system_kind: 'general' })
-      .is('deleted_at', null)
-      .neq('status', 'archived')
-      .maybeSingle()
-    if (error || !data?.id) return null
-    return String(data.id)
+    const meetingsPrecallPrep = this.meetingsPrecallPrep
+    const spaceTemplates = this.spaceTemplates
+    try {
+      return await ensureMeetingsSpaceForScope({
+        supabase,
+        scope,
+        resolveMeetingsSpaceId: (client, userId, orgId) =>
+          meetingsPrecallPrep.resolveMeetingsSpaceId(client, userId, orgId),
+        instantiate: (client, createScope, templateKey, options) =>
+          spaceTemplates.instantiate(client, createScope, templateKey, options as never),
+      })
+    } catch (err) {
+      if (err instanceof BadRequestException) throw err
+      throw new BadRequestException(err instanceof Error ? err.message : String(err))
+    }
   }
 
   async disconnect(supabase: SupabaseClient, userId: string): Promise<void> {

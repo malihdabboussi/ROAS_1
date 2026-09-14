@@ -1,12 +1,25 @@
 import { Body, Controller, Get, HttpException, HttpStatus, Post, UseGuards } from '@nestjs/common'
-import { AuthGuard, CurrentUser, OrgContextGuard, OrgRoleGuard } from '@vibey/api-shared'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import {
+  AuthGuard,
+  CurrentUser,
+  OrgContext,
+  OrgContextGuard,
+  OrgRoleGuard,
+  Supabase,
+  type RequestScope,
+} from '@vibey/api-shared'
+import { MeetingsSpaceBootstrapService } from '../../../meetings/intake/services/meetings-space-bootstrap.service'
 import { ConnectReadAiSchema } from '../dto/read-ai.dto'
 import { ReadAiApiService } from '../services/read-ai-api.service'
 
 @Controller('integrations/read-ai')
 @UseGuards(AuthGuard, OrgContextGuard, OrgRoleGuard)
 export class ReadAiController {
-  constructor(private readonly api: ReadAiApiService) {}
+  constructor(
+    private readonly api: ReadAiApiService,
+    private readonly meetingsSpace: MeetingsSpaceBootstrapService,
+  ) {}
 
   @Get('status')
   async status(@CurrentUser() user: { id: string }) {
@@ -15,7 +28,12 @@ export class ReadAiController {
   }
 
   @Post('connect')
-  async connect(@CurrentUser() user: { id: string }, @Body() body: unknown) {
+  async connect(
+    @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
+    @Supabase() supabase: SupabaseClient,
+    @Body() body: unknown,
+  ) {
     const validation = ConnectReadAiSchema.safeParse(body)
     if (!validation.success) {
       throw new HttpException(
@@ -24,6 +42,8 @@ export class ReadAiController {
       )
     }
     const result = await this.api.connect(user.id, validation.data.signingKey)
+    // Meetings from Read AI land in the same Meetings space Fathom uses.
+    await this.meetingsSpace.ensureMeetingsSpaceQuietly(supabase, scope)
     return { success: true, ...result }
   }
 

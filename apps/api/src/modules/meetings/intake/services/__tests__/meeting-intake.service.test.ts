@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { normalizeFathomMeetingSource } from '../../../providers/fathom-meeting-source'
+import { normalizeFirefliesMeetingSource } from '../../../providers/fireflies-meeting-source'
 import type {
   MeetingConnection,
   TranscriptProvider,
@@ -352,6 +353,44 @@ describe('MeetingIntakeService', () => {
           hasTranscript: false,
           spaceRoute: expect.objectContaining({ space_id: 'space_1' }),
         }),
+      )
+    })
+
+    it('lands a non-Fathom meeting in the Meetings space through the bridged recording event', async () => {
+      const fireflies: TranscriptProvider = {
+        identity: {
+          id: 'fireflies',
+          auth: 'api_key',
+          manifest: { displayName: 'Fireflies', personalOnly: true, logoKey: 'fireflies' },
+        },
+        normalize: normalizeFirefliesMeetingSource,
+      }
+      const result = await service.intake({
+        provider: fireflies,
+        connection: connection({ provider: 'fireflies' }),
+        externalId: 'ff_1',
+        inlineEvent: {
+          id: 'ff_1',
+          title: 'Pricing sync',
+          host_email: 'host@example.com',
+          sentences: [{ speaker_name: 'Host', text: 'Welcome', start_time: 0 }],
+        },
+      })
+      expect(result).toMatchObject({ status: 'processed', hasTranscript: true })
+      expect(spaceAutomation.processFathomRecordingEvent).toHaveBeenCalledWith(
+        admin,
+        'user_1',
+        expect.objectContaining({
+          provider: 'fireflies',
+          recording_id: 'ff_1',
+          recorded_by: { email: 'host@example.com' },
+          transcript: [expect.objectContaining({ text: 'Welcome' })],
+        }),
+      )
+      expect(importJobs.enqueueMeetingTranscriptImport).toHaveBeenCalledWith(
+        'user_1',
+        { source: expect.objectContaining({ provider: 'fireflies' }) },
+        null,
       )
     })
 

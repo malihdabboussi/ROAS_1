@@ -36,7 +36,7 @@ export class FathomMeetingWorkspaceAttachService {
     event = await this.ensureMeetingPayload(supabase, input.userId, recordingId, event)
     await this.ensureTranscriptAndSummary(supabase, input.userId, recordingId, event)
 
-    const result = await this.ingestion.ingestFathomSource(supabase, {
+    const result = await this.ingestion.ingestMeetingSource(supabase, {
       meetingItemId: input.meetingItemId,
       spaceId: input.spaceId,
       userId: input.userId,

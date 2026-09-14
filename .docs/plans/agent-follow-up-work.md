@@ -40443,3 +40443,39 @@ Evidence: `apps/api/src/modules/integrations/fireflies/repositories/fireflies.re
 Needed work: switch `FirefliesApiService` to the shared helpers (keeping `email`/`name` metadata) and delete the duplicated methods.
 
 Reason not done now: Fireflies has extra metadata and a passing test suite; consolidation belongs in the Phase 4 cleanup.
+
+## 2026-09-14 - [REFACTOR] Rename the Meetings-space trigger away from Fathom
+
+Status: Open
+
+Found while: ROA-40 Phase 3.
+
+Evidence: `external_fathom_recording_ready` / `FATHOM_RECORDING_READY` name the trigger that now fires for Fathom, Fireflies and Read AI (`apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `packages/api-shared/src/types/flow-capabilities.ts:346`, `apps/web/src/features/spaces/lib/automation-catalog.ts`, 63 references). The trigger event carries `provider` as of Phase 3.
+
+Needed work: introduce `external_meeting_recording_ready` with a Flow capabilities migration and catalog label "Meeting recording ready", keep the old name as an alias for stored automations.
+
+Reason not done now: contract change across api, web and packages; out of ROA-40 scope.
+
+## 2026-09-14 - [FEATURE] Training panel: one "Meetings" source
+
+Status: Open
+
+Found while: ROA-40 Phase 3.
+
+Evidence: `apps/web/src/features/brain/components/training/{types.ts,TrainingSourceRail.tsx,TrainingOneTimeTab.tsx,training-queue-dispatch.ts}` still model Fathom and Fireflies as two rail entries and two staged-payload kinds; Phase 3 only switched connectivity to `GET /api/integrations/meetings/providers`.
+
+Needed work: one `meeting` staged kind carrying `{ provider, externalId, title }`, one rail entry listing connected providers with `listRecent`, and `importMeetingTranscript(provider, externalId)` on dispatch.
+
+Reason not done now: the web vitest runner fails at setup in this environment, so a UI refactor of this size could not be verified beyond typecheck.
+
+## 2026-09-14 - [FIX] Pre-existing failure in `space-automation-fathom-actions.service.test.ts`
+
+Status: Open
+
+Found while: ROA-40 Phase 3.
+
+Evidence: "uses authoritative provider actions instead of generating extra Fathom tasks" fails on the branch before Phase 0 (`suggest-tasks` is still called); unrelated to the meeting intake changes.
+
+Needed work: align the test with the current `meeting_workspace_actions_authoritative` behavior or fix the regression it describes.
+
+Reason not done now: pre-existing and outside ROA-40.

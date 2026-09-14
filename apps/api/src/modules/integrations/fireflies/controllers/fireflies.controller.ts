@@ -23,6 +23,7 @@ import {
 } from '@vibey/api-shared'
 import { CreditsGuard } from '../../../billing/guards/credits.guard'
 import { MeetingImportService } from '../../../meetings/intake/services/meeting-import.service'
+import { MeetingsSpaceBootstrapService } from '../../../meetings/intake/services/meetings-space-bootstrap.service'
 import {
   ConnectFirefliesSchema,
   ListFirefliesTranscriptsSchema,
@@ -38,6 +39,7 @@ export class FirefliesController {
   constructor(
     private readonly api: FirefliesApiService,
     private readonly meetingImport: MeetingImportService,
+    private readonly meetingsSpace: MeetingsSpaceBootstrapService,
   ) {}
 
   @Get('status')
@@ -47,7 +49,12 @@ export class FirefliesController {
   }
 
   @Post('connect')
-  async connect(@CurrentUser() user: { id: string }, @Body() body: unknown) {
+  async connect(
+    @CurrentUser() user: { id: string },
+    @OrgContext() scope: RequestScope,
+    @Supabase() supabase: SupabaseClient,
+    @Body() body: unknown,
+  ) {
     const validation = ConnectFirefliesSchema.safeParse(body)
     if (!validation.success) throw invalidRequest(validation.error.flatten())
     const result = await this.api.connect(
@@ -55,6 +62,8 @@ export class FirefliesController {
       validation.data.apiKey,
       validation.data.webhookSecret,
     )
+    // Meetings from Fireflies land in the same Meetings space Fathom uses.
+    await this.meetingsSpace.ensureMeetingsSpaceQuietly(supabase, scope)
     return { success: true, ...result }
   }
 

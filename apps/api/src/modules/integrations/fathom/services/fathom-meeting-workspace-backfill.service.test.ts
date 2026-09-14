@@ -34,7 +34,7 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
       ]),
     }
     const ingestion = {
-      ingestFathomSource: vi.fn().mockResolvedValue({
+      ingestMeetingSource: vi.fn().mockResolvedValue({
         transcript_doc_item_id: 'transcript-doc',
       }),
     }
@@ -58,7 +58,7 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
       failures: [],
     })
     expect(api.getRecordingTranscript).toHaveBeenCalledWith({}, 'user', '123')
-    expect(ingestion.ingestFathomSource).toHaveBeenCalledWith(
+    expect(ingestion.ingestMeetingSource).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         meetingItemId: 'meeting-item',
@@ -90,7 +90,7 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
         },
       ]),
     }
-    const ingestion = { ingestFathomSource: vi.fn() }
+    const ingestion = { ingestMeetingSource: vi.fn() }
     const service = new FathomMeetingWorkspaceBackfillService(
       api as never,
       repository as never,
@@ -104,7 +104,7 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
 
     expect(result.unavailable).toBe(1)
     expect(result.failed).toBe(0)
-    expect(ingestion.ingestFathomSource).not.toHaveBeenCalled()
+    expect(ingestion.ingestMeetingSource).not.toHaveBeenCalled()
   })
 
   it('returns a stable cursor so unavailable rows cannot block older recordings', async () => {
@@ -133,7 +133,7 @@ describe('FathomMeetingWorkspaceBackfillService', () => {
     const service = new FathomMeetingWorkspaceBackfillService(
       api as never,
       repository as never,
-      { ingestFathomSource: vi.fn() } as never,
+      { ingestMeetingSource: vi.fn() } as never,
     )
 
     const result = await service.backfillMissingTranscripts({} as never, {

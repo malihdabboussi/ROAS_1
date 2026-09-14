@@ -111,7 +111,7 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
     }
     const meetingSourceIngestion = {
       findMatchingMeetingItem: vi.fn().mockResolvedValue(null),
-      ingestFathomSource: vi.fn().mockResolvedValue({
+      ingestMeetingSource: vi.fn().mockResolvedValue({
         recording_id: 'recording-1',
         transcript_doc_item_id: 'transcript-1',
         provider_action_ids: ['provider-action-1'],
@@ -187,7 +187,7 @@ describe('SpaceAutomationService Fathom actions and revocation', () => {
       expect.anything(),
     )
     expect(createItem).toHaveBeenCalledTimes(1)
-    expect(meetingSourceIngestion.ingestFathomSource).toHaveBeenCalledWith(
+    expect(meetingSourceIngestion.ingestMeetingSource).toHaveBeenCalledWith(
       expect.anything(),
       expect.objectContaining({
         meetingItemId: 'item_parent',
