@@ -40338,7 +40338,7 @@ Reason not done now: ROA-40 session was planning only; code changes need approva
 
 ## 2026-09-11 - [FIX] Fathom webhook accepts unsigned or mis-signed deliveries
 
-Status: Open (fixed by Phase 0 of `.docs/plans/meeting-notetaker-system-roa-40.md`)
+Status: Done in ROA-40 Phase 0 (2026-09-14): shared webhook door verifies Standard Webhooks signatures and rejects unsigned deliveries.
 
 Found while: Planning ROA-40.
 
@@ -40362,7 +40362,7 @@ Reason not done now: Planning-only session; decomposition is broader than ROA-40
 
 ## 2026-09-11 - [FIX] `ingest_fireflies_transcript` agent action is a no-op stub
 
-Status: Open (Phase 4 of the ROA-40 plan replaces it with `ingest_meeting_transcript`)
+Status: Done in ROA-40 Phase 4 (2026-09-14): replaced by `ingest_meeting_transcript`.
 
 Found while: Planning ROA-40.
 
