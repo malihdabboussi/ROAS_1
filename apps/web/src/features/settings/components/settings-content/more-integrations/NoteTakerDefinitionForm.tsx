@@ -2,6 +2,7 @@
 
 import { NoteTakerFieldMapSection } from './NoteTakerFieldMapSection'
 import { NoteTakerPreviewPanel } from './NoteTakerPreviewPanel'
+import { NoteTakerStartSection } from './NoteTakerStartSection'
 import type { useNoteTakerDefinitionForm } from './use-note-taker-definition-form'
 
 type Form = ReturnType<typeof useNoteTakerDefinitionForm>
@@ -50,6 +51,8 @@ export function NoteTakerDefinitionForm({ form }: { form: Form }) {
   const signed = state.signatureScheme === 'hmac_sha256'
   return (
     <div className="space-y-spacing-6">
+      <NoteTakerStartSection form={form} />
+
       <section className="space-y-spacing-3">
         <p className="body-2 text-foreground font-medium">About the tool</p>
         <div className="gap-spacing-3 grid grid-cols-1 sm:grid-cols-2">
@@ -203,12 +206,10 @@ export function NoteTakerDefinitionForm({ form }: { form: Form }) {
       </section>
 
       <NoteTakerPreviewPanel
-        samplePayload={state.samplePayload}
-        error={errors.samplePayload}
+        hasSample={state.samplePayload.trim().length > 0}
         previewing={form.previewing}
         preview={form.preview}
         previewError={form.previewError}
-        onSampleChange={(v) => setField('samplePayload', v)}
         onRunPreview={form.runPreview}
       />
     </div>

@@ -18,6 +18,18 @@ export class MeetingProviderDefinitionsController {
     return { success: true, definitions }
   }
 
+  @Get('templates')
+  templates() {
+    return { success: true, templates: this.definitions.templates() }
+  }
+
+  @Post('suggest')
+  @UseGuards(RoleGuard)
+  @Roles('admin')
+  suggest(@Body() body: unknown) {
+    return { success: true, ...this.definitions.suggest(body) }
+  }
+
   @Get(':slug')
   @UseGuards(RoleGuard)
   @Roles('admin')

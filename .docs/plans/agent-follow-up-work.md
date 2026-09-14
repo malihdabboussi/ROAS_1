@@ -40482,7 +40482,7 @@ Reason not done now: pre-existing and outside ROA-40.
 
 ## 2026-09-14 - [FIX] Read AI webhook address is shown only after Connect
 
-Status: Open (check during ROA-50 live run)
+Status: Done 2026-09-14 (ROA-51 follow-on): the connect dialog shows the address before the key for Read AI and Fireflies via `GET /integrations/meetings/:provider/webhook-address`.
 
 Found while: Writing the wiki Features page for ROA-40.
 
@@ -40518,7 +40518,7 @@ Reason not done now: No target tool needed it in v1; adding it later is one unio
 
 ## 2026-09-14 - [REFACTOR] Read AI connect could reuse the generic note-taker connect route
 
-Status: Open
+Status: Open (address route already shared since 2026-09-14; connect, status and disconnect still duplicated)
 
 Found while: ROA-51 Phase A.
 

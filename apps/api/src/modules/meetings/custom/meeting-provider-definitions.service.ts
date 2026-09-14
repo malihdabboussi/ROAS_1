@@ -10,10 +10,13 @@ import {
   NoteTakerDefinitionInputSchema,
   NoteTakerDefinitionUpdateSchema,
   NoteTakerPreviewSchema,
+  NoteTakerSuggestSchema,
   slugFromDisplayName,
   type NoteTakerDefinition,
   type NoteTakerDefinitionInput,
 } from './note-taker-definition.schema'
+import { NOTE_TAKER_TEMPLATES } from './note-taker-templates'
+import { suggestFieldMap } from './suggest-field-map'
 
 /** What the Library needs for a defined note taker; never the field map or signature rule. */
 export type NoteTakerListing = {
@@ -70,6 +73,16 @@ export class MeetingProviderDefinitionsService {
   async deactivate(slug: string): Promise<void> {
     await this.getForAdmin(slug)
     await this.repository.setActive(slug, false)
+  }
+
+  templates() {
+    return NOTE_TAKER_TEMPLATES
+  }
+
+  /** Guess the field map from one sample delivery; the admin confirms with the preview. */
+  suggest(body: unknown) {
+    const { samplePayload } = parse(NoteTakerSuggestSchema, body)
+    return suggestFieldMap(samplePayload)
   }
 
   /** Runs the mapping over a sample so the admin can check paths before saving. */

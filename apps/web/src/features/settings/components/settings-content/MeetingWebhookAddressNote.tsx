@@ -32,8 +32,8 @@ export function MeetingWebhookAddressNote({ provider, name }: { provider: string
     <div className="rounded-spacing-2 border-border bg-secondary p-spacing-3 space-y-spacing-1 border">
       <p className="body-3 text-foreground font-medium">1. Give {name} this address</p>
       <p className="body-4 text-muted-foreground">
-        Create a webhook in {name} that posts finished meetings here, then paste the secret it shows
-        below.
+        Create a webhook in {name} that posts finished meetings here. Then paste the signing secret
+        below: the one {name} shows for the webhook, or the one you set there.
       </p>
       {address ? (
         <code className="body-4 text-foreground break-all font-mono" data-testid="webhook-address">
