@@ -40539,3 +40539,27 @@ Evidence: Running vitest in `apps/web` on branch `claude/roa-40-modular-meeting-
 Needed work: Triage each against main now that the suite runs; most look like assertions that drifted from the component (column lists, labels, a missing mock export).
 
 Reason not done now: Outside ROA-51; the suite had been silently broken so the drift accumulated unnoticed.
+
+## 2026-09-14 - [FIX] Recording events marked "ignored" are never re-claimed once a route exists
+
+Status: Open
+
+Found while: ROA-51 live run; three Read AI deliveries were marked ignored because the Meetings space had no rule.
+
+Evidence: `apps/api/src/modules/spaces/repositories/space-automation-external-events.repository.ts` `claimFathomExternalEvent` re-claims only `failed` and `received` rows; a row in `ignored` (no matching route at the time) blocks every later delivery of the same meeting, including a manual re-push from the tool.
+
+Needed work: Treat `ignored` with reason `no_matching_route` as re-claimable (or age it out), so a meeting delivered before the rule existed can land once the rule is installed. Until then, delete the ignored rows for the meeting before re-pushing.
+
+Reason not done now: Claim semantics are shared with Fathom and Composio events; needs a small design pass and its own tests.
+
+## 2026-09-14 - [ARCH] `space-automation-service-03.base.ts` is near its limit
+
+Status: Open
+
+Found while: Adding `ensureMeetingLogAutomation` (ROA-51).
+
+Evidence: 568 of 600 lines.
+
+Needed work: Move the external-trigger sync helpers (`syncExternalTriggerForAutomation`, `syncFathomTriggerRoute`, `syncContactTriggerRoute`, the disable helpers) into their own service.
+
+Reason not done now: Out of scope for the live-run fix.
