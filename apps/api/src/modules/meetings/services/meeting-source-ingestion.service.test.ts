@@ -180,7 +180,7 @@ describe('MeetingSourceIngestionService', () => {
       stateRepository as never,
     )
 
-    const result = await service.ingestFathomSource({} as never, {
+    const result = await service.ingestMeetingSource({} as never, {
       meetingItemId: 'meeting-1',
       spaceId: 'space-1',
       userId: 'user-1',
@@ -353,5 +353,83 @@ describe('MeetingSourceIngestionService', () => {
     })
 
     expect(result).toBe('instant-meeting')
+  })
+
+  it('ingests a normalized non-Fathom source and keeps the real provider on the recording', async () => {
+    const repository = {
+      upsertWorkspace: vi.fn().mockResolvedValue(undefined),
+      upsertParticipantContextLinks: vi.fn().mockResolvedValue(undefined),
+      upsertRecording: vi.fn().mockResolvedValue({ id: 'recording-1' }),
+      upsertTranscriptDocument: vi.fn().mockResolvedValue({ id: 'doc-1' }),
+      linkTranscriptDocument: vi.fn().mockResolvedValue(undefined),
+      listAssigneeCandidates: vi.fn().mockResolvedValue([]),
+      listRecordings: vi.fn().mockResolvedValue([
+        {
+          id: 'recording-1',
+          provider: 'read_ai',
+          external_recording_id: 'S1',
+          title: 'Standup',
+          participant_emails: ['owner@example.com'],
+          transcript_entries: 1,
+          provider_action_items: [],
+        },
+      ]),
+      setPrimaryRecording: vi.fn().mockResolvedValue(undefined),
+    }
+    const resolutionRepository = {
+      findByMeetingItem: vi.fn().mockResolvedValue(null),
+      findMeetingItemCustomData: vi.fn().mockResolvedValue({}),
+      findCallIdentityProfile: vi.fn().mockResolvedValue({
+        email: 'owner@example.com',
+        fathomAliases: [],
+        fullName: 'Owner',
+        internalDomains: [],
+      }),
+      updateMeetingItemCallKind: vi.fn().mockResolvedValue(undefined),
+      updateMeetingItemFathomRecording: vi.fn().mockResolvedValue(undefined),
+    }
+    const recaps = {
+      listActions: vi.fn().mockResolvedValue([]),
+      upsertRecap: vi.fn().mockResolvedValue('recap-1'),
+    }
+    const service = new MeetingSourceIngestionService(
+      repository as never,
+      { upsertProviderActions: vi.fn().mockResolvedValue([]) } as never,
+      resolutionRepository as never,
+      recaps as never,
+      { upsertProviderFollowUps: vi.fn().mockResolvedValue([]) } as never,
+    )
+    const { normalizeReadAiMeetingSource } = await import('../providers/read-ai-meeting-source')
+    const source = normalizeReadAiMeetingSource({
+      session_id: 'S1',
+      title: 'Standup',
+      owner: { email: 'owner@example.com', name: 'Owner' },
+      transcript: { speaker_blocks: [{ speaker: { name: 'Owner' }, words: 'hello' }] },
+    })
+
+    const result = await service.ingestMeetingSource({} as never, {
+      meetingItemId: 'meeting-1',
+      spaceId: 'space-1',
+      userId: 'user-1',
+      orgId: null,
+      calendarEventId: null,
+      source,
+    })
+
+    expect(result.recording_id).toBe('recording-1')
+    expect(repository.upsertRecording).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ source: expect.objectContaining({ provider: 'read_ai' }) }),
+    )
+    expect(repository.upsertTranscriptDocument).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ docBody: expect.stringContaining('Provider:</strong> Read AI') }),
+    )
+    expect(resolutionRepository.updateMeetingItemFathomRecording).toHaveBeenCalledWith(
+      expect.anything(),
+      'meeting-1',
+      {},
+      expect.objectContaining({ host: expect.anything() }),
+    )
   })
 })

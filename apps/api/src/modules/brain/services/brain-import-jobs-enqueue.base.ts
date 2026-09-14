@@ -1,6 +1,6 @@
-import { randomUUID } from 'node:crypto'
 import type { AssetRef } from '@vibey/api-shared'
 import { normalizeSlackTimestamp } from '../../slack/utils/normalize-slack-timestamp'
+import type { MeetingJobSource } from './brain-import-jobs-meeting-input'
 import { BrainImportJobsRuntimeBase } from './brain-import-jobs-runtime.base'
 import type { SlackForkTarget } from './brain-import-jobs.types'
 
@@ -69,34 +69,6 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
     )
   }
 
-  async enqueueFathomMeetingImport(
-    userId: string,
-    meeting: Record<string, unknown>,
-    orgId?: string | null,
-    brainId?: string,
-    targetBrain?: string,
-  ) {
-    const externalId = String(
-      meeting.id ||
-        meeting.recording_id ||
-        meeting.call_id ||
-        meeting.url ||
-        meeting.title ||
-        randomUUID(),
-    )
-    const payload: Record<string, unknown> = { meeting }
-    if (brainId) payload.brainId = brainId
-    if (targetBrain) payload.targetBrainOverride = targetBrain
-    return this.enqueueJob(
-      userId,
-      'fathom_meeting_import',
-      String(meeting.title || meeting.meeting_title || 'Fathom meeting'),
-      `fathom:${externalId}`,
-      payload,
-      orgId,
-    )
-  }
-
   async enqueueSkIngest(
     userId: string,
     input: {
@@ -148,21 +120,56 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
     )
   }
 
-  async enqueueFirefliesTranscriptImport(
+  /** Provider-agnostic meeting import: the normalized transcript travels in the payload. */
+  async enqueueMeetingTranscriptImport(
     userId: string,
-    transcriptId: string,
+    input: {
+      source: MeetingJobSource
+      brainId?: string
+      targetBrain?: string
+      contactId?: string
+    },
     orgId?: string | null,
-    brainId?: string,
-    targetBrain?: string,
   ) {
-    const payload: Record<string, unknown> = { transcriptId }
-    if (brainId) payload.brainId = brainId
-    if (targetBrain) payload.targetBrainOverride = targetBrain
+    const payload: Record<string, unknown> = {
+      provider: input.source.provider,
+      externalId: input.source.externalRecordingId,
+      source: input.source,
+    }
+    if (input.brainId) payload.brainId = input.brainId
+    if (input.targetBrain) payload.targetBrainOverride = input.targetBrain
+    if (input.contactId) payload.contactId = input.contactId
     return this.enqueueJob(
       userId,
-      'fireflies_transcript_import',
-      'Fireflies transcript',
-      `fireflies:${transcriptId}`,
+      'meeting_transcript_import',
+      input.source.title || 'Meeting transcript',
+      `meeting:${input.source.provider}:${input.source.externalRecordingId}`,
+      payload,
+      orgId,
+    )
+  }
+
+  async enqueueCampaignMeetingImport(
+    userId: string,
+    input: {
+      campaignId: string
+      source: MeetingJobSource
+      domain?: 'strategy' | 'marketing' | 'finance' | 'operations' | 'creative' | 'general'
+    },
+    orgId?: string | null,
+  ) {
+    const payload: Record<string, unknown> = {
+      campaignId: input.campaignId,
+      provider: input.source.provider,
+      externalId: input.source.externalRecordingId,
+      source: input.source,
+    }
+    if (input.domain) payload.domain = input.domain
+    return this.enqueueJob(
+      userId,
+      'campaign_meeting_import',
+      input.source.title || 'Campaign meeting import',
+      `campaign-meeting:${input.campaignId}:${input.source.provider}:${input.source.externalRecordingId}`,
       payload,
       orgId,
     )
@@ -213,52 +220,6 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
       'campaign_url_import',
       `Link: ${shortUrl}`,
       dedupeKey,
-      input as unknown as Record<string, unknown>,
-      orgId,
-    )
-  }
-
-  async enqueueCampaignFathomImport(
-    userId: string,
-    input: {
-      campaignId: string
-      meeting: Record<string, unknown>
-      domain?: 'strategy' | 'marketing' | 'finance' | 'operations' | 'creative' | 'general'
-    },
-    orgId?: string | null,
-  ) {
-    const externalId = String(
-      input.meeting.id ||
-        input.meeting.recording_id ||
-        input.meeting.call_id ||
-        input.meeting.url ||
-        input.meeting.title ||
-        randomUUID(),
-    )
-    return this.enqueueJob(
-      userId,
-      'campaign_fathom_import',
-      String(input.meeting.title || input.meeting.meeting_title || 'Campaign Fathom import'),
-      `campaign-fathom:${input.campaignId}:${externalId}`,
-      input as unknown as Record<string, unknown>,
-      orgId,
-    )
-  }
-
-  async enqueueCampaignFirefliesImport(
-    userId: string,
-    input: {
-      campaignId: string
-      transcriptId: string
-      domain?: 'strategy' | 'marketing' | 'finance' | 'operations' | 'creative' | 'general'
-    },
-    orgId?: string | null,
-  ) {
-    return this.enqueueJob(
-      userId,
-      'campaign_fireflies_import',
-      'Campaign Fireflies import',
-      `campaign-fireflies:${input.campaignId}:${input.transcriptId}`,
       input as unknown as Record<string, unknown>,
       orgId,
     )

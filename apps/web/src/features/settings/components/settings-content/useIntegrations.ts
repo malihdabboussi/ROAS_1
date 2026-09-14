@@ -534,8 +534,19 @@ export function useIntegrations() {
         if (!res?.authorizeUrl) throw new Error('Missing authorizeUrl')
         window.open(res.authorizeUrl, '_blank', 'noopener,noreferrer')
       } else if (provider === 'fireflies') {
-        if (!apiKey) throw new Error('API key required')
-        await backendPost('/api/integrations/fireflies/connect', { apiKey })
+        const firefliesApiKey = connectionData?.api_key?.trim() || apiKey
+        if (!firefliesApiKey) throw new Error('API key required')
+        const firefliesWebhookSecret = connectionData?.webhook_secret?.trim()
+        await backendPost('/api/integrations/fireflies/connect', {
+          apiKey: firefliesApiKey,
+          ...(firefliesWebhookSecret ? { webhookSecret: firefliesWebhookSecret } : {}),
+        })
+        await loadData()
+        return { completedSynchronously: true }
+      } else if (provider === 'read_ai') {
+        const signingKey = connectionData?.signing_key?.trim() || apiKey
+        if (!signingKey) throw new Error('Signing key required')
+        await backendPost('/api/integrations/read-ai/connect', { signingKey })
         await loadData()
         return { completedSynchronously: true }
       } else if (provider === 'cursor') {
@@ -660,6 +671,8 @@ export function useIntegrations() {
         await backendPost('/api/integrations/wordpress/disconnect', {})
       } else if (provider === 'fireflies') {
         await backendPost('/api/integrations/fireflies/disconnect', {})
+      } else if (provider === 'read_ai') {
+        await backendPost('/api/integrations/read-ai/disconnect', {})
       } else if (provider === 'cursor') {
         await backendPost('/api/integrations/cursor/disconnect', {
           connectionId: userIntegration.id,

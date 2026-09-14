@@ -69,11 +69,6 @@
       "limit": 400,
       "lines": 407
     },
-    "apps/api/src/modules/brain/repositories/memory-stats.repository.ts": {
-      "kind": "repository",
-      "limit": 400,
-      "lines": 404
-    },
     "apps/api/src/modules/composio/services/composio.service.ts": {
       "kind": "service",
       "limit": 600,

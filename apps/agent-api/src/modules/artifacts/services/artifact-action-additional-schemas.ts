@@ -447,11 +447,6 @@ export const PROMPTMODE_ADDITIONAL_ACTION_SCHEMAS: Record<string, ActionSchema> 
   ),
 
   get_brain_stats: schema(),
-  ingest_fireflies_transcript: schema(
-    [['meeting_id', 'recording_id', 'call_id']],
-    ['meeting_id', 'recording_id', 'call_id', 'title', ...campaignScope],
-    stringType(['meeting_id', 'recording_id', 'call_id', 'title', ...campaignScope]),
-  ),
   create_strategy_node: schema(
     [],
     ['title', 'content', 'node_type', ...campaignScope],

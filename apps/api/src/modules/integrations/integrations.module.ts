@@ -26,6 +26,7 @@ import { MetaModule } from './meta/meta.module'
 import { OpenAICodexModule } from './openai-codex/openai-codex.module'
 import { PageGraderModule } from './page-grader/page-grader.module'
 import { PaypalModule } from './paypal/paypal.module'
+import { ReadAiModule } from './read-ai/read-ai.module'
 import { IntegrationsRepository } from './repositories/integrations.repository'
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module'
 import { SearchApiModule } from './searchapi/searchapi.module'
@@ -68,6 +69,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     FathomModule,
     FanbasisModule,
     FirefliesModule,
+    ReadAiModule,
     PageGraderModule,
     ScrapeCreatorsModule,
     SearchApiModule,

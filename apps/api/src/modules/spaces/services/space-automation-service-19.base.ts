@@ -278,6 +278,7 @@ interface AutomationYoutubeChannelInput {
 
 export abstract class SpaceAutomationServiceBase19 extends SpaceAutomationServiceBase18 {
   protected extractFathomSummary(event: Record<string, unknown>): {
+    provider: string
     meetingId: string
     title: string
     recordedByEmail: string
@@ -324,6 +325,10 @@ export abstract class SpaceAutomationServiceBase19 extends SpaceAutomationServic
       event.id ?? event.recording_id ?? event.call_id ?? `fathom-${Date.now()}`,
     ).trim()
     return {
+      provider:
+        typeof event.provider === 'string' && event.provider.trim()
+          ? event.provider.trim()
+          : 'fathom',
       meetingId,
       title: String(event.title ?? event.meeting_title ?? 'Untitled Meeting').trim(),
       recordedByEmail: String(recordedBy.email ?? '')

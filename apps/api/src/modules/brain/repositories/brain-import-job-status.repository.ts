@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import {
+  CAMPAIGN_BRAIN_IMPORT_JOB_TYPES,
+  QUEUE_VISIBLE_IMPORT_JOB_TYPES,
+  USER_BRAIN_IMPORT_JOB_TYPES,
+} from '../services/brain-import-job-type-groups'
 
 @Injectable()
 export class BrainImportJobStatusRepository {
@@ -51,32 +56,12 @@ export class BrainImportJobStatusRepository {
       query = query.eq('payload->>brainId', scope.brainId)
     } else if (scope?.campaignId) {
       query = query
-        .in('job_type', [
-          'campaign_file_import',
-          'campaign_fathom_import',
-          'campaign_fireflies_import',
-          'campaign_url_import',
-          'page_grader_brain_sync',
-        ])
+        .in('job_type', CAMPAIGN_BRAIN_IMPORT_JOB_TYPES)
         .eq('payload->>campaignId', scope.campaignId)
     } else if (scope?.targetBrain === 'user') {
-      query = query
-        .in('job_type', [
-          'document_remember',
-          'user_link_import',
-          'fathom_meeting_import',
-          'fireflies_transcript_import',
-        ])
-        .is('payload->>brainId', null)
+      query = query.in('job_type', USER_BRAIN_IMPORT_JOB_TYPES).is('payload->>brainId', null)
     } else {
-      query = query.in('job_type', [
-        'document_remember',
-        'user_link_import',
-        'sk_ingest',
-        'sk_link_ingest',
-        'fathom_meeting_import',
-        'fireflies_transcript_import',
-      ])
+      query = query.in('job_type', QUEUE_VISIBLE_IMPORT_JOB_TYPES)
     }
 
     const { data, error } = await query.order('created_at', { ascending: false }).limit(limit)

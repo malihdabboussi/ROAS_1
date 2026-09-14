@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { SupabaseServiceClient } from '@vibey/api-shared'
+import { USER_BRAIN_IMPORT_JOB_TYPES } from '../services/brain-import-job-type-groups'
 import { sumBrainConnectionCounts } from '../utils/brain-connection-stats'
 import { MemoryBrainResolver } from './memory-brain-resolver'
 
@@ -385,14 +386,7 @@ export class MemoryStatsRepository {
       .in('status', ['queued', 'processing', 'retry'])
 
     if (brainScope === 'user') {
-      query = query
-        .in('job_type', [
-          'document_remember',
-          'user_link_import',
-          'fathom_meeting_import',
-          'fireflies_transcript_import',
-        ])
-        .is('payload->>brainId', null)
+      query = query.in('job_type', USER_BRAIN_IMPORT_JOB_TYPES).is('payload->>brainId', null)
     } else {
       query = query.eq('payload->>brainId', brainId)
     }

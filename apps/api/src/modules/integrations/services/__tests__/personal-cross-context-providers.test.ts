@@ -13,7 +13,14 @@ describe('personal-cross-context-providers', () => {
   })
 
   it('keeps existing personal-only tools and excludes Slack from the status/calendar set', () => {
-    for (const id of ['fathom', 'fireflies', 'page_grader', 'openai_codex', 'anthropic_claude']) {
+    for (const id of [
+      'fathom',
+      'fireflies',
+      'read_ai',
+      'page_grader',
+      'openai_codex',
+      'anthropic_claude',
+    ]) {
       expect(PERSONAL_CROSS_CONTEXT_PROVIDERS.has(id)).toBe(true)
     }
     expect(PERSONAL_CROSS_CONTEXT_PROVIDERS.has('slack')).toBe(false)

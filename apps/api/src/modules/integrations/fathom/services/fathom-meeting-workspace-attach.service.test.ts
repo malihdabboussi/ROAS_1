@@ -24,7 +24,7 @@ describe('FathomMeetingWorkspaceAttachService', () => {
       requireMeeting: vi.fn().mockResolvedValue({ meeting: { id: 'meeting-1' } }),
     }
     const ingestion = {
-      ingestFathomSource: vi.fn().mockResolvedValue({
+      ingestMeetingSource: vi.fn().mockResolvedValue({
         recording_id: 'rec-row-1',
         primary_recording_id: 'rec-row-1',
         transcript_doc_item_id: 'doc-1',
@@ -56,7 +56,7 @@ describe('FathomMeetingWorkspaceAttachService', () => {
     )
     expect(api.getRecordingTranscript).toHaveBeenCalledWith({}, 'user-1', 'fathom-99')
     expect(api.getRecordingSummary).toHaveBeenCalledWith({}, 'user-1', 'fathom-99')
-    expect(ingestion.ingestFathomSource).toHaveBeenCalledWith(
+    expect(ingestion.ingestMeetingSource).toHaveBeenCalledWith(
       {},
       expect.objectContaining({
         meetingItemId: 'meeting-1',
@@ -84,7 +84,7 @@ describe('FathomMeetingWorkspaceAttachService', () => {
     const service = new FathomMeetingWorkspaceAttachService(
       { getRecordingTranscript: vi.fn(), getRecordingSummary: vi.fn() } as never,
       { requireMeeting: vi.fn().mockResolvedValue({}) } as never,
-      { ingestFathomSource: vi.fn() } as never,
+      { ingestMeetingSource: vi.fn() } as never,
     )
 
     await expect(

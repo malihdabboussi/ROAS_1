@@ -55,6 +55,7 @@ export function resolveIntegrationConnectionIdentity(
   if (provider === 'fireflies') {
     return metadataText(metadata, 'name') ?? metadataText(metadata, 'email')
   }
+  if (provider === 'read_ai') return metadataText(metadata, 'owner_email') ?? 'Read AI'
   if (provider === 'fathom') {
     return (
       metadataText(metadata, 'email') ??

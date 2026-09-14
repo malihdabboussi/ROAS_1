@@ -6,7 +6,7 @@ import type { A2ATurn } from './artifact-agent-delegation.types'
 
 export class ArtifactAgentDelegationTaskService {
   private static readonly MEETING_SOURCE_PATTERN =
-    /\b(call|meeting|recording|transcript|fathom|fireflies|zoom|otter|tldv|tactiq|sembly)\b/i
+    /\b(call|meeting|recording|transcript|fathom|fireflies|read\.?ai|zoom|otter|tldv|tactiq|sembly)\b/i
   private static readonly UNVERIFIED_MISSING_SOURCE_PATTERN =
     /\b(cannot|can't|could not|couldn't|unable to|did not|didn't)\b.{0,80}\b(find|locate|access|retrieve)\b|\b(missing|unavailable|not in the workspace)\b|send (?:me )?(?:the )?(?:call|recording|transcript|link)|tell me (?:the )?(?:call )?date/i
   private static readonly MEETING_SOURCE_TOOLS = new Set([

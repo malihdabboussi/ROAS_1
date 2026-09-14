@@ -2657,19 +2657,12 @@ export const VIBEY_API_ACTION_DOCS: Record<string, VibeyActionDoc> = {
     parameters:
       '```json\n{"action":"ingest_agent_brain_link","label":"Adding agent knowledge from link","data":{"brain_id":"UUID-from-resolve_agent_brain","url":"https://example.com/article","title":"Optional Override Title"}}\n```',
   },
-  ingest_fathom_meeting: {
+  ingest_meeting_transcript: {
     section: 'Brain',
     description:
-      'Imports a Fathom meeting recording/transcript. **meeting_id is REQUIRED**. User sees: meeting insights appear as memories in Brain with source attribution.',
+      "Imports one meeting from a connected note taker into a brain. **provider** (fathom, fireflies, read_ai) and **external_id** (the provider's meeting/recording/transcript id) are REQUIRED. Optional brain_id or target_brain (user, agent, customer with contact_id) and campaign_id for a Campaign Brain. The transcript is fetched server-side and saved with source attribution. User sees: meeting insights appear as memories in Brain.",
     parameters:
-      '```json\n{"action":"ingest_fathom_meeting","label":"Importing Fathom meeting","data":{"meeting_id":"..."}}\n```',
-  },
-  ingest_fireflies_transcript: {
-    section: 'Brain',
-    description:
-      'Imports a Fireflies transcript. **transcript_id is REQUIRED**. User sees: transcript insights appear as memories in Brain with source attribution.',
-    parameters:
-      '```json\n{"action":"ingest_fireflies_transcript","label":"Importing Fireflies transcript","data":{"transcript_id":"..."}}\n```',
+      '```json\n{"action":"ingest_meeting_transcript","label":"Importing meeting","data":{"provider":"fathom","external_id":"..."}}\n```',
   },
   bulk_create_ads: {
     section: 'Ads',

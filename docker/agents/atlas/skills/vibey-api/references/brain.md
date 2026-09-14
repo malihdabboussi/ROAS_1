@@ -513,30 +513,17 @@ CUSTOMER BRAIN ONLY — saves customer text knowledge. Required: text/content. P
 {"action":"ingest_customer_brain_text","label":"Adding customer signal","data":{"text":"A public widget visitor asked for clearer weekly rollout updates.","conversation_id":"UUID","visitor_id":"visitor_123","title":"Public widget request"}}
 ```
 
-## ingest_fathom_meeting
-**Required keys:** `meeting_id,recording_id,call_id,meeting`
+## ingest_meeting_transcript
 
-**Optional keys:** `title`, `brainId`, `brain_id`, `targetBrain`, `target_brain`, `campaignId`, `campaign_id`
+Import one meeting from a connected note taker (Fathom, Fireflies, Read AI) into a brain. The API fetches the transcript through the provider and queues the shared meeting import, so the brain always receives the words that were said.
 
-**Types:** `meeting_id`: string, `recording_id`: string, `call_id`: string, `title`: string, `brainId`: string, `brain_id`: string, `targetBrain`: string, `target_brain`: string, `campaignId`: string, `campaign_id`: string
-
-Imports a Fathom meeting recording/transcript. **meeting_id is REQUIRED**. User sees: meeting insights appear as memories in Brain with source attribution.
-
-```json
-{"action":"ingest_fathom_meeting","label":"Importing Fathom meeting","data":{"meeting_id":"..."}}
-```
-
-## ingest_fireflies_transcript
-**Required keys:** `meeting_id,recording_id,call_id`
-
-**Optional keys:** `meeting_id`, `recording_id`, `call_id`, `title`, `campaign_id`, `campaignId`, `space_id`, `scope_override`
-
-**Types:** `meeting_id`: string, `recording_id`: string, `call_id`: string, `title`: string, `campaign_id`: string, `campaignId`: string, `space_id`: string, `scope_override`: string
-
-Imports a Fireflies transcript. **transcript_id is REQUIRED**. User sees: transcript insights appear as memories in Brain with source attribution.
+- `provider` (required): `fathom`, `fireflies`, or `read_ai`
+- `external_id` (required): the provider's meeting, recording, transcript, or session id
+- `brain_id` / `target_brain` (optional): `user` (default), `agent`, `customer` (needs `contact_id`)
+- `campaign_id` (optional): import into a Campaign Brain instead
 
 ```json
-{"action":"ingest_fireflies_transcript","label":"Importing Fireflies transcript","data":{"transcript_id":"..."}}
+{"action":"ingest_meeting_transcript","label":"Importing meeting","data":{"provider":"fathom","external_id":"..."}}
 ```
 
 ## ingest_user_brain_document

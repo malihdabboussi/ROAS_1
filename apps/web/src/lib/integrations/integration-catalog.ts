@@ -415,9 +415,42 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'fireflies',
     provider: 'fireflies',
     name: 'Fireflies',
-    description: 'Connect Fireflies AI to sync meeting transcripts, summaries, and action items.',
+    description:
+      'Connect Fireflies AI to sync meeting transcripts, summaries, and action items. After connecting, paste the ROAS webhook address shown on the card into Fireflies → Settings → Developer → Webhooks so new meetings arrive on their own.',
     category: 'productivity',
     auth_type: 'api_key',
+    connection_fields: [
+      {
+        name: 'api_key',
+        label: 'Fireflies API Key',
+        placeholder: 'From Fireflies → Settings → Developer',
+        required: true,
+      },
+      {
+        name: 'webhook_secret',
+        label: 'Webhook signing secret',
+        placeholder: '16 to 32 characters, set in Fireflies Developer settings (optional)',
+        required: false,
+      },
+    ],
+    is_active: true,
+  },
+  {
+    id: 'read_ai',
+    provider: 'read_ai',
+    name: 'Read AI',
+    description:
+      'Connect Read AI so meeting reports, transcripts, and action items flow into your brain and Meetings. In Read AI → Integrations → Webhooks, create a webhook pointing at the ROAS address shown on the card and paste its signing key here. Needs a Read AI Pro or Enterprise plan.',
+    category: 'productivity',
+    auth_type: 'api_key',
+    connection_fields: [
+      {
+        name: 'signing_key',
+        label: 'Webhook signing key',
+        placeholder: 'Copied from the webhook you created in Read AI',
+        required: true,
+      },
+    ],
     is_active: true,
   },
   {

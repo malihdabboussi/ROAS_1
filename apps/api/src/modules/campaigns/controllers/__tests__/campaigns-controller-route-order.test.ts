@@ -39,8 +39,6 @@ const EXPECTED_CAMPAIGNS_ROUTES = [
   'GET campaigns/:id/knowledge/nodes -> listKnowledgeNodes',
   'POST campaigns/:id/knowledge/nodes/manual -> createManualKnowledgeNode',
   'POST campaigns/:id/knowledge/import-url -> importKnowledgeFromUrl',
-  'POST campaigns/:id/knowledge/import-fathom-meeting -> importKnowledgeFromFathomMeeting',
-  'POST campaigns/:id/knowledge/import-fireflies-transcript -> importKnowledgeFromFirefliesTranscript',
   'POST campaigns/:id/knowledge/from-deliverable -> addKnowledgeFromDeliverable',
   'DELETE campaigns/:id/knowledge/nodes/:nodeId -> deleteKnowledgeNode',
   'GET campaigns/:id/knowledge/graph -> getKnowledgeGraph',

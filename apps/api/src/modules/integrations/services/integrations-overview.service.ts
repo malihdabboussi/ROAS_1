@@ -32,6 +32,7 @@ const INTEGRATION_IDS_FOR_OVERVIEW = [
   'gohighlevel',
   'fathom',
   'fireflies',
+  'read_ai',
   'linkedin',
   'instagram',
   'twitter',
@@ -465,6 +466,19 @@ export class IntegrationsOverviewService {
 
       if (!firefliesSecret) {
         connectedSet.delete('fireflies')
+      }
+    }
+    if (connectedSet.has('read_ai')) {
+      const { data: readAiSecret } = await this.repository
+        .table(supabase, 'vault_secrets')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('provider', 'read_ai')
+        .eq('label', 'signing_key')
+        .maybeSingle()
+
+      if (!readAiSecret) {
+        connectedSet.delete('read_ai')
       }
     }
     if (connectedSet.has('fanbasis')) {

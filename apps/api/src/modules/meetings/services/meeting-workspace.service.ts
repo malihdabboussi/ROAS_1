@@ -456,7 +456,7 @@ export class MeetingWorkspaceService {
     const orgId = input.orgId !== undefined ? input.orgId : text(meeting.org_id)
 
     try {
-      await this.ingestion.ingestFathomSource(supabase, {
+      await this.ingestion.ingestMeetingSource(supabase, {
         meetingItemId: input.meetingItemId,
         spaceId: input.spaceId,
         userId,
