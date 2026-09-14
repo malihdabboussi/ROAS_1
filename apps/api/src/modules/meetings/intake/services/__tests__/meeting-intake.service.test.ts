@@ -33,7 +33,7 @@ describe('MeetingIntakeService', () => {
   let registry: { get: ReturnType<typeof vi.fn>; require: ReturnType<typeof vi.fn> }
   let repository: Record<string, ReturnType<typeof vi.fn>>
   let deliveries: { claim: ReturnType<typeof vi.fn>; release: ReturnType<typeof vi.fn> }
-  let importJobs: { enqueueFathomMeetingImport: ReturnType<typeof vi.fn> }
+  let importJobs: { enqueueMeetingTranscriptImport: ReturnType<typeof vi.fn> }
   let customerBrain: { listEnabledCustomerBrainsForRouting: ReturnType<typeof vi.fn> }
   let spaceAutomation: { processFathomRecordingEvent: ReturnType<typeof vi.fn> }
   let provider: TranscriptProvider & {
@@ -86,7 +86,9 @@ describe('MeetingIntakeService', () => {
       release: vi.fn().mockResolvedValue(undefined),
     }
     importJobs = {
-      enqueueFathomMeetingImport: vi.fn().mockResolvedValue({ jobId: 'job-1', status: 'queued' }),
+      enqueueMeetingTranscriptImport: vi
+        .fn()
+        .mockResolvedValue({ jobId: 'job-1', status: 'queued' }),
     }
     customerBrain = { listEnabledCustomerBrainsForRouting: vi.fn().mockResolvedValue([]) }
     spaceAutomation = {
@@ -130,7 +132,7 @@ describe('MeetingIntakeService', () => {
       })
       repository.findConnectionByWebhookKey.mockResolvedValue(null)
       await expect(webhook(transcriptEvent)).resolves.toMatchObject({ status: 404 })
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
     })
 
     it('answers 401 when the provider signature check fails and processes nothing', async () => {
@@ -138,7 +140,7 @@ describe('MeetingIntakeService', () => {
         status: 401,
       })
       expect(deliveries.claim).not.toHaveBeenCalled()
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
     })
 
     it('answers 400 when the body cannot be parsed into a meeting', async () => {
@@ -151,7 +153,7 @@ describe('MeetingIntakeService', () => {
         status: 200,
         body: { success: true, status: 'duplicate' },
       })
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
     })
 
     it('claims the delivery, fans the meeting out, and answers 202', async () => {
@@ -164,11 +166,20 @@ describe('MeetingIntakeService', () => {
       })
       expect(result.status).toBe(202)
       expect(result.body).toMatchObject({ success: true, status: 'processed', brainJobId: 'job-1' })
-      expect(importJobs.enqueueFathomMeetingImport).toHaveBeenCalledWith(
+      expect(importJobs.enqueueMeetingTranscriptImport).toHaveBeenCalledWith(
         'user_1',
-        expect.objectContaining({ id: 'meeting_1', title: 'Strategy call' }),
+        {
+          source: expect.objectContaining({
+            provider: 'fathom',
+            externalRecordingId: 'meeting_1',
+            title: 'Strategy call',
+            transcript: [expect.objectContaining({ text: 'Important decision' })],
+          }),
+        },
         null,
       )
+      const jobSource = importJobs.enqueueMeetingTranscriptImport.mock.calls[0]![1].source
+      expect(jobSource).not.toHaveProperty('raw')
       expect(spaceAutomation.processFathomRecordingEvent).toHaveBeenCalledWith(
         admin,
         'user_1',
@@ -184,7 +195,7 @@ describe('MeetingIntakeService', () => {
     })
 
     it('releases the claim and answers 500 when processing throws, so the provider retries', async () => {
-      importJobs.enqueueFathomMeetingImport.mockRejectedValue(new Error('queue down'))
+      importJobs.enqueueMeetingTranscriptImport.mockRejectedValue(new Error('queue down'))
       await expect(webhook(transcriptEvent)).resolves.toMatchObject({ status: 500 })
       expect(deliveries.release).toHaveBeenCalledWith('del_1')
     })
@@ -203,7 +214,7 @@ describe('MeetingIntakeService', () => {
           inlineEvent: transcriptEvent,
         }),
       ).resolves.toEqual({ status: 'skipped', reason: 'auto_ingest_disabled' })
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
       expect(spaceAutomation.processFathomRecordingEvent).not.toHaveBeenCalled()
     })
 
@@ -231,7 +242,7 @@ describe('MeetingIntakeService', () => {
         inlineEvent: transcriptEvent,
       })
       expect(result).toEqual({ status: 'skipped', reason: 'agenda_occurrence_minimized' })
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
       expect(customerBrain.listEnabledCustomerBrainsForRouting).not.toHaveBeenCalled()
       expect(spaceAutomation.processFathomRecordingEvent).not.toHaveBeenCalled()
     })
@@ -250,7 +261,7 @@ describe('MeetingIntakeService', () => {
         inlineEvent: transcriptEvent,
       })
       expect(repository.findActiveOrgMemberRole).toHaveBeenCalledWith('user_1', 'org_9')
-      expect(importJobs.enqueueFathomMeetingImport).toHaveBeenCalledWith(
+      expect(importJobs.enqueueMeetingTranscriptImport).toHaveBeenCalledWith(
         'user_1',
         expect.anything(),
         'org_9',
@@ -276,7 +287,7 @@ describe('MeetingIntakeService', () => {
           inlineEvent: transcriptEvent,
         }),
       ).rejects.toThrow(/not authorized/)
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
     })
 
     it('emits one customer interaction envelope per enabled customer brain', async () => {
@@ -318,7 +329,7 @@ describe('MeetingIntakeService', () => {
         inlineEvent: { ...transcriptEvent, transcript: undefined },
       })
       expect(result).toMatchObject({ status: 'processed', hasTranscript: false, brainJobId: null })
-      expect(importJobs.enqueueFathomMeetingImport).not.toHaveBeenCalled()
+      expect(importJobs.enqueueMeetingTranscriptImport).not.toHaveBeenCalled()
       expect(customerBrain.listEnabledCustomerBrainsForRouting).not.toHaveBeenCalled()
       expect(spaceAutomation.processFathomRecordingEvent).toHaveBeenCalled()
       expect(provider.hooks.afterSpaceRoute).toHaveBeenCalledWith(

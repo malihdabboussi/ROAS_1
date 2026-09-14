@@ -4,6 +4,7 @@ import type { ErrorReporter } from '@vibey/api-shared'
 import { BrainImportJobsInputRepository } from '../repositories/brain-import-jobs-input.repository'
 import { BrainImportJobsRuntimeRepository } from '../repositories/brain-import-jobs-runtime.repository'
 import { BrainImportJobsExecutionBase } from './brain-import-jobs-execution.base'
+import { buildMeetingMissionInput } from './brain-import-jobs-meeting-input'
 import type { BrainImportJobRecord } from './brain-import-jobs.types'
 
 export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionBase {
@@ -206,6 +207,9 @@ export abstract class BrainImportJobsInputBase extends BrainImportJobsExecutionB
           },
         }
       }
+      case 'meeting_transcript_import':
+      case 'campaign_meeting_import':
+        return buildMeetingMissionInput(job, payload)
       case 'slack_period_import':
       case 'campaign_slack_import':
         return this.buildSlackMissionInput(job, payload)

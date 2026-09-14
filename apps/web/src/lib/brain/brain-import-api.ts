@@ -117,8 +117,8 @@ export async function importFirefliesTranscript(
   status: 'queued' | 'processing' | 'retry' | 'succeeded' | 'failed'
   deduped?: boolean
 }> {
-  return backendPost('/api/brain/import-jobs/fireflies-transcript', {
-    transcriptId: id,
+  return backendPost('/api/integrations/meetings/fireflies/import', {
+    externalId: id,
     ...(options?.brainId ? { brainId: options.brainId } : {}),
     ...(options?.targetBrain ? { targetBrain: options.targetBrain } : {}),
   })

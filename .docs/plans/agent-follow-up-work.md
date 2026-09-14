@@ -40395,3 +40395,27 @@ Evidence: `apps/api/src/modules/integrations/fathom/services/fathom-oauth.servic
 Needed work: move the webhook registration and re-registration methods (`createSharedDoorWebhook`, `reregisterWebhook`, `reregisterAllWebhooks`) into a `fathom-webhook-registration.service.ts`.
 
 Reason not done now: kept Phase 0 scoped to the door change; extraction is mechanical and safe to do in Phase 4 cleanup.
+
+## 2026-09-14 - [FIX] Web vitest fails at setup in this environment
+
+Status: Open
+
+Found while: ROA-40 Phase 1 (web changes to the Fireflies card and import calls).
+
+Evidence: `apps/web/tests/setup.ts:9` throws `Class extends value undefined is not a constructor` (`NodeTextEncoder` undefined) for every web test file under Node 22 and Node 20 in this worktree; the same command was also tried in the main checkout.
+
+Needed work: confirm the Node/jsdom combination the web suite expects (CLAUDE.md reports ~2395 passing on clean `main`) and fix `tests/setup.ts` or pin the runner version so the web suite runs on a fresh install.
+
+Reason not done now: outside ROA-40 scope; web changes were verified by typecheck and lint instead.
+
+## 2026-09-14 - [FIX] Pre-existing failure in `type-c-services.characterization.test.ts`
+
+Status: Open
+
+Found while: ROA-40 Phase 1.
+
+Evidence: `apps/api/src/modules/brain/services/__tests__/type-c-services.characterization.test.ts` "builds Slack mission input" fails with `Cannot find module '../../slack/services/slack-observation.service'` from `brain-import-jobs.base.ts:146`; identical failure on branch `claude/roa-40-modular-meeting-system` before Phase 1.
+
+Needed work: the lazy `require` in `getSlackObservationService` needs a mock in that test (or the require should be replaced by module injection).
+
+Reason not done now: unrelated to the meeting intake change.

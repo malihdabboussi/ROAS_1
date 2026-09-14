@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { reportAppError } from '@vibey/api-shared'
+import { CROSS_POLLINATION_JOB_TYPES } from './brain-import-job-type-groups'
 import { BrainImportJobsBase } from './brain-import-jobs.base'
 import type {
   BrainImportJobRecord,
@@ -358,11 +359,7 @@ export abstract class BrainImportJobsRuntimeBase extends BrainImportJobsBase {
     void this.emitJobNotification(job, 'succeeded').catch(() => {})
 
     const payload = job.payload as Record<string, unknown>
-    if (
-      (job.job_type === 'fathom_meeting_import' ||
-        job.job_type === 'fireflies_transcript_import') &&
-      !payload.targetBrainOverride
-    ) {
+    if (CROSS_POLLINATION_JOB_TYPES.includes(job.job_type) && !payload.targetBrainOverride) {
       void this.triggerCrossPollination(job).catch((err) =>
         this.logger.warn(`Cross-pollination analysis failed: ${(err as Error).message}`),
       )

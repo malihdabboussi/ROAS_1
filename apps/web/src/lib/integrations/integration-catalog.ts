@@ -415,9 +415,24 @@ const STANDARD_INTEGRATIONS: Integration[] = [
     id: 'fireflies',
     provider: 'fireflies',
     name: 'Fireflies',
-    description: 'Connect Fireflies AI to sync meeting transcripts, summaries, and action items.',
+    description:
+      'Connect Fireflies AI to sync meeting transcripts, summaries, and action items. After connecting, paste the ROAS webhook address shown on the card into Fireflies → Settings → Developer → Webhooks so new meetings arrive on their own.',
     category: 'productivity',
     auth_type: 'api_key',
+    connection_fields: [
+      {
+        name: 'api_key',
+        label: 'Fireflies API Key',
+        placeholder: 'From Fireflies → Settings → Developer',
+        required: true,
+      },
+      {
+        name: 'webhook_secret',
+        label: 'Webhook signing secret',
+        placeholder: '16 to 32 characters, set in Fireflies Developer settings (optional)',
+        required: false,
+      },
+    ],
     is_active: true,
   },
   {

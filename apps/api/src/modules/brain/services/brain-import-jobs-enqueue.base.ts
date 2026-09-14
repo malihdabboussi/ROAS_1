@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import type { AssetRef } from '@vibey/api-shared'
 import { normalizeSlackTimestamp } from '../../slack/utils/normalize-slack-timestamp'
+import type { MeetingJobSource } from './brain-import-jobs-meeting-input'
 import { BrainImportJobsRuntimeBase } from './brain-import-jobs-runtime.base'
 import type { SlackForkTarget } from './brain-import-jobs.types'
 
@@ -163,6 +164,61 @@ export abstract class BrainImportJobsEnqueueBase extends BrainImportJobsRuntimeB
       'fireflies_transcript_import',
       'Fireflies transcript',
       `fireflies:${transcriptId}`,
+      payload,
+      orgId,
+    )
+  }
+
+  /** Provider-agnostic meeting import: the normalized transcript travels in the payload. */
+  async enqueueMeetingTranscriptImport(
+    userId: string,
+    input: {
+      source: MeetingJobSource
+      brainId?: string
+      targetBrain?: string
+      contactId?: string
+    },
+    orgId?: string | null,
+  ) {
+    const payload: Record<string, unknown> = {
+      provider: input.source.provider,
+      externalId: input.source.externalRecordingId,
+      source: input.source,
+    }
+    if (input.brainId) payload.brainId = input.brainId
+    if (input.targetBrain) payload.targetBrainOverride = input.targetBrain
+    if (input.contactId) payload.contactId = input.contactId
+    return this.enqueueJob(
+      userId,
+      'meeting_transcript_import',
+      input.source.title || 'Meeting transcript',
+      `meeting:${input.source.provider}:${input.source.externalRecordingId}`,
+      payload,
+      orgId,
+    )
+  }
+
+  async enqueueCampaignMeetingImport(
+    userId: string,
+    input: {
+      campaignId: string
+      source: MeetingJobSource
+      domain?: 'strategy' | 'marketing' | 'finance' | 'operations' | 'creative' | 'general'
+    },
+    orgId?: string | null,
+  ) {
+    const payload: Record<string, unknown> = {
+      campaignId: input.campaignId,
+      provider: input.source.provider,
+      externalId: input.source.externalRecordingId,
+      source: input.source,
+    }
+    if (input.domain) payload.domain = input.domain
+    return this.enqueueJob(
+      userId,
+      'campaign_meeting_import',
+      input.source.title || 'Campaign meeting import',
+      `campaign-meeting:${input.campaignId}:${input.source.provider}:${input.source.externalRecordingId}`,
       payload,
       orgId,
     )

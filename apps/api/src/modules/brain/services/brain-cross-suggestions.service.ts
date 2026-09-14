@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import type { RequestScope } from '@vibey/api-shared'
 import { BrainCrossSuggestionsRepository } from '../repositories/brain-cross-suggestions.repository'
+import type { MeetingJobSource } from './brain-import-jobs-meeting-input'
 import { BrainImportJobsService } from './brain-import-jobs.service'
 
 @Injectable()
@@ -25,6 +26,16 @@ export class BrainCrossSuggestionsService {
     let result: { jobId: string; status: string }
 
     if (
+      suggestion.source_job_type === 'meeting_transcript_import' ||
+      originalJob.job_type === 'meeting_transcript_import'
+    ) {
+      const source = payload.source as MeetingJobSource
+      result = await this.importJobs.enqueueCampaignMeetingImport(
+        userId,
+        { campaignId: suggestion.target_campaign_id as string, source },
+        org.orgId,
+      )
+    } else if (
       suggestion.source_job_type === 'fathom_meeting_import' ||
       originalJob.job_type === 'fathom_meeting_import'
     ) {

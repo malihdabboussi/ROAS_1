@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { buildInteractionDedupeKey, CUSTOMER_INTERACTION_ROUTE_EVENT } from '@vibey/api-shared'
+import { compactMeetingSource } from '../../../brain/services/brain-import-jobs-meeting-input'
 import { BrainImportJobsService } from '../../../brain/services/brain-import-jobs.service'
 import { CustomerBrainService } from '../../../brain/services/customer-brain.service'
 import { SpaceAutomationService } from '../../../spaces/services/space-automation.service'
@@ -214,14 +215,9 @@ export class MeetingIntakeService {
     ctx: ProviderContext,
     source: TranscriptSourceEvent,
   ): Promise<string | null> {
-    // Phase 0: Fathom keeps its existing job type; the provider-agnostic
-    // `meeting_transcript_import` job replaces this in Phase 1.
-    if (source.provider !== 'fathom') {
-      throw new Error(`Brain import is not wired for provider ${source.provider} yet`)
-    }
-    const queued = await this.importJobs.enqueueFathomMeetingImport(
+    const queued = await this.importJobs.enqueueMeetingTranscriptImport(
       ctx.userId,
-      source.raw,
+      { source: compactMeetingSource(source) },
       ctx.orgId,
     )
     return typeof queued?.jobId === 'string' ? queued.jobId : null

@@ -534,8 +534,13 @@ export function useIntegrations() {
         if (!res?.authorizeUrl) throw new Error('Missing authorizeUrl')
         window.open(res.authorizeUrl, '_blank', 'noopener,noreferrer')
       } else if (provider === 'fireflies') {
-        if (!apiKey) throw new Error('API key required')
-        await backendPost('/api/integrations/fireflies/connect', { apiKey })
+        const firefliesApiKey = connectionData?.api_key?.trim() || apiKey
+        if (!firefliesApiKey) throw new Error('API key required')
+        const firefliesWebhookSecret = connectionData?.webhook_secret?.trim()
+        await backendPost('/api/integrations/fireflies/connect', {
+          apiKey: firefliesApiKey,
+          ...(firefliesWebhookSecret ? { webhookSecret: firefliesWebhookSecret } : {}),
+        })
         await loadData()
         return { completedSynchronously: true }
       } else if (provider === 'cursor') {

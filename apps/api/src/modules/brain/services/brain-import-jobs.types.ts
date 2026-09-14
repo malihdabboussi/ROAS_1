@@ -5,6 +5,8 @@ export type BrainImportJobType =
   | 'sk_link_ingest'
   | 'fathom_meeting_import'
   | 'fireflies_transcript_import'
+  | 'meeting_transcript_import'
+  | 'campaign_meeting_import'
   | 'campaign_file_import'
   | 'campaign_fathom_import'
   | 'campaign_fireflies_import'

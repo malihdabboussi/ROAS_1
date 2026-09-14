@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { SupabaseServiceClient } from '@vibey/api-shared'
+import { generateWebhookKey, readWebhookKey } from '../../../meetings/providers/webhook-key'
 
 type FirefliesConnectionMetadata = {
   email?: string | null
@@ -10,9 +11,23 @@ type FirefliesConnectionMetadata = {
 export class FirefliesRepository {
   constructor(private readonly serviceClient: SupabaseServiceClient) {}
 
+  private async readMetadata(userId: string): Promise<Record<string, unknown>> {
+    const { data } = await this.serviceClient.client
+      .from('user_integrations')
+      .select('metadata')
+      .eq('user_id', userId)
+      .eq('integration_id', 'fireflies')
+      .is('org_id', null)
+      .maybeSingle()
+    return (data?.metadata as Record<string, unknown> | null) ?? {}
+  }
+
   async upsertConnection(userId: string, metadata: FirefliesConnectionMetadata): Promise<void> {
     const admin = this.serviceClient.client
     const now = new Date().toISOString()
+    // The webhook key survives reconnects so the address pasted into Fireflies stays valid.
+    const existingMeta = await this.readMetadata(userId)
+    const webhookKey = readWebhookKey(existingMeta)
     const row = {
       user_id: userId,
       integration_id: 'fireflies',
@@ -23,7 +38,11 @@ export class FirefliesRepository {
       token_expires_at: null,
       connected_at: now,
       error_message: null,
-      metadata: { email: metadata.email, name: metadata.name },
+      metadata: {
+        email: metadata.email,
+        name: metadata.name,
+        ...(webhookKey ? { webhook_key: webhookKey } : {}),
+      },
       connection_label: metadata.email ?? metadata.name ?? null,
       updated_at: now,
     }
@@ -49,7 +68,26 @@ export class FirefliesRepository {
     await admin.from('user_integrations').insert({ ...row, org_id: null })
   }
 
+  /** Returns the connection's webhook key, creating one the first time. */
+  async ensureWebhookKey(userId: string): Promise<string> {
+    const metadata = await this.readMetadata(userId)
+    const existing = readWebhookKey(metadata)
+    if (existing) return existing
+    const webhookKey = generateWebhookKey()
+    await this.serviceClient.client
+      .from('user_integrations')
+      .update({
+        metadata: { ...metadata, webhook_key: webhookKey },
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', userId)
+      .eq('integration_id', 'fireflies')
+      .is('org_id', null)
+    return webhookKey
+  }
+
   async markDisconnected(userId: string): Promise<void> {
+    const webhookKey = readWebhookKey(await this.readMetadata(userId))
     await this.serviceClient.client
       .from('user_integrations')
       .update({
@@ -58,7 +96,7 @@ export class FirefliesRepository {
         refresh_token: null,
         token_expires_at: null,
         error_message: null,
-        metadata: {},
+        metadata: webhookKey ? { webhook_key: webhookKey } : {},
         updated_at: new Date().toISOString(),
       })
       .eq('user_id', userId)
@@ -71,6 +109,7 @@ export class FirefliesRepository {
     email: string | null
     name: string | null
     connectedAt: string | null
+    webhookKey: string | null
   } | null> {
     const { data } = await this.serviceClient.client
       .from('user_integrations')
@@ -87,6 +126,7 @@ export class FirefliesRepository {
       email: (metadata.email as string) ?? null,
       name: (metadata.name as string) ?? null,
       connectedAt: (data.connected_at as string) ?? null,
+      webhookKey: readWebhookKey(metadata),
     }
   }
 

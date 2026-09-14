@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { getIntegrationLogoPath } from '@/lib/integrations/integration-logo'
+import { resolveMeetingWebhookUrl } from '@/lib/integrations/meeting-webhook-url'
 import { ConnectedIntegrationCard } from './ConnectedIntegrationCard'
 import { getIntegrationGroupIdentitySummary } from './integration-connection-label'
 import type { Integration, UserIntegration } from './integrations.types'
@@ -104,6 +105,18 @@ export function IntegrationAccountsGroup({
       )}
       {showBody ? (
         <div className="px-spacing-4 pb-spacing-3 space-y-spacing-1">
+          {rows.map((userIntegration) => {
+            const webhookUrl = resolveMeetingWebhookUrl(integration, userIntegration)
+            return webhookUrl ? (
+              <p
+                key={`${userIntegration.id}-webhook`}
+                className="body-3 text-muted-foreground px-spacing-2 break-all"
+              >
+                Webhook address to paste into {integration.name}:{' '}
+                <code className="text-foreground">{webhookUrl}</code>
+              </p>
+            ) : null
+          })}
           {rows.map((userIntegration, index) => (
             <ConnectedIntegrationCard
               key={userIntegration.id || `${integration.id}-${index}`}

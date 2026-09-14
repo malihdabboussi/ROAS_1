@@ -215,9 +215,9 @@ export async function importCampaignKnowledgeFromFirefliesTranscript(
   transcriptId: string,
   domain?: KnowledgeDomain,
 ): Promise<CampaignImportEnqueueResult> {
-  return backendPost('/api/brain/import-jobs/campaign-fireflies', {
+  return backendPost('/api/integrations/meetings/fireflies/import', {
     campaignId,
-    transcriptId,
+    externalId: transcriptId,
     domain,
   })
 }
