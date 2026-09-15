@@ -404,6 +404,56 @@ describe('BrainContextService', () => {
     )
   })
 
+  it("labels trained Specific Knowledge with its provenance so the model weighs it as the user's rule", async () => {
+    const search = vi.fn(async () => ({
+      family: 'user',
+      count: 1,
+      context_sufficient: true,
+      sufficiency: {
+        sufficient: true,
+        confidence: 1,
+        reason: '',
+        missing: [],
+        suggested_next_queries: [],
+      },
+      missing: [],
+      suggested_next_queries: [],
+      results: [
+        {
+          id: 'sk-1',
+          kind: 'sk_entry',
+          title: 'Tuesday Webinar Scheduling Rule',
+          snippet: 'Webinars perform best on Tuesdays.',
+          source_type: 'sk_source',
+          source_title: 'Best Day for Webinars',
+          metadata: { entry_type: 'technique', mastery: 0.3, confidence: 0.9 },
+          related: [],
+        },
+      ],
+    }))
+    const supabase = {
+      from: vi.fn(() => makeQuery([])),
+      rpc: vi.fn(async () => ({ data: [], error: null })),
+    }
+    const retrieval = { search, resolveUserBrainId: vi.fn(async () => 'brain-user') }
+    const service = new BrainContextService(
+      { client: supabase } as any,
+      { getEmbedding: vi.fn() } as any,
+      { buildSpotlightContext: vi.fn(), buildBrainSpotlightContext: vi.fn() } as any,
+      { buildCompanyContext: vi.fn(async () => '') } as any,
+      undefined,
+      retrieval as any,
+    )
+    const result = await service.buildUserBrainContext(
+      'user-1',
+      undefined,
+      'best webinar day',
+      null,
+    )
+    expect(result).toContain(
+      '- [trained technique] Tuesday Webinar Scheduling Rule: Webinars perform best on Tuesdays. (trained by the user, mastery 30%, confidence 90%, from training "Best Day for Webinars")',
+    )
+  })
   it('retrieves user brain with identity query for first-person fill requests', async () => {
     const search = vi.fn(async (input: { family: string; query: string; embedding?: unknown }) => ({
       success: true,

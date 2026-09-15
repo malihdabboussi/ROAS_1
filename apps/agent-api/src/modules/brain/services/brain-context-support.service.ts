@@ -520,7 +520,27 @@ export class BrainContextSupportService {
       candidate.related.length > 0
         ? ` Related: ${candidate.related.map((item) => `${item.relation} ${item.title}`).join('; ')}`
         : ''
+    if (candidate.kind === 'sk_entry') {
+      // Trained knowledge carries its provenance so the model weighs it as the
+      // user's guidance (with its strength) rather than as an established fact.
+      return `- [trained ${this.skEntryType(candidate)}] ${candidate.title}: ${candidate.snippet}${this.skProvenance(candidate)}${related}`
+    }
     return `- [${candidate.kind}] ${candidate.title}: ${candidate.snippet}${source}${related}`
+  }
+
+  private skEntryType(candidate: BrainRetrievalCandidate): string {
+    const entryType = candidate.metadata?.entry_type
+    return typeof entryType === 'string' && entryType.trim() ? entryType.trim() : 'knowledge'
+  }
+
+  private skProvenance(candidate: BrainRetrievalCandidate): string {
+    const parts = ['trained by the user']
+    const mastery = Number(candidate.metadata?.mastery)
+    if (Number.isFinite(mastery)) parts.push(`mastery ${Math.round(mastery * 100)}%`)
+    const confidence = Number(candidate.metadata?.confidence)
+    if (Number.isFinite(confidence)) parts.push(`confidence ${Math.round(confidence * 100)}%`)
+    if (candidate.source_title) parts.push(`from training "${candidate.source_title}"`)
+    return ` (${parts.join(', ')})`
   }
 }
 

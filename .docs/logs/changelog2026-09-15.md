@@ -34,3 +34,10 @@ What: Chat Brain retrieval now searches Specific Knowledge entries (`ns_sk_entri
 Why: Train Brain writes SK entries into the user's default brain (e.g. the "Best Day for Webinars" training created the technique "Tuesday Webinar Scheduling Rule"), and the Brain page shows them, but chat retrieval never looked there: with retrieval timing logs on, the user-family search returned exactly the six memories and zero SK candidates, so Vibey answered "Wednesday" from general knowledge while the user's own trained rule said Tuesday.
 Impact: Trained knowledge in personal/customer brains reaches the model's Brain context. Lane balancing already reserves a per-lane quota, so SK entries are not crowded out by memories.
 Files: apps/agent-api/src/modules/brain/services/brain-retrieval-search-lane.service.ts, apps/agent-api/src/modules/brain/services/brain-retrieval-candidate-builder.ts, apps/agent-api/src/modules/brain/services/brain-retrieval-search-lanes.service.test.ts
+
+## [2026-09-15 22:30] - [FEATURE]
+
+What: Trained Specific Knowledge reaches the model with provenance. In the Brain context an SK item is now rendered as `- [trained <entry_type>] Title: text (trained by the user, mastery N%, confidence N%, from training "<source>")` instead of a bare `[sk_entry]` line, and the source-of-truth instructions gain one rule: trained Brain items are the user's own rules, apply them ahead of general best practice, cite them as such, say so when they conflict with other evidence, and hedge on low mastery.
+Why: With SK now retrieved for personal brains (dd588087), a wrongly trained rule would otherwise be asserted as fact. Showing type, mastery, confidence and origin lets the model weigh it and lets the user trace an answer back to the training that caused it.
+Impact: Answers grounded in training say so; low-mastery rules are hedged; no retrieval or storage change.
+Files: apps/agent-api/src/modules/brain/services/brain-context-support.service.ts, apps/agent-api/src/modules/chat/services/chat-source-truth-instructions.ts, apps/agent-api/src/modules/brain/services/brain-context.service.test.ts
