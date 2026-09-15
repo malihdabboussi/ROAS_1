@@ -16,6 +16,7 @@ import {
   type ResolvedChatModelSelection,
   type ValidatedModelSettings,
 } from './chat-model-input.service'
+import { logBrainDenied, logPolicyMissing } from './chat-personal-brain-access.log'
 import type { ChatStablePrewarmContext } from './chat-prewarm-context.service'
 import { listAdditionalConversationCampaignIds } from './conversation-extra-campaigns'
 
@@ -205,10 +206,11 @@ export class ChatStableTurnContextService {
           'personal',
           policyScope,
         )
+        if (!userBrainAccess) logBrainDenied(logger, resolvedAgentId, policyScope)
       } catch (err) {
         logger.warn(`policy resolve failed for ${resolvedAgentId}: ${err}`)
       }
-    }
+    } else if (!prewarmedStableContext) logPolicyMissing(logger, resolvedAgentId)
 
     userBrainAccess = applyChannelPrincipalBrainPolicy({
       source,

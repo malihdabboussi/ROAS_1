@@ -40584,3 +40584,10 @@ Reason not done now: Requires the production DDL, which needs project credential
 - Evidence: when `runOperationalAgendaResearch` fails (e.g. `list_calendar_events` → 403 "Only org admins or agents can access Workspace calendars" on a personal workspace, or 401 "Invalid token" from a stale session token), the research result is returned with `failed` set and the user sees a generic "temporarily unavailable" toast. The quick path is an optimisation; its failure should fall back to the standard Brain-backed research stage (and the calendar step should report "calendar not connected" as a tool step, not a turn failure).
 - Needed: fall back to `runWithRecovery` with validated research settings when the quick path fails; keep the failed tool step in the activity list. Add a regression test in `chat-stream-execution.service.test.ts`.
 - Not done now: out of scope for ROA-40 live testing; the routing fix (`PAST_MEETING_RECALL_REQUEST`) removed the trigger for meeting-recall questions.
+
+## 2026-09-15 — chat (agent-api): chat-prewarm-context.service.ts at the LOC limit
+
+- File: `apps/agent-api/src/modules/chat/services/chat-prewarm-context.service.ts` (597 LOC after adding two one-line diagnostics; limit 600)
+- Evidence: adding a 3-line log block tripped `max-lines`; the fix had to be shaped around the limit.
+- Needed: extract the agent-policy block (`resolveAgentPolicy` + `canAgentUseCapability` + channel check, ~45 LOC shared with `chat-stable-turn-context.service.ts`) into a `ChatAgentAccessService` used by both, which also removes the duplicated logic.
+- Not done now: out of scope for ROA-40 live testing.
