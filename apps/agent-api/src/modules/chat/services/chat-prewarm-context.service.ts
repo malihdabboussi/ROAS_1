@@ -58,12 +58,12 @@ export class ChatPrewarmContextService {
     private readonly integrationContext: IntegrationContextService,
     private readonly conversations: ConversationsRepository,
     private readonly chatContextRepository: ChatContextRepository,
-    @Optional() private readonly chatPrewarmCache: ChatPrewarmCacheService | undefined,
-    @Optional() private readonly agentPolicy: AgentPolicyService | undefined,
     private readonly chatAccessTokenService: ChatAccessTokenService,
     private readonly chatDocumentContextService: ChatDocumentContextService,
     private readonly chatModelInputService: ChatModelInputService,
     private readonly chatProfileContextService: ChatProfileContextService,
+    @Optional() private readonly chatPrewarmCache?: ChatPrewarmCacheService,
+    @Optional() private readonly agentPolicy?: AgentPolicyService,
   ) {}
 
   createPrewarmCacheKey(options: PrewarmChatContextOptions): string | null {

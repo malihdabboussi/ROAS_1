@@ -43,8 +43,8 @@ import { ChatTurnCompletionService } from './chat-turn-completion.service'
 import { ChatTurnGatewayPreparationService } from './chat-turn-gateway-preparation.service'
 import { ChatTurnQueryService } from './chat-turn-query.service'
 import { ChatTurnSessionService } from './chat-turn-session.service'
-import { ChatTurnStreamingStateService } from './chat-turn-streaming-state.service'
 import { ChatTurnStreamService } from './chat-turn-stream.service'
+import { ChatTurnStreamingStateService } from './chat-turn-streaming-state.service'
 import { ChatTurnTerminalService } from './chat-turn-terminal.service'
 import type { DocumentParserService } from './document-parser.service'
 import type { IntegrationContextService } from './integration-context.service'
@@ -258,12 +258,12 @@ export class ChatServiceCollaborators {
         this.deps.integrationContext,
         this.deps.conversations,
         this.deps.chatContextRepository,
-        this.deps.chatPrewarmCache,
-        this.deps.agentPolicy,
         this.getChatAccessTokenService(),
         this.getChatDocumentContextService(),
         this.getChatModelInputService(),
         this.getChatProfileContextService(),
+        this.deps.chatPrewarmCache,
+        this.deps.agentPolicy,
       )
     }
     return this.chatPrewarmContextService
@@ -427,7 +427,9 @@ export class ChatServiceCollaborators {
     return this.chatTurnGatewayPreparationService
   }
 
-  getChatTurnQueryService(conversationPermissions: ConversationPermissionsService): ChatTurnQueryService {
+  getChatTurnQueryService(
+    conversationPermissions: ConversationPermissionsService,
+  ): ChatTurnQueryService {
     if (!this.chatTurnQueryService) {
       this.chatTurnQueryService = new ChatTurnQueryService(
         this.deps.messages,
