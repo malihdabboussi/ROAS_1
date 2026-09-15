@@ -2,6 +2,7 @@
 
 import { backendDelete, backendGet, backendPatch, backendPost } from '@/lib/api/backend-client'
 import { cachedFetch } from '@/lib/cache/keyed-fetch-cache'
+import { searchHitToBrainMemory, type BrainSearchHit } from '../lib/brain-search-result'
 import type {
   BeliefPattern,
   BrainGraphData,
@@ -97,8 +98,10 @@ export async function fetchBrainSearch(
   params.set('limit', String(limit))
   if (brainId?.trim()) params.set('brainId', brainId.trim())
   else if (agentId?.trim()) params.set('agentId', agentId.trim())
-  const res = await backendGet<{ results: BrainMemory[] }>(`/api/brain/search?${params.toString()}`)
-  return res.results ?? []
+  const res = await backendGet<{ results: BrainSearchHit[] }>(
+    `/api/brain/search?${params.toString()}`,
+  )
+  return (res.results ?? []).map(searchHitToBrainMemory)
 }
 
 export async function fetchBrainImageSearch(input: {
@@ -109,8 +112,8 @@ export async function fetchBrainImageSearch(input: {
   brainId?: string
   agentId?: string
 }): Promise<BrainMemory[]> {
-  const res = await backendPost<{ results: BrainMemory[] }>('/api/brain/search/image', input)
-  return res.results ?? []
+  const res = await backendPost<{ results: BrainSearchHit[] }>('/api/brain/search/image', input)
+  return (res.results ?? []).map(searchHitToBrainMemory)
 }
 
 export async function fetchBrainMemory(id: string): Promise<BrainMemory> {
