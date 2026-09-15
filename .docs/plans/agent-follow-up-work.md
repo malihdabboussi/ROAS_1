@@ -40563,3 +40563,15 @@ Evidence: 568 of 600 lines.
 Needed work: Move the external-trigger sync helpers (`syncExternalTriggerForAutomation`, `syncFathomTriggerRoute`, `syncContactTriggerRoute`, the disable helpers) into their own service.
 
 Reason not done now: Out of scope for the live-run fix.
+
+## 2026-09-14 - [ARCH] The repository cannot build a database from scratch
+
+Status: Open
+
+Found while: Rebuilding the app-runner's local Supabase after a failed `db reset` (ROA-51 live run).
+
+Evidence: (1) `supabase/migrations/001_add_leads_table.sql` references `funnels`, which only `supabase/schema.sql` creates, and the Supabase CLI does not load that file, so `supabase db reset --local` fails at the second migration; `scripts/roas/apply-migrations-resilient.sh` with `RESET=1` is the only path that loads the base schema first. (2) Five tables are created nowhere in the repo but are required by later migrations and by the API: `skill_library`, `skill_library_resources`' parent, `app_errors`, `user_notifications`, `social_posts`, `template_skill_assignments` (grep of migrations and schema.sql finds no CREATE TABLE); they exist only in the production project. (3) `20260326100000_team_members_permissions_foundation.sql` calls `auth.jwt()`, which the local Postgres image does not define, so `has_team_campaign_access` and 21 dependent migrations fail locally. (4) `scripts/roas/migration-order.txt` stops at 2026-08-20; 147 newer files are not listed. (5) After a reset the storage service must be restarted before migrations that touch `storage.buckets`.
+
+Needed work: Add the missing five table definitions as migrations (dump their DDL from production once), make the base schema a numbered first migration or a CLI schema path, guard `auth.jwt()` usage with a local shim migration, regenerate the order file or drop it in favour of name order, and document the local bootstrap in `documentation/utilities`.
+
+Reason not done now: Requires the production DDL, which needs project credentials the agent does not hold.
