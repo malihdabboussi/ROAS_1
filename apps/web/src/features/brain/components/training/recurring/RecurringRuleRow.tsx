@@ -13,6 +13,7 @@ import {
 } from './rule-cards/CompanyDreamRuleCard'
 import { FathomRuleCard } from './rule-cards/FathomRuleCard'
 import { FirefliesRuleCard } from './rule-cards/FirefliesRuleCard'
+import { ReadAiRuleCard } from './rule-cards/ReadAiRuleCard'
 import { SlackRuleCard } from './rule-cards/SlackRuleCard'
 import { ZoomRuleCard } from './rule-cards/ZoomRuleCard'
 
@@ -91,6 +92,7 @@ export function RecurringRuleRow({
       {rule.kind === 'slack' ? <SlackRuleCard rule={rule} onRefresh={onRefresh} /> : null}
       {rule.kind === 'fathom_auto' ? <FathomRuleCard rule={rule} onRefresh={onRefresh} /> : null}
       {rule.kind === 'fireflies_sync' ? <FirefliesRuleCard rule={rule} /> : null}
+      {rule.kind === 'read_ai_auto' ? <ReadAiRuleCard rule={rule} /> : null}
       {rule.kind === 'zoom_auto' ? <ZoomRuleCard rule={rule} /> : null}
       {rule.kind === 'company_dream' ? (
         <CompanyDreamRuleCard rule={rule} onRefresh={onRefresh} />

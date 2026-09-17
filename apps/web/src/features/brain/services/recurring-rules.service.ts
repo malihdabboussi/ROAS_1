@@ -15,6 +15,7 @@ export type RecurringTrainingKind =
   | 'slack'
   | 'fathom_auto'
   | 'fireflies_sync'
+  | 'read_ai_auto'
   | 'zoom_auto'
   | 'company_dream'
 
@@ -103,6 +104,18 @@ export type RecurringTrainingRule =
       connectedAt: string | null
     }
   | {
+      id: 'read_ai:auto'
+      kind: 'read_ai_auto'
+      name: string
+      enabled: boolean
+      connected: boolean
+      cadence: 'realtime'
+      destinationLabel: string
+      destinationKind: 'user'
+      lastRunAt: null
+      connectedAt: string | null
+    }
+  | {
       id: 'zoom:auto'
       kind: 'zoom_auto'
       name: string
@@ -163,6 +176,8 @@ export function recurringTrainingKindLabel(kind: RecurringTrainingKind): string 
       return 'Fathom'
     case 'fireflies_sync':
       return 'Fireflies'
+    case 'read_ai_auto':
+      return 'Read AI'
     case 'zoom_auto':
       return 'Zoom'
     case 'company_dream':
@@ -263,7 +278,7 @@ export async function listRecurringTrainingRules(): Promise<{
   slackTeamName: string | null
 }> {
   const activeOrgId = getActiveOrgIdFromStorage()
-  const [destinations, slackRes, slackStatus, fathomRes, firefliesRes, companyRes] =
+  const [destinations, slackRes, slackStatus, fathomRes, firefliesRes, readAiRes, companyRes] =
     await Promise.all([
       listBrainTrainingDestinations().catch(() => []),
       backendGet<SlackMappingsResponse>('/api/integrations/slack/brain-mappings').catch(() => null),
@@ -285,6 +300,14 @@ export async function listRecurringTrainingRules(): Promise<{
         status: string | null
         connectedAt: string | null
       }>('/api/integrations/fireflies/status').catch(() => null),
+      // Read AI goes through the shared note-taker door, so its status comes
+      // from the provider-agnostic connection endpoint.
+      backendGet<{
+        success: boolean
+        connected: boolean
+        status: string | null
+        connectedAt: string | null
+      }>('/api/integrations/meetings/read_ai/status').catch(() => null),
       activeOrgId ? fetchCompanyCortexStatus().catch(() => null) : Promise.resolve(null),
     ])
 
@@ -358,6 +381,18 @@ export async function listRecurringTrainingRules(): Promise<{
     connectedAt: firefliesRes?.connectedAt ?? null,
   })
 
+  rules.push({
+    id: 'read_ai:auto',
+    kind: 'read_ai_auto',
+    name: 'Read AI meetings',
+    enabled: !!readAiRes?.connected,
+    connected: !!readAiRes?.connected,
+    cadence: 'realtime',
+    destinationLabel: 'Personal Brain',
+    destinationKind: 'user',
+    lastRunAt: null,
+    connectedAt: readAiRes?.connectedAt ?? null,
+  })
   rules.push({
     id: 'zoom:auto',
     kind: 'zoom_auto',
