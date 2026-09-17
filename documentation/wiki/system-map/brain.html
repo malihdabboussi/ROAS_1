@@ -25,7 +25,7 @@
 
 <h1>🧠 The Brain</h1>
 <div class="meta">
-  <span>Last updated: 2026-09-11</span>
+  <span>Last updated: 2026-09-17</span>
   <span>Category: <a href="index.html">System map</a></span>
   <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a>, <a href="https://linear.app/1dscollective/issue/ROA-18/fix-brain-critical-issues">ROA-18</a>, findings <a href="https://linear.app/1dscollective/issue/ROA-29">ROA-29</a> to <a href="https://linear.app/1dscollective/issue/ROA-38">ROA-38</a></span>
   <span>Source of truth: <code>apps/api/src/modules/brain</code>, <code>supabase/migrations</code></span>
@@ -37,7 +37,7 @@
 
 <div class="card" id="summary" style="margin-bottom:14px">
   <h3>The brain in one paragraph</h3>
-  <p>The brain is five kinds of notebook: <a href="#kinds">yours, one per agent, one per campaign, one shared about customers, and one for the company</a>. Knowledge enters through <a href="#doors">eight doors</a>. Six of them write a ticket in the database, ring the Redis doorbell, get claimed by a worker, get read by Atlas, and get saved by a tool that fingerprints, extracts, embeds, and stores. Two doors, the ROAS Portal and chat, write directly. Everything lands on <a href="#flow-shelves">separate shelves</a>: memories, textbook entries, snapshots, and the layers built from them. The web app, the Chrome extension, and the chat helper <a href="#flow">read those shelves back</a>, and today the helper reads through a different copy of the search code, which is <a href="#problem-1">the biggest open problem</a>.</p>
+  <p>The brain is five kinds of notebook: <a href="#kinds">yours, one per agent, one per campaign, one shared about customers, and one for the company</a>. Knowledge enters through <a href="#doors">seven doors</a>. Five of them write a ticket in the database, ring the Redis doorbell, get claimed by a worker, get read by Atlas, and get saved by a tool that fingerprints, extracts, embeds, and stores. Two doors, the ROAS Portal and chat, write directly. Everything lands on <a href="#flow-shelves">separate shelves</a>: memories, textbook entries, snapshots, and the layers built from them. The web app, the Chrome extension, and the chat helper <a href="#flow">read those shelves back</a>, and the helper reads through a different copy of the search code (<a href="#problem-1">Problem 1</a>); since 2026-09-15 that copy reaches the personal brain and its textbook entries (<a href="#live-4">Live finding 4</a>, <a href="#live-5">Live finding 5</a>), so the remaining gap is duplication, not missing knowledge.</p>
   <div class="where">📍 Written 2026-09-10 from sections 1 to 8 of this page; every claim above has its code path in those sections.</div>
 </div>
 
@@ -105,8 +105,7 @@
       <div class="box door"><a href="#door-text">✍️ Typed or pasted text</a></div>
       <div class="box door"><a href="#door-file">📄 Uploaded file</a></div>
       <div class="box door"><a href="#door-link">🔗 Link</a></div>
-      <div class="box door"><a href="#door-fathom">🎙️ Fathom meeting</a></div>
-      <div class="box door"><a href="#door-fireflies">🎙️ Fireflies meeting</a></div>
+      <div class="box door"><a href="#door-note-taker">🎙️ Note taker meeting</a><small>Fathom, Fireflies, Read AI, or a tool an admin defined: one door for all</small></div>
       <div class="box door"><a href="#door-slack">💬 Slack channel</a></div>
       <div class="box door bypass"><a href="#door-portal">🗂️ ROAS Portal (Page Grader)</a><small>skips stages 1 to 4, writes straight to the shelves</small></div>
       <div class="box door bypass"><a href="#door-chat">🗨️ Chat with the helper</a><small>skips stages 1 to 4, writes straight to the shelves</small></div>
@@ -145,7 +144,7 @@
       <div class="stagehead">Readers</div>
       <div class="box read">🖥️ Web app search</div>
       <div class="box read">🧩 Chrome extension</div>
-      <div class="box warn">🤖 The AI agent<br><small>uses a different copy of the search code in another app</small></div>
+      <div class="box warn">🤖 The AI agent<br><small>uses a different copy of the search code in another app; since 2026-09-15 that copy reads the personal brain and its textbook entries too (<a href="#live-4">Live finding 4</a>, <a href="#live-5">Live finding 5</a>)</small></div>
     </div>
   </div>
   <div class="legend"><span><i style="background:var(--blue-bg);border-color:var(--blue)"></i> door</span><span><i style="background:var(--purple-bg);border-color:var(--purple)"></i> work stage</span><span><i style="background:var(--green-bg);border-color:var(--green)"></i> shelf (a table)</span><span><i style="background:var(--teal-bg);border-color:var(--teal)"></i> reader</span><span><i style="border-style:dashed"></i> skips the queue and Atlas</span></div>
@@ -188,7 +187,7 @@
   <p style="margin-top:12px"><strong>Want the full detail?</strong> The <a href="#flow-journey">Flow tab</a> has every step with the store it touches, which door takes which road, and what each shelf really is.</p>
 </div>
 
-<h2 id="doors"><span class="n">3</span> The eight doors, one story each</h2>
+<h2 id="doors"><span class="n">3</span> The seven doors, one story each</h2>
 <div class="grid g2 stack">
   <div class="card" id="door-text"><h3>✍️ Typed or pasted text</h3>
     <div class="scenario">
@@ -214,20 +213,12 @@
       <div class="where">📍 Code: <code>brain/controllers/memories.controller.ts:91</code> <code>POST /api/brain/remember-link</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:51</code> <code>enqueueUserLinkImport</code> → <code>brain/services/link-extraction.service.ts:17</code> <code>extract</code></div>
     </div>
   </div>
-  <div class="card" id="door-fathom"><h3>🎙️ Fathom meeting</h3>
+  <div class="card" id="door-note-taker"><span id="door-fathom"></span><span id="door-fireflies"></span><h3>🎙️ Note taker meeting (Fathom, Fireflies, Read AI, defined tools)</h3>
     <div class="scenario">
-      <div class="sc-row"><b>Situation</b><span>A recorded discovery call with a lead finishes in Fathom.</span></div>
-      <div class="sc-row"><b>What happens</b><span>A Fathom-import job is queued using the meeting id as its fingerprint, so one meeting cannot be queued twice while running. If the transcript is missing, the worker fetches it from Fathom before handing the meeting to Atlas. Optionally the job targets a campaign brain instead of the personal one.</span></div>
-      <div class="sc-row"><b>What you see</b><span>Memories with the meeting title as source, and possibly a cross-brain suggestion offering to copy them into a related campaign.</span></div>
-      <div class="where">📍 Code: <code>brain/controllers/import-jobs.controller.ts:39</code> <code>POST /api/brain/import-jobs/fathom-meeting</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:72</code> <code>enqueueFathomMeetingImport</code>; transcript fetch <code>brain/services/brain-import-jobs-execution.base.ts:410</code> <code>ensureFathomTranscript</code>; suggestions <code>brain/services/brain-cross-pollinator.service.ts</code></div>
-    </div>
-  </div>
-  <div class="card" id="door-fireflies"><h3>🎙️ Fireflies meeting</h3>
-    <div class="scenario">
-      <div class="sc-row"><b>Situation</b><span>A team meeting transcript arrives from Fireflies.</span></div>
-      <div class="sc-row"><b>What happens</b><span>Same road as Fathom, keyed by the transcript id. The transcript text is handed to Atlas, which keeps decisions and commitments and drops small talk.</span></div>
-      <div class="sc-row"><b>What you see</b><span>Memories with the meeting title as source.</span></div>
-      <div class="where">📍 Code: <code>brain/controllers/import-jobs.controller.ts:62</code> <code>POST /api/brain/import-jobs/fireflies-transcript</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:151</code> <code>enqueueFirefliesTranscriptImport</code></div>
+      <div class="sc-row"><b>Situation</b><span>A recorded discovery call finishes in Fathom, Fireflies or Read AI, or in a note taker a platform admin defined from Settings › Integrations › More integrations.</span></div>
+      <div class="sc-row"><b>What happens</b><span>Since ROA-40 (2026-09-15) every note taker knocks on the same door: the tool posts its report to the address ROAS gave the user at connect time, the provider adapter checks the signature, and one intake service does the rest. It records the delivery (so a repeated webhook is ignored), checks the connection's auto-ingest switch, fetches the transcript when the tool only sent a pointer (Fireflies), normalises the report into one meeting shape, queues one <em>meeting transcript import</em> ticket for Atlas, and routes the call into the Meetings space. A campaign target turns the ticket into a campaign meeting import instead. Fireflies can also be pulled by hand from the Recurring tab; Read AI and defined tools only push.</span></div>
+      <div class="sc-row"><b>What you see</b><span>A row on the Activity tab named after the meeting, memories with the meeting title as source (or a "skipped" result when the transcript held nothing durable), the call in the Meetings space, and possibly a cross-brain suggestion offering to copy the memories into a related campaign.</span></div>
+      <div class="where">📍 Code: shared door <code>apps/api/src/modules/meetings/intake/controllers/meeting-webhooks.controller.ts:14</code> <code>POST /api/integrations/meetings/webhooks/:provider/:connectionKey</code> → <code>apps/api/src/modules/meetings/intake/services/meeting-intake.service.ts</code> (delivery claim <code>:109</code>, auto-ingest gate <code>:164</code>, ticket <code>:223</code> <code>enqueueBrainImport</code> → <code>enqueueMeetingTranscriptImport</code>, Meetings space <code>:191</code>) · adapters <code>apps/api/src/modules/meetings/providers/{fathom,fireflies,read-ai}-meeting-source.ts</code>, defined tools <code>apps/api/src/modules/meetings/custom/</code> · registry <code>apps/api/src/modules/meetings/providers/meeting-provider.registry.ts</code> · the old Fathom-only door <code>apps/api/src/modules/integrations/fathom/controllers/fathom-webhooks.controller.ts:34</code> stays registered until webhooks are re-registered (ROA-40 follow-up) · suggestions <code>brain/services/brain-cross-pollinator.service.ts</code> · 🗄️ <code>meeting_webhook_deliveries</code>, <code>meeting_provider_definitions</code>, <code>brain_import_jobs</code>. Full story: <a href="../integrations/meeting-note-takers.html">Integrations › Meeting note takers</a>.</div>
     </div>
   </div>
   <div class="card" id="door-slack"><h3>💬 Slack channel</h3>
@@ -378,7 +369,7 @@
 
 <h2 id="flow-doors" data-tab="Flow"><span class="n">7</span> Which door takes which road</h2>
 <div class="card scroll">
-  <p>Six doors go through the ticket, the doorbell, and Atlas. Two doors write straight to the shelves. Each row says which save tool Atlas is told to use and which shelf the rows land on.</p>
+  <p>Five doors go through the ticket, the doorbell, and Atlas (the note-taker door was three separate doors until ROA-40 merged them on 2026-09-15). Two doors write straight to the shelves. Each row says which save tool Atlas is told to use and which shelf the rows land on.</p>
   <table>
     <thead><tr><th>Door</th><th>Endpoint or trigger</th><th>Ticket type</th><th>Target brain</th><th>Road</th><th>Save tool</th><th>Shelf</th><th>Where</th></tr></thead>
     <tbody>
@@ -387,8 +378,7 @@
       <tr><td><a href="#door-file">Uploaded file</a></td><td>text extracted in the browser first, then the same two endpoints as typed text</td><td><code>sk_ingest</code> or <code>document_remember</code></td><td>agent or user</td><td>ticket → Atlas</td><td>as above</td><td>as above</td><td><code>training-queue-dispatch.ts:53-55</code> · <code>brain/controllers/import-jobs.controller.ts:28</code></td></tr>
       <tr><td><a href="#door-link">Link, "Train brain"</a></td><td><code>POST /api/brain/import-jobs/sk-ingest-link</code></td><td><code>sk_link_ingest</code></td><td>agent</td><td>ticket → Atlas</td><td><code>ingest_agent_brain_link</code></td><td>SK sources + entries</td><td><code>brain/controllers/import-jobs.controller.ts:131</code></td></tr>
       <tr><td><a href="#door-link">Link, personal</a></td><td><code>POST /api/brain/remember-link</code></td><td><code>user_link_import</code></td><td>user</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/memories.controller.ts:91</code></td></tr>
-      <tr><td><a href="#door-fathom">Fathom meeting</a></td><td><code>POST /api/brain/import-jobs/fathom-meeting</code>, or the Fathom webhook</td><td><code>fathom_meeting_import</code></td><td>user, or an override</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/import-jobs.controller.ts:39</code> · <code>apps/api/src/modules/integrations/fathom/services/fathom-webhook.service.ts:116</code></td></tr>
-      <tr><td><a href="#door-fireflies">Fireflies meeting</a></td><td><code>POST /api/brain/import-jobs/fireflies-transcript</code>, or the Fireflies page</td><td><code>fireflies_transcript_import</code></td><td>user</td><td>ticket → Atlas</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>brain/controllers/import-jobs.controller.ts:62</code> · <code>apps/api/src/modules/integrations/fireflies/controllers/fireflies.controller.ts:87-91</code></td></tr>
+      <tr><td><a href="#door-note-taker">Note taker meeting (Fathom, Fireflies, Read AI, defined tools)</a></td><td><code>POST /api/integrations/meetings/webhooks/:provider/:connectionKey</code>; Fireflies also by "Sync now"</td><td><code>meeting_transcript_import</code> (or <code>campaign_meeting_import</code> for a campaign target)</td><td>user, or a campaign</td><td>ticket → Atlas, plus the Meetings space</td><td><code>save_user_memory</code></td><td>Memories</td><td><code>apps/api/src/modules/meetings/intake/controllers/meeting-webhooks.controller.ts:14</code> · <code>apps/api/src/modules/meetings/intake/services/meeting-intake.service.ts:223</code></td></tr>
       <tr><td><a href="#door-slack">Slack channel</a></td><td>a scheduler, no HTTP door</td><td><code>slack_period_import</code> or <code>campaign_slack_import</code></td><td>user or campaign</td><td>ticket → Atlas, then the only shelf audit</td><td><code>save_user_memory</code> or <code>atlas_save_brain_context</code></td><td>Memories</td><td><code>apps/api/src/modules/slack/services/slack-brain-mapping.service.ts:120</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:267</code> · audit <code>brain-import-jobs-runtime.base.ts:352</code></td></tr>
       <tr><td><a href="#door-portal">ROAS Portal (Page Grader)</a></td><td><code>POST /api/brain/page-grader/client-package</code>, a webhook, or the hourly catch-up</td><td><code>page_grader_brain_sync</code>, written <em>after</em> the work as a receipt</td><td>campaign</td><td><strong>direct</strong>, no ticket, no Redis, no Atlas</td><td>none</td><td>Memories + evidence</td><td><code>brain/services/page-grader-brain-package-ingest.service.ts:42</code> · embeds after insert <code>:104</code> · receipt row <code>:372</code></td></tr>
       <tr><td><a href="#door-chat">Chat, whole conversation</a></td><td><code>POST /api/brain/process/conversation</code></td><td>none</td><td>user</td><td><strong>direct</strong>, no ticket, no Redis, no Atlas</td><td>none</td><td>Memories</td><td><code>brain/controllers/memories.controller.ts:114</code> → <code>brain/services/conversation-processing.service.ts:52</code></td></tr>
