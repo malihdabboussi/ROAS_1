@@ -142,3 +142,6 @@ scripts/roas/.lovable-applied-migrations.log
 packages/@vibey/
 .env*
 .worktrees/
+
+# Redis on-disk snapshot written by a local redis-server started from the repo root
+dump.rdb
