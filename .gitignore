@@ -145,3 +145,4 @@ packages/@vibey/
 
 # Database dumps never belong in git
 *.dump
+*.rdb

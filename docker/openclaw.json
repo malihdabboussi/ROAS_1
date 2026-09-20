@@ -6463,6 +6463,121 @@
           "static-ad-book",
           "vibey-api"
         ]
+      },
+      {
+        "id": "user-74205d3e-cbd1-4a6b-ab42-731927b9fd83-atlas",
+        "workspace": "${AGENTS_BASE_DIR}/users/74205d3e-cbd1-4a6b-ab42-731927b9fd83/atlas",
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        },
+        "skills": [
+          "brain-library-lint",
+          "brain-library-organization",
+          "brain-pattern-analysis",
+          "brain-timeline-synthesis",
+          "company-context-rule-lint",
+          "company-cortex-formation",
+          "company-daily-dream",
+          "customer-avatar-synthesis",
+          "customer-brain-pattern-analysis",
+          "customer-call-routing",
+          "vibey-api"
+        ]
+      },
+      {
+        "id": "user-74205d3e-cbd1-4a6b-ab42-731927b9fd83-loop",
+        "workspace": "${AGENTS_BASE_DIR}/users/74205d3e-cbd1-4a6b-ab42-731927b9fd83/loop",
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts",
+            "browser"
+          ]
+        },
+        "skills": ["vibey-api"]
+      },
+      {
+        "id": "user-74205d3e-cbd1-4a6b-ab42-731927b9fd83-vibey",
+        "workspace": "${AGENTS_BASE_DIR}/users/74205d3e-cbd1-4a6b-ab42-731927b9fd83/vibey",
+        "promptMode": "vibey",
+        "tools": {
+          "deny": [
+            "write",
+            "edit",
+            "apply_patch",
+            "exec",
+            "grep",
+            "find",
+            "ls",
+            "process",
+            "canvas",
+            "nodes",
+            "cron",
+            "message",
+            "gateway",
+            "agents_list",
+            "sessions_list",
+            "sessions_history",
+            "sessions_send",
+            "sessions_spawn",
+            "subagents",
+            "image",
+            "tts"
+          ]
+        },
+        "skills": [
+          "delegation-desk",
+          "dylans-super-voice",
+          "page-grader-operator",
+          "post-call-delivery",
+          "slack-signal-operator",
+          "strategy-guardian",
+          "vibey-api"
+        ]
       }
     ]
   },

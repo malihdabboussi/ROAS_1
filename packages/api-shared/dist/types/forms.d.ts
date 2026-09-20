@@ -8,13 +8,13 @@ export declare const FormQuestionOptionSchema: z.ZodObject<{
     color: z.ZodOptional<z.ZodString>;
     group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
 }, "strip", z.ZodTypeAny, {
-    id: string;
     label: string;
+    id: string;
     color?: string | undefined;
     group?: "active" | "done" | "not_started" | "closed" | undefined;
 }, {
-    id: string;
     label: string;
+    id: string;
     color?: string | undefined;
     group?: "active" | "done" | "not_started" | "closed" | undefined;
 }>;
@@ -32,13 +32,13 @@ export declare const FormQuestionSchema: z.ZodObject<{
         color: z.ZodOptional<z.ZodString>;
         group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
     }, "strip", z.ZodTypeAny, {
-        id: string;
         label: string;
+        id: string;
         color?: string | undefined;
         group?: "active" | "done" | "not_started" | "closed" | undefined;
     }, {
-        id: string;
         label: string;
+        id: string;
         color?: string | undefined;
         group?: "active" | "done" | "not_started" | "closed" | undefined;
     }>, "many">>;
@@ -59,13 +59,13 @@ export declare const FormQuestionSchema: z.ZodObject<{
         color: z.ZodOptional<z.ZodString>;
         group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
     }, "strip", z.ZodTypeAny, {
-        id: string;
         label: string;
+        id: string;
         color?: string | undefined;
         group?: "active" | "done" | "not_started" | "closed" | undefined;
     }, {
-        id: string;
         label: string;
+        id: string;
         color?: string | undefined;
         group?: "active" | "done" | "not_started" | "closed" | undefined;
     }>, "many">>;
@@ -86,13 +86,13 @@ export declare const FormQuestionSchema: z.ZodObject<{
         color: z.ZodOptional<z.ZodString>;
         group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
     }, "strip", z.ZodTypeAny, {
-        id: string;
         label: string;
+        id: string;
         color?: string | undefined;
         group?: "active" | "done" | "not_started" | "closed" | undefined;
     }, {
-        id: string;
         label: string;
+        id: string;
         color?: string | undefined;
         group?: "active" | "done" | "not_started" | "closed" | undefined;
     }>, "many">>;
@@ -117,13 +117,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -144,13 +144,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -171,13 +171,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -202,13 +202,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -229,13 +229,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -256,13 +256,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -287,13 +287,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -314,13 +314,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -341,13 +341,13 @@ export declare const FormSchemaPayload: z.ZodObject<{
             color: z.ZodOptional<z.ZodString>;
             group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
         }, "strip", z.ZodTypeAny, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }, {
-            id: string;
             label: string;
+            id: string;
             color?: string | undefined;
             group?: "active" | "done" | "not_started" | "closed" | undefined;
         }>, "many">>;
@@ -457,13 +457,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -484,13 +484,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -511,13 +511,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -542,13 +542,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -569,13 +569,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -596,13 +596,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -627,13 +627,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -654,13 +654,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -681,13 +681,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -797,13 +797,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -824,13 +824,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -851,13 +851,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -915,13 +915,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -942,13 +942,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -969,13 +969,13 @@ export declare const CreateFormSchema: z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1034,13 +1034,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1061,13 +1061,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1088,13 +1088,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1119,13 +1119,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1146,13 +1146,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1173,13 +1173,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1204,13 +1204,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1231,13 +1231,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1258,13 +1258,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1373,13 +1373,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1400,13 +1400,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1427,13 +1427,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1490,13 +1490,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1517,13 +1517,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1544,13 +1544,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1607,13 +1607,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1634,13 +1634,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1661,13 +1661,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1724,13 +1724,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1751,13 +1751,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;
@@ -1778,13 +1778,13 @@ export declare const UpdateFormSchema: z.ZodEffects<z.ZodObject<{
                 color: z.ZodOptional<z.ZodString>;
                 group: z.ZodOptional<z.ZodEnum<["not_started", "active", "done", "closed"]>>;
             }, "strip", z.ZodTypeAny, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }, {
-                id: string;
                 label: string;
+                id: string;
                 color?: string | undefined;
                 group?: "active" | "done" | "not_started" | "closed" | undefined;
             }>, "many">>;

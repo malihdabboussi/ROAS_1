@@ -55,13 +55,13 @@ export declare const UpsertConversationShareSchema: z.ZodObject<{
 }, "strip", z.ZodTypeAny, {
     entity_type: "user" | "org";
     entity_id: string;
-    level: "view" | "edit" | "admin";
+    level: "admin" | "edit" | "view";
     notify?: boolean | undefined;
     note?: string | undefined;
 }, {
     entity_type: "user" | "org";
     entity_id: string;
-    level: "view" | "edit" | "admin";
+    level: "admin" | "edit" | "view";
     notify?: boolean | undefined;
     note?: string | undefined;
 }>;
@@ -72,13 +72,13 @@ export declare const PassOffConversationShareSchema: z.ZodObject<{
     note: z.ZodOptional<z.ZodString>;
     notify: z.ZodDefault<z.ZodBoolean>;
 }, "strip", z.ZodTypeAny, {
-    level: "view" | "edit" | "admin";
-    notify: boolean;
     user_id: string;
+    level: "admin" | "edit" | "view";
+    notify: boolean;
     note?: string | undefined;
 }, {
     user_id: string;
-    level?: "view" | "edit" | "admin" | undefined;
+    level?: "admin" | "edit" | "view" | undefined;
     notify?: boolean | undefined;
     note?: string | undefined;
 }>;
