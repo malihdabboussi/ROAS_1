@@ -1,69 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { SupabaseServiceClient } from '@vibey/api-shared'
-
-type FirefliesConnectionMetadata = {
-  email?: string | null
-  name?: string | null
-}
+import { readWebhookKey } from '../../../meetings/providers/webhook-key'
 
 @Injectable()
 export class FirefliesRepository {
   constructor(private readonly serviceClient: SupabaseServiceClient) {}
-
-  async upsertConnection(userId: string, metadata: FirefliesConnectionMetadata): Promise<void> {
-    const admin = this.serviceClient.client
-    const now = new Date().toISOString()
-    const row = {
-      user_id: userId,
-      integration_id: 'fireflies',
-      provider: 'fireflies',
-      status: 'connected',
-      access_token: null,
-      refresh_token: null,
-      token_expires_at: null,
-      connected_at: now,
-      error_message: null,
-      metadata: { email: metadata.email, name: metadata.name },
-      connection_label: metadata.email ?? metadata.name ?? null,
-      updated_at: now,
-    }
-
-    const { data: existing } = await admin
-      .from('user_integrations')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('integration_id', 'fireflies')
-      .is('org_id', null)
-      .maybeSingle()
-
-    if (existing) {
-      await admin
-        .from('user_integrations')
-        .update({ ...row, updated_at: now })
-        .eq('user_id', userId)
-        .eq('integration_id', 'fireflies')
-        .is('org_id', null)
-      return
-    }
-
-    await admin.from('user_integrations').insert({ ...row, org_id: null })
-  }
-
-  async markDisconnected(userId: string): Promise<void> {
-    await this.serviceClient.client
-      .from('user_integrations')
-      .update({
-        status: 'disconnected',
-        access_token: null,
-        refresh_token: null,
-        token_expires_at: null,
-        error_message: null,
-        metadata: {},
-        updated_at: new Date().toISOString(),
-      })
-      .eq('user_id', userId)
-      .eq('integration_id', 'fireflies')
-  }
 
   async getStatus(userId: string): Promise<{
     connected: boolean
@@ -71,6 +12,7 @@ export class FirefliesRepository {
     email: string | null
     name: string | null
     connectedAt: string | null
+    webhookKey: string | null
   } | null> {
     const { data } = await this.serviceClient.client
       .from('user_integrations')
@@ -87,6 +29,7 @@ export class FirefliesRepository {
       email: (metadata.email as string) ?? null,
       name: (metadata.name as string) ?? null,
       connectedAt: (data.connected_at as string) ?? null,
+      webhookKey: readWebhookKey(metadata),
     }
   }
 

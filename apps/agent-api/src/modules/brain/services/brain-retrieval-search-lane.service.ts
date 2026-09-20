@@ -41,15 +41,18 @@ export class BrainRetrievalSearchLaneService {
       ])
       candidates = [...objects, ...signals, ...timeline]
     } else {
-      const [core, cognition, customer, timeline] = await Promise.all([
+      // Training writes Specific Knowledge (techniques, principles) into user
+      // and customer brains too, so those brains get the SK lane as well.
+      const [core, sk, cognition, customer, timeline] = await Promise.all([
         this.searchMemoryAndSnapshotCandidates(input),
+        this.searchSkCandidates(input),
         this.searchCognitionCandidates(input),
         input.family === 'customer'
           ? this.searchCustomerBrainArtifactCandidates(input)
           : Promise.resolve([]),
         this.searchTimelineCandidates(input),
       ])
-      candidates = [...core, ...cognition, ...customer, ...timeline]
+      candidates = [...core, ...sk, ...cognition, ...customer, ...timeline]
     }
     return this.filterIncludedKinds(input, candidates)
   }
@@ -257,7 +260,10 @@ export class BrainRetrievalSearchLaneService {
     if (vector.error) throw new Error(`SK vector search failed: ${vector.error.message}`)
     if (text.error) throw new Error(`SK text search failed: ${text.error.message}`)
     return this.candidateBuilder
-      .mergeRankedRows(this.candidateBuilder.mergeRankedRows(vector.data ?? [], text.data ?? []), keyword)
+      .mergeRankedRows(
+        this.candidateBuilder.mergeRankedRows(vector.data ?? [], text.data ?? []),
+        keyword,
+      )
       .map((row) => this.candidateBuilder.skCandidate(input, row))
   }
 
@@ -280,12 +286,11 @@ export class BrainRetrievalSearchLaneService {
       limit,
     })
     const [vector, text] = await Promise.all([vectorPromise, textPromise])
-    if (vector.error)
-      throw new Error(`Timeline item vector search failed: ${vector.error.message}`)
+    if (vector.error) throw new Error(`Timeline item vector search failed: ${vector.error.message}`)
     if (text.error) throw new Error(`Timeline item lexical search failed: ${text.error.message}`)
-    return this.candidateBuilder.mergeRankedRows(vector.data ?? [], text.data ?? []).map((row) =>
-      this.candidateBuilder.timelineItemCandidate(input, row),
-    )
+    return this.candidateBuilder
+      .mergeRankedRows(vector.data ?? [], text.data ?? [])
+      .map((row) => this.candidateBuilder.timelineItemCandidate(input, row))
   }
 
   private async searchSkKeywordRows(
@@ -326,9 +331,9 @@ export class BrainRetrievalSearchLaneService {
     const [vector, text] = await Promise.all([vectorPromise, textPromise])
     if (vector.error) throw new Error(`Company vector search failed: ${vector.error.message}`)
     if (text.error) throw new Error(`Company text search failed: ${text.error.message}`)
-    return this.candidateBuilder.mergeRankedRows(vector.data ?? [], text.data ?? []).map((row) =>
-      this.candidateBuilder.companyCandidate(input, row),
-    )
+    return this.candidateBuilder
+      .mergeRankedRows(vector.data ?? [], text.data ?? [])
+      .map((row) => this.candidateBuilder.companyCandidate(input, row))
   }
 
   private async searchCompanySignalCandidates(
@@ -355,9 +360,9 @@ export class BrainRetrievalSearchLaneService {
     if (vector.error)
       throw new Error(`Company signal vector search failed: ${vector.error.message}`)
     if (text.error) throw new Error(`Company signal lexical search failed: ${text.error.message}`)
-    return this.candidateBuilder.mergeRankedRows(vector.data ?? [], text.data ?? []).map((row) =>
-      this.candidateBuilder.companySignalCandidate(input, row),
-    )
+    return this.candidateBuilder
+      .mergeRankedRows(vector.data ?? [], text.data ?? [])
+      .map((row) => this.candidateBuilder.companySignalCandidate(input, row))
   }
 
   private async searchCustomerBrainArtifactCandidates(

@@ -6,7 +6,15 @@
 // so adding a new ingestion channel never touches the worker.
 // See .docs/plans/customer-signal-loop.md for the full architecture.
 
-export const INTERACTION_CHANNELS = ['telegram', 'widget', 'fathom'] as const
+export const INTERACTION_CHANNELS = [
+  'telegram',
+  'widget',
+  'fathom',
+  'fireflies',
+  'read_ai',
+  /** Any note taker defined from Settings (`nt_` providers). */
+  'meeting',
+] as const
 
 export type InteractionChannel = (typeof INTERACTION_CHANNELS)[number]
 

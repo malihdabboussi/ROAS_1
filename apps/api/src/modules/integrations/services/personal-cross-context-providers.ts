@@ -1,3 +1,5 @@
+import { isCustomMeetingProviderId } from '../../meetings/providers/transcript-source.types'
+
 /**
  * Personal-account integrations (`user_integrations.org_id IS NULL`) that remain
  * usable by the owning user inside an organization workspace.
@@ -11,6 +13,7 @@
 export const PERSONAL_CROSS_CONTEXT_PROVIDERS = new Set([
   'fathom',
   'fireflies',
+  'read_ai',
   'page_grader',
   'openai_codex',
   'anthropic_claude',
@@ -22,9 +25,19 @@ export const PERSONAL_CROSS_CONTEXT_PROVIDERS = new Set([
 export const PERSONAL_CROSS_CONTEXT_OVERVIEW_EXTRA = new Set(['slack'])
 
 export function isPersonalCrossContextProvider(integrationId: string): boolean {
-  return PERSONAL_CROSS_CONTEXT_PROVIDERS.has(integrationId)
+  return (
+    PERSONAL_CROSS_CONTEXT_PROVIDERS.has(integrationId) || isCustomMeetingProviderId(integrationId)
+  )
 }
 
 export function personalCrossContextOverviewIds(): string[] {
   return [...PERSONAL_CROSS_CONTEXT_PROVIDERS, ...PERSONAL_CROSS_CONTEXT_OVERVIEW_EXTRA]
+}
+
+/** Meeting note takers connect per person only; never as an org-shared credential. */
+export function isPersonalOnlyMeetingProvider(integrationId: string): boolean {
+  return (
+    ['fathom', 'fireflies', 'read_ai'].includes(integrationId) ||
+    isCustomMeetingProviderId(integrationId)
+  )
 }

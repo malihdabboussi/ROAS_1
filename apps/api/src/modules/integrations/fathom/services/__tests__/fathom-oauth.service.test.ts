@@ -87,13 +87,18 @@ describe('FathomOAuthService', () => {
 
     const redirect = await service.handleCallback('code_1', state)
 
+    // Fathom posts to the shared meeting door; the last path segment is the
+    // per-connection key that the intake uses to find this connection.
+    const sharedDoor =
+      /^https:\/\/api\.vibey\.test\/api\/integrations\/meetings\/webhooks\/fathom\/[A-Za-z0-9_-]{16,128}$/
     expect(fathom.createWebhook).toHaveBeenCalledWith('access_1', {
-      destinationUrl: 'https://api.vibey.test/api/integrations/fathom/webhook',
+      destinationUrl: expect.stringMatching(sharedDoor),
       triggeredFor: ['my_recordings', 'shared_team_recordings', 'my_shared_with_team_recordings'],
       includeTranscript: true,
       includeSummary: true,
       includeActionItems: true,
     })
+    const destinationUrl = fathom.createWebhook.mock.calls[0]![1].destinationUrl as string
     expect(repo.upsertConnection).toHaveBeenCalledWith(
       'user_1',
       { access_token: 'access_1', refresh_token: 'refresh_1' },
@@ -102,6 +107,7 @@ describe('FathomOAuthService', () => {
         team_name: 'ROAS Team',
         webhook_secret: 'whsec_1',
         webhook_id: 'wh_1',
+        webhook_key: destinationUrl.split('/').pop(),
         triggered_for: [
           'my_recordings',
           'shared_team_recordings',

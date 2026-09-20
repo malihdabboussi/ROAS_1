@@ -1,49 +1,15 @@
-export type FathomTranscriptTurn = {
-  speakerName: string
-  speakerEmail: string | null
-  timestamp: string | null
-  text: string
-}
+import type {
+  TranscriptSourceAction,
+  TranscriptSourceEvent,
+  TranscriptTurn,
+} from './transcript-source.types'
 
-export type FathomSourceAction = {
-  sourceKey: string
-  sourceText: string
-  assigneeName: string | null
-  assigneeEmail: string | null
-  recordingTimestamp: string | null
-  recordingPlaybackUrl: string | null
-  completed: boolean
-  userGenerated: boolean
-  raw: Record<string, unknown>
-  evidence?: {
-    sourceKind: 'meeting_transcript' | 'meeting_summary'
-    excerpt: string
-    speakerName: string | null
-    timestamp: string | null
-    transcriptTurnIndex: number | null
-  }
-  /** Present when the LLM judgment pass rewrote or annotated this action. */
-  refinement?: { original_text: string; why?: string }
-}
-
-export type FathomMeetingSource = {
-  provider: 'fathom'
-  externalRecordingId: string
-  providerMeetingId: string | null
-  calendarEventId: string | null
-  title: string
-  recordingUrl: string | null
-  scheduledStart: string | null
-  scheduledEnd: string | null
-  recordingStart: string | null
-  recordingEnd: string | null
-  durationSeconds: number | null
-  participantEmails: string[]
-  providerSummary: string | null
-  actions: FathomSourceAction[]
-  transcript: FathomTranscriptTurn[]
-  raw: Record<string, unknown>
-}
+// Fathom is the first implementation of the provider-agnostic transcript
+// contract; these aliases keep the historical names for existing consumers.
+export type FathomTranscriptTurn = TranscriptTurn
+export type FathomSourceAction = TranscriptSourceAction
+// Not narrowed to provider 'fathom': the meetings domain accepts every provider's source.
+export type FathomMeetingSource = TranscriptSourceEvent
 
 const GENERIC_FATHOM_TITLE_RE =
   /^(impromptu(?:\s+zoom)?(?:\s+meeting|\s+call)?|untitled(?:\s+meeting)?|zoom meeting|working session(?:\s*[—-].*)?|call \(naming…\))$/i
@@ -75,6 +41,7 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
 
   return {
     provider: 'fathom',
+    kind: 'meeting',
     externalRecordingId,
     providerMeetingId: firstText(event.meeting_id, event.call_id),
     calendarEventId: firstText(
@@ -88,6 +55,9 @@ export function normalizeFathomMeetingSource(event: Record<string, unknown>): Fa
       event,
     }),
     recordingUrl: httpUrl(event.url) ?? httpUrl(event.share_url),
+    sourceUrl: httpUrl(event.share_url) ?? httpUrl(event.url),
+    mediaUrl: null,
+    hostEmail: normalizedEmail(objectRecord(event.recorded_by).email ?? event.recorded_by_email),
     scheduledStart,
     scheduledEnd,
     recordingStart,
@@ -231,43 +201,6 @@ function collectParticipantNames(event: Record<string, unknown>): string[] {
   return [...new Set(names)].slice(0, 2)
 }
 
-export function renderFathomTranscriptDocument(source: FathomMeetingSource): string {
-  const metadata = [
-    `<p><strong>Provider:</strong> Fathom</p>`,
-    source.recordingStart
-      ? `<p><strong>Recorded:</strong> ${escapeHtml(source.recordingStart)}</p>`
-      : '',
-    source.recordingUrl
-      ? `<p><strong>Recording:</strong> <a href="${escapeHtml(source.recordingUrl)}">${escapeHtml(source.recordingUrl)}</a></p>`
-      : '',
-  ]
-    .filter(Boolean)
-    .join('')
-  const turns = source.transcript
-    .map((turn) => {
-      const timestamp = turn.timestamp
-        ? ` <time datetime="${escapeHtml(turn.timestamp)}">${escapeHtml(turn.timestamp)}</time>`
-        : ''
-      const speakerEmail = turn.speakerEmail
-        ? ` <span>&lt;${escapeHtml(turn.speakerEmail)}&gt;</span>`
-        : ''
-      return [
-        '<section>',
-        `<p><strong>${escapeHtml(turn.speakerName)}</strong>${speakerEmail}${timestamp}</p>`,
-        `<p>${escapeHtml(turn.text).replace(/\n/g, '<br>')}</p>`,
-        '</section>',
-      ].join('')
-    })
-    .join('')
-
-  return [
-    `<h1>TRANSCRIPT — ${escapeHtml(source.title)}</h1>`,
-    metadata,
-    '<hr>',
-    turns || '<p>No transcript was supplied by Fathom.</p>',
-  ].join('')
-}
-
 function normalizeTranscript(value: unknown): FathomTranscriptTurn[] {
   if (!Array.isArray(value)) return []
   return value.flatMap((raw) => {
@@ -348,13 +281,4 @@ function objectRecord(value: unknown): Record<string, unknown> {
   return value && typeof value === 'object' && !Array.isArray(value)
     ? (value as Record<string, unknown>)
     : {}
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;')
 }

@@ -3,7 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.CUSTOMER_INTERACTION_ROUTE_EVENT = exports.INTERACTION_PARTICIPANT_ROLES = exports.INTERACTION_CHANNELS = void 0;
 exports.buildInteractionDedupeKey = buildInteractionDedupeKey;
 exports.parseInteractionEnvelope = parseInteractionEnvelope;
-exports.INTERACTION_CHANNELS = ['telegram', 'widget', 'fathom'];
+exports.INTERACTION_CHANNELS = [
+    'telegram',
+    'widget',
+    'fathom',
+    'fireflies',
+    'read_ai',
+    'meeting',
+];
 exports.INTERACTION_PARTICIPANT_ROLES = ['customer', 'team', 'unknown'];
 exports.CUSTOMER_INTERACTION_ROUTE_EVENT = 'customer_interaction_route';
 function buildInteractionDedupeKey(brainId, sourceId, lastUnitId) {

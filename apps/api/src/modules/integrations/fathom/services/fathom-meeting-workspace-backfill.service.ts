@@ -69,7 +69,7 @@ export class FathomMeetingWorkspaceBackfillService {
         const summaryResult = await this.api
           .getRecordingSummary(supabase, input.userId, recordingId)
           .catch(() => ({ summary: null }))
-        await this.ingestion.ingestFathomSource(supabase, {
+        await this.ingestion.ingestMeetingSource(supabase, {
           meetingItemId,
           spaceId,
           userId: input.userId,

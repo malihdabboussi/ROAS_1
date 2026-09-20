@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common'
 import { temporalInsertFields } from '@vibey/api-shared'
 import { ArtifactBrainAccessService } from './artifact-brain-access.service'
 
+const MEETING_PROVIDERS = new Set(['fathom', 'fireflies', 'read_ai'])
+
 @Injectable()
 export class ArtifactBrainIngestionActionsService {
   constructor(
@@ -431,54 +433,51 @@ export class ArtifactBrainIngestionActionsService {
     )
   }
 
-  async ingestFathomMeeting(
+  /**
+   * Import one meeting from any connected note taker (Fathom, Fireflies, Read AI)
+   * into a brain. The API fetches through the provider adapter and queues the
+   * shared `meeting_transcript_import` job with the transcript inside.
+   */
+  async ingestMeetingTranscript(
     target: Record<string, any>,
     input: Record<string, unknown>,
     sessionKey?: string,
   ) {
-    const meeting =
-      input.meeting && typeof input.meeting === 'object' && !Array.isArray(input.meeting)
-        ? (input.meeting as Record<string, unknown>)
-        : undefined
-    const meetingId = String(
-      input.meeting_id ??
+    const provider = String(input.provider ?? '')
+      .trim()
+      .toLowerCase()
+    if (!MEETING_PROVIDERS.has(provider)) {
+      return {
+        success: false,
+        error: `provider is required and must be one of: ${[...MEETING_PROVIDERS].join(', ')}`,
+      }
+    }
+    const externalId = String(
+      input.external_id ??
+        input.externalId ??
+        input.meeting_id ??
         input.recording_id ??
-        input.call_id ??
-        meeting?.recording_id ??
-        meeting?.id ??
-        meeting?.call_id ??
+        input.transcript_id ??
+        input.session_id ??
         '',
     ).trim()
-    if (!meetingId && !meeting) return { success: false, error: 'meeting_id is required' }
-
-    const targetBrain = String(input.targetBrain ?? input.target_brain ?? '').trim()
-    if (targetBrain === 'campaign') {
-      return { success: false, error: 'Campaign Brain is no longer supported as an ingest target.' }
-    }
+    if (!externalId) return { success: false, error: 'external_id is required' }
 
     return this.callMainApiInternal(
       target,
-      '/brain/import-jobs/fathom-meeting',
+      '/brain/import-jobs/meeting-transcript',
       {
-        meeting_id: meetingId || undefined,
-        meeting,
-        title: input.title,
+        provider,
+        external_id: externalId,
         brainId: input.brainId ?? input.brain_id,
-        targetBrain: targetBrain || undefined,
+        targetBrain: input.targetBrain ?? input.target_brain,
+        contactId: input.contactId ?? input.contact_id,
+        campaignId: input.campaignId ?? input.campaign_id,
         domain: input.domain,
         org_id: target.resolveOrgId?.(sessionKey) ?? null,
       },
       sessionKey,
     )
-  }
-
-  ingestFirefliesTranscript() {
-    return {
-      success: true,
-      status: 'handled_by_mission',
-      message:
-        'Fireflies transcript ingestion is now handled via Atlas missions, not artifact actions.',
-    }
   }
 
   private async callMainApiInternal(

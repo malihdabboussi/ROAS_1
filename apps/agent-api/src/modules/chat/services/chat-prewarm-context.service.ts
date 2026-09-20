@@ -13,6 +13,7 @@ import { CampaignContextService } from './campaign-context.service'
 import { ChatAccessTokenService } from './chat-access-token.service'
 import { ChatDocumentContextService } from './chat-document-context.service'
 import { ChatModelInputService } from './chat-model-input.service'
+import { logBrainDenied, logPolicyMissing } from './chat-personal-brain-access.log'
 import {
   ChatPrewarmCacheService,
   type ChatPrewarmCacheStatus,
@@ -57,12 +58,12 @@ export class ChatPrewarmContextService {
     private readonly integrationContext: IntegrationContextService,
     private readonly conversations: ConversationsRepository,
     private readonly chatContextRepository: ChatContextRepository,
-    @Optional() private readonly chatPrewarmCache: ChatPrewarmCacheService | undefined,
-    @Optional() private readonly agentPolicy: AgentPolicyService | undefined,
     private readonly chatAccessTokenService: ChatAccessTokenService,
     private readonly chatDocumentContextService: ChatDocumentContextService,
     private readonly chatModelInputService: ChatModelInputService,
     private readonly chatProfileContextService: ChatProfileContextService,
+    @Optional() private readonly chatPrewarmCache?: ChatPrewarmCacheService,
+    @Optional() private readonly agentPolicy?: AgentPolicyService,
   ) {}
 
   createPrewarmCacheKey(options: PrewarmChatContextOptions): string | null {
@@ -324,10 +325,11 @@ export class ChatPrewarmContextService {
           'personal',
           policyScope,
         )
+        if (!userBrainAccess) logBrainDenied(logger, resolvedAgentId, policyScope)
       } catch (err) {
         logger.warn(`policy resolve failed for ${resolvedAgentId}: ${err}`)
       }
-    }
+    } else logPolicyMissing(logger, resolvedAgentId)
 
     if (this.agentPolicy && (source === 'slack' || source === 'telegram')) {
       try {

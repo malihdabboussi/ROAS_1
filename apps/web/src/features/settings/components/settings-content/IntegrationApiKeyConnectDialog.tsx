@@ -14,6 +14,8 @@ type Props = {
   setConnectionFields: React.Dispatch<React.SetStateAction<Record<string, string>>>
   submittingKey: boolean
   onSubmit: () => void | Promise<void>
+  /** Content shown above the fields, for example the webhook address to paste into the tool. */
+  preface?: React.ReactNode
 }
 
 export function IntegrationApiKeyConnectDialog({
@@ -27,6 +29,7 @@ export function IntegrationApiKeyConnectDialog({
   setConnectionFields,
   submittingKey,
   onSubmit,
+  preface,
 }: Props) {
   const showApiKeyModal = open
   const setShowApiKeyModal = onOpenChange
@@ -49,6 +52,7 @@ export function IntegrationApiKeyConnectDialog({
             </div>
 
             <div className="mt-spacing-4 space-y-spacing-3">
+              {preface ?? null}
               {hasConnectionFields ? (
                 integration.connection_fields!.map((field) => (
                   <div key={field.name}>

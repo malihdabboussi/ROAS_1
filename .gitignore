@@ -142,3 +142,6 @@ scripts/roas/.lovable-applied-migrations.log
 packages/@vibey/
 .env*
 .worktrees/
+
+# Database dumps never belong in git
+*.dump

@@ -1,3 +1,4 @@
+import { isDefinedNoteTakerId } from '@/lib/integrations/meeting-provider-definitions'
 import type { Integration, UserIntegration } from './integrations.types'
 
 const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
@@ -55,6 +56,8 @@ export function resolveIntegrationConnectionIdentity(
   if (provider === 'fireflies') {
     return metadataText(metadata, 'name') ?? metadataText(metadata, 'email')
   }
+  if (provider === 'read_ai') return metadataText(metadata, 'owner_email') ?? 'Read AI'
+  if (isDefinedNoteTakerId(provider)) return metadataText(metadata, 'email')
   if (provider === 'fathom') {
     return (
       metadataText(metadata, 'email') ??

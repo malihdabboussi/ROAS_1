@@ -93,8 +93,8 @@ export async function importFathomMeeting(
   status: 'queued' | 'processing' | 'retry' | 'succeeded' | 'failed'
   deduped?: boolean
 }> {
-  return backendPost('/api/brain/import-jobs/fathom-meeting', {
-    meeting,
+  return backendPost('/api/integrations/meetings/fathom/import', {
+    externalId: fathomExternalId(meeting),
     ...(options?.brainId ? { brainId: options.brainId } : {}),
     ...(options?.targetBrain ? { targetBrain: options.targetBrain } : {}),
   })
@@ -117,8 +117,8 @@ export async function importFirefliesTranscript(
   status: 'queued' | 'processing' | 'retry' | 'succeeded' | 'failed'
   deduped?: boolean
 }> {
-  return backendPost('/api/brain/import-jobs/fireflies-transcript', {
-    transcriptId: id,
+  return backendPost('/api/integrations/meetings/fireflies/import', {
+    externalId: id,
     ...(options?.brainId ? { brainId: options.brainId } : {}),
     ...(options?.targetBrain ? { targetBrain: options.targetBrain } : {}),
   })
@@ -271,4 +271,26 @@ export async function retryImportJob(jobId: string): Promise<void> {
 
 export async function dismissImportJob(jobId: string): Promise<void> {
   await backendDelete(`/api/brain/import-jobs/${jobId}/dismiss`)
+}
+
+export type MeetingProviderSummary = {
+  id: 'fathom' | 'fireflies' | 'read_ai'
+  connected: boolean
+  push: boolean
+  pull: boolean
+  listRecent: boolean
+  manifest: { displayName: string; personalOnly: boolean; logoKey: string }
+}
+
+/** Every registered note taker, what it can do, and whether the caller has it connected. */
+export async function listMeetingProviders(): Promise<MeetingProviderSummary[]> {
+  const response = await backendGet<{ success: boolean; providers: MeetingProviderSummary[] }>(
+    '/api/integrations/meetings/providers',
+  )
+  return response.providers ?? []
+}
+
+function fathomExternalId(meeting: FathomMeeting): string {
+  const raw = meeting as unknown as Record<string, unknown>
+  return String(raw.recording_id ?? raw.id ?? raw.call_id ?? '')
 }

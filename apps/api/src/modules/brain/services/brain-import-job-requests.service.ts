@@ -23,12 +23,6 @@ export type RememberDocumentBody = {
   asset_ref?: AssetRef | null
 }
 
-export type FathomMeetingBody = {
-  meeting?: Record<string, unknown>
-  brainId?: string
-  targetBrain?: string
-}
-
 export type CampaignFileBody = {
   campaignId?: string
   title?: string
@@ -44,12 +38,6 @@ export type CampaignFileBody = {
   assetRef?: AssetRef | null
   asset_id?: string | null
   asset_ref?: AssetRef | null
-}
-
-export type CampaignMeetingBody = {
-  campaignId?: string
-  meeting?: Record<string, unknown>
-  domain?: CampaignDomain
 }
 
 export type SkIngestBody = {
@@ -103,28 +91,6 @@ export class BrainImportJobRequestsService {
     return { success: true, ...queued }
   }
 
-  async enqueueFathomMeeting(
-    userId: string,
-    body: FathomMeetingBody,
-    scope: RequestScope,
-    supabase: SupabaseClient,
-  ) {
-    if (!body.meeting || typeof body.meeting !== 'object') {
-      throw new BadRequestException('meeting is required')
-    }
-    if (body.brainId?.trim()) {
-      await this.brainPermissions.assertCanTrainBrain(supabase, userId, scope, body.brainId.trim())
-    }
-    const queued = await this.importJobs.enqueueFathomMeetingImport(
-      userId,
-      body.meeting,
-      scope.orgId,
-      body.brainId?.trim() || undefined,
-      body.targetBrain?.trim() || undefined,
-    )
-    return { success: true, ...queued }
-  }
-
   async enqueueRememberLink(
     userId: string,
     body: { url?: string; title?: string },
@@ -139,27 +105,6 @@ export class BrainImportJobRequestsService {
         title: body.title?.trim() || null,
       },
       scope.orgId,
-    )
-    return { success: true, ...queued }
-  }
-
-  async enqueueFirefliesTranscript(
-    userId: string,
-    body: { transcriptId?: string; brainId?: string; targetBrain?: string },
-    scope: RequestScope,
-    supabase: SupabaseClient,
-  ) {
-    const transcriptId = body.transcriptId?.trim()
-    if (!transcriptId) throw new BadRequestException('transcriptId is required')
-    if (body.brainId?.trim()) {
-      await this.brainPermissions.assertCanTrainBrain(supabase, userId, scope, body.brainId.trim())
-    }
-    const queued = await this.importJobs.enqueueFirefliesTranscriptImport(
-      userId,
-      transcriptId,
-      scope.orgId,
-      body.brainId?.trim() || undefined,
-      body.targetBrain?.trim() || undefined,
     )
     return { success: true, ...queued }
   }
@@ -206,42 +151,6 @@ export class BrainImportJobRequestsService {
       {
         campaignId: body.campaignId.trim(),
         url: body.url.trim(),
-        domain: body.domain,
-      },
-      scope.orgId,
-    )
-    return { success: true, ...queued }
-  }
-
-  async enqueueCampaignFathom(userId: string, body: CampaignMeetingBody, scope: RequestScope) {
-    if (!body.campaignId?.trim()) throw new BadRequestException('campaignId is required')
-    if (!body.meeting || typeof body.meeting !== 'object') {
-      throw new BadRequestException('meeting is required')
-    }
-    const queued = await this.importJobs.enqueueCampaignFathomImport(
-      userId,
-      {
-        campaignId: body.campaignId.trim(),
-        meeting: body.meeting,
-        domain: body.domain,
-      },
-      scope.orgId,
-    )
-    return { success: true, ...queued }
-  }
-
-  async enqueueCampaignFireflies(
-    userId: string,
-    body: { campaignId?: string; transcriptId?: string; domain?: CampaignDomain },
-    scope: RequestScope,
-  ) {
-    if (!body.campaignId?.trim()) throw new BadRequestException('campaignId is required')
-    if (!body.transcriptId?.trim()) throw new BadRequestException('transcriptId is required')
-    const queued = await this.importJobs.enqueueCampaignFirefliesImport(
-      userId,
-      {
-        campaignId: body.campaignId.trim(),
-        transcriptId: body.transcriptId.trim(),
         domain: body.domain,
       },
       scope.orgId,

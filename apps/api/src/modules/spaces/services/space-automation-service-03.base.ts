@@ -3,6 +3,7 @@ import { Injectable, Logger, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Queue } from 'bullmq'
+import type { RequestScope } from '@vibey/api-shared'
 import { AGENT_RUNTIME_AUTOMATION_QUEUE } from '../../agent-runtime/agent-runtime-queues'
 import { CreditsService } from '../../billing/services/credits.service'
 import { BrainImportJobsService } from '../../brain/services/brain-import-jobs.service'
@@ -19,6 +20,10 @@ import {
   getConnectedAppFlowTriggerBySlug,
   type ConnectedAppFlowProvider,
 } from '../data/connected-app-flow-triggers'
+import {
+  MEETING_LOG_AUTOMATION_SEED,
+  MEETING_LOG_TRIGGER_TYPE,
+} from '../data/meeting-log-automation.seed'
 import { SpaceAutomationsRepository } from '../repositories/space-automations.repository'
 import { SpacesRepository } from '../repositories/spaces.repository'
 import { sanitizeAssigneesForWrite } from '../utils/sanitize-assignees'
@@ -274,6 +279,50 @@ interface AutomationYoutubeChannelInput {
 }
 
 export abstract class SpaceAutomationServiceBase03 extends SpaceAutomationServiceBase02 {
+  /**
+   * A Meetings space created before the meeting-log rule existed, or without
+   * automations, gives recordings nowhere to land ("no_matching_route").
+   * Install the template's rule once, owned by the space owner, and sync its
+   * routing row so every note taker routes there.
+   */
+  async ensureMeetingLogAutomation(
+    supabase: SupabaseClient,
+    scope: RequestScope,
+    spaceId: string,
+  ): Promise<{ installed: boolean }> {
+    const automations = (await this.automationsRepo.listBySpace(supabase, spaceId)) as Array<
+      Record<string, unknown>
+    >
+    const present = automations.some(
+      (automation) =>
+        this.objectRecord(automation.trigger).type === MEETING_LOG_TRIGGER_TYPE &&
+        automation.enabled === true &&
+        automation.is_draft !== true,
+    )
+    if (present) return { installed: false }
+    const space = (await this.repo.findSpaceByIdForAccess(supabase, spaceId)) as Record<
+      string,
+      unknown
+    > | null
+    if (!space) return { installed: false }
+    const ownerId = String(space.user_id ?? scope.userId)
+    const orgId = typeof space.org_id === 'string' ? space.org_id : null
+    const automation = (await this.automationsRepo.create(
+      supabase,
+      { id: spaceId, user_id: ownerId, org_id: orgId },
+      scope.userId,
+      {
+        name: MEETING_LOG_AUTOMATION_SEED.name,
+        trigger: MEETING_LOG_AUTOMATION_SEED.trigger,
+        actions: MEETING_LOG_AUTOMATION_SEED.actions,
+        enabled: true,
+      } as never,
+    )) as Record<string, unknown>
+    await this.syncExternalTriggerForAutomation(supabase, ownerId, orgId, spaceId, automation)
+    this.logger.log(`Installed the meeting log rule on space ${spaceId} for ${ownerId}`)
+    return { installed: true }
+  }
+
   async syncExternalTriggerForAutomation(
     supabase: SupabaseClient,
     userId: string,

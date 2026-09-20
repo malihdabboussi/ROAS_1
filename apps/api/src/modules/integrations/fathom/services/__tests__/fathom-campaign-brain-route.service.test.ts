@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
-  campaignFathomDedupeKey,
   FathomCampaignBrainRouteService,
   isSystemCampaign,
 } from '../fathom-campaign-brain-route.service'
@@ -33,7 +32,7 @@ const event = { id: 'rec-1', title: '1DS x ROAS Weekly Session', transcript: [] 
 describe('FathomCampaignBrainRouteService', () => {
   it('queues the meeting into the client campaign brain when the Space route resolves a client campaign', async () => {
     const importJobs = {
-      enqueueCampaignFathomImport: vi.fn(async () => ({ jobId: 'job-9', status: 'queued' })),
+      enqueueCampaignMeetingImport: vi.fn(async () => ({ jobId: 'job-9', status: 'queued' })),
     }
     const pageGraderApi = { getClientScopeMap: vi.fn() }
     const service = new FathomCampaignBrainRouteService(importJobs as never, pageGraderApi as never)
@@ -55,16 +54,19 @@ describe('FathomCampaignBrainRouteService', () => {
       jobId: 'job-9',
       source: 'space_route',
     })
-    expect(importJobs.enqueueCampaignFathomImport).toHaveBeenCalledWith(
+    expect(importJobs.enqueueCampaignMeetingImport).toHaveBeenCalledWith(
       'user-1',
-      { campaignId: 'camp-1ds', meeting: event },
+      {
+        campaignId: 'camp-1ds',
+        source: expect.objectContaining({ provider: 'fathom', externalRecordingId: 'rec-1' }),
+      },
       'org-1',
     )
   })
 
   it('routes primarily from matched Page Grader clients via client_scope_map', async () => {
     const importJobs = {
-      enqueueCampaignFathomImport: vi.fn(async () => ({ jobId: 'job-match', status: 'queued' })),
+      enqueueCampaignMeetingImport: vi.fn(async () => ({ jobId: 'job-match', status: 'queued' })),
     }
     const pageGraderApi = {
       getClientScopeMap: vi.fn(async () => ({
@@ -95,17 +97,23 @@ describe('FathomCampaignBrainRouteService', () => {
         source: 'matched_client',
       },
     ])
-    expect(importJobs.enqueueCampaignFathomImport).toHaveBeenCalledTimes(1)
-    expect(importJobs.enqueueCampaignFathomImport).toHaveBeenCalledWith(
+    expect(importJobs.enqueueCampaignMeetingImport).toHaveBeenCalledTimes(1)
+    expect(importJobs.enqueueCampaignMeetingImport).toHaveBeenCalledWith(
       'user-1',
-      { campaignId: 'camp-1ds', meeting: event },
+      {
+        campaignId: 'camp-1ds',
+        source: expect.objectContaining({ provider: 'fathom', externalRecordingId: 'rec-1' }),
+      },
       'org-1',
     )
   })
 
   it('falls back to Space route when matched clients do not map to a client campaign', async () => {
     const importJobs = {
-      enqueueCampaignFathomImport: vi.fn(async () => ({ jobId: 'job-fallback', status: 'queued' })),
+      enqueueCampaignMeetingImport: vi.fn(async () => ({
+        jobId: 'job-fallback',
+        status: 'queued',
+      })),
     }
     const pageGraderApi = {
       getClientScopeMap: vi.fn(async () => ({})),
@@ -135,7 +143,7 @@ describe('FathomCampaignBrainRouteService', () => {
   })
 
   it('does not write client meetings into General or Personal system campaigns', async () => {
-    const importJobs = { enqueueCampaignFathomImport: vi.fn() }
+    const importJobs = { enqueueCampaignMeetingImport: vi.fn() }
     const pageGraderApi = { getClientScopeMap: vi.fn() }
     const service = new FathomCampaignBrainRouteService(importJobs as never, pageGraderApi as never)
 
@@ -151,11 +159,11 @@ describe('FathomCampaignBrainRouteService', () => {
     })
 
     expect(decision).toEqual({ routed: false, reason: 'system_campaign' })
-    expect(importJobs.enqueueCampaignFathomImport).not.toHaveBeenCalled()
+    expect(importJobs.enqueueCampaignMeetingImport).not.toHaveBeenCalled()
   })
 
   it('skips quietly when there is no Space route or the Space has no campaign', async () => {
-    const importJobs = { enqueueCampaignFathomImport: vi.fn() }
+    const importJobs = { enqueueCampaignMeetingImport: vi.fn() }
     const pageGraderApi = { getClientScopeMap: vi.fn() }
     const service = new FathomCampaignBrainRouteService(importJobs as never, pageGraderApi as never)
 
@@ -178,11 +186,11 @@ describe('FathomCampaignBrainRouteService', () => {
         spaceRoute: { space_id: 'space-x' },
       }),
     ).resolves.toEqual({ routed: false, reason: 'no_campaign' })
-    expect(importJobs.enqueueCampaignFathomImport).not.toHaveBeenCalled()
+    expect(importJobs.enqueueCampaignMeetingImport).not.toHaveBeenCalled()
   })
 
   it('never throws out of the webhook when the lookup fails', async () => {
-    const importJobs = { enqueueCampaignFathomImport: vi.fn() }
+    const importJobs = { enqueueCampaignMeetingImport: vi.fn() }
     const pageGraderApi = { getClientScopeMap: vi.fn() }
     const service = new FathomCampaignBrainRouteService(importJobs as never, pageGraderApi as never)
 
@@ -195,12 +203,6 @@ describe('FathomCampaignBrainRouteService', () => {
         spaceRoute: { space_id: 'space-x' },
       }),
     ).resolves.toEqual({ routed: false, reason: 'lookup_failed' })
-  })
-
-  it('builds the same campaign-fathom dedupe key as enqueueCampaignFathomImport', () => {
-    expect(campaignFathomDedupeKey('camp-1', { recording_id: 'r1', title: 'Call' })).toBe(
-      'campaign-fathom:camp-1:r1',
-    )
   })
 })
 

@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { ComposioModule } from '../composio/composio.module'
+import { CustomNoteTakersModule } from '../meetings/custom/custom-note-takers.module'
 import { SpacesModule } from '../spaces/spaces.module'
 import { ActiveCampaignModule } from './activecampaign/activecampaign.module'
 import { AnthropicClaudeModule } from './anthropic-claude/anthropic-claude.module'
@@ -26,6 +27,7 @@ import { MetaModule } from './meta/meta.module'
 import { OpenAICodexModule } from './openai-codex/openai-codex.module'
 import { PageGraderModule } from './page-grader/page-grader.module'
 import { PaypalModule } from './paypal/paypal.module'
+import { ReadAiModule } from './read-ai/read-ai.module'
 import { IntegrationsRepository } from './repositories/integrations.repository'
 import { ScrapeCreatorsModule } from './scrapecreators/scrapecreators.module'
 import { SearchApiModule } from './searchapi/searchapi.module'
@@ -48,6 +50,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
 
 @Module({
   imports: [
+    CustomNoteTakersModule,
     ConfigModule,
     ComposioModule,
     SpacesModule,
@@ -68,6 +71,7 @@ import { WordpressModule } from './wordpress/wordpress.module'
     FathomModule,
     FanbasisModule,
     FirefliesModule,
+    ReadAiModule,
     PageGraderModule,
     ScrapeCreatorsModule,
     SearchApiModule,

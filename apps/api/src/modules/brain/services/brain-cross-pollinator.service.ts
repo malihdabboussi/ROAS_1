@@ -147,7 +147,28 @@ export class BrainCrossPollinatorService {
 
   private extractMeetingSummary(job: BrainImportJobRecord): string | null {
     const payload = job.payload
-    const meeting = (payload.meeting ?? payload) as Record<string, unknown>
+    // Provider-agnostic meeting jobs carry the normalized source; legacy Fathom
+    // jobs carry the raw meeting. Read both through the Fathom-shaped fields.
+    const source = payload.source as
+      | {
+          title?: string
+          providerSummary?: string | null
+          actions?: Array<{ sourceText?: string }>
+        }
+      | undefined
+    const meeting = (
+      source
+        ? {
+            title: source.title,
+            default_summary: source.providerSummary
+              ? { markdown_formatted: source.providerSummary }
+              : undefined,
+            action_items: (source.actions ?? []).map((action) => ({
+              description: action.sourceText,
+            })),
+          }
+        : (payload.meeting ?? payload)
+    ) as Record<string, unknown>
 
     const title = String(meeting.title || meeting.meeting_title || job.title || '')
     const summary =

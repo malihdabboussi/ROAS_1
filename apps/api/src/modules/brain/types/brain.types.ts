@@ -23,6 +23,7 @@ export type SourceType =
   | 'conversation'
   | 'fathom'
   | 'fireflies'
+  | 'read_ai'
   | 'api'
   | 'openclaw'
   | 'crystallize'

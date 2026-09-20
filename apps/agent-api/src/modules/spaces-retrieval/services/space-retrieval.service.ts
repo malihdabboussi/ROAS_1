@@ -4,13 +4,13 @@ import { temporalCandidateMetadata, type BrainRetrievalCandidate } from '@vibey/
 import { BrainRerankerService } from '../../brain/services/brain-reranker.service'
 import { BrainSufficiencyService } from '../../brain/services/brain-sufficiency.service'
 import { EmbeddingService } from '../../brain/services/embedding.service'
+import { SpacesRetrievalRepository } from '../repositories/spaces-retrieval.repository'
 import type {
   SpaceRetrievalCandidate,
   SpaceRetrievalSearchInput,
   SpaceRetrievalSearchResult,
   SpaceSemanticSourceType,
 } from '../types/space-retrieval.types'
-import { SpacesRetrievalRepository } from '../repositories/spaces-retrieval.repository'
 import { SpaceGraphExpansionService } from './space-graph-expansion.service'
 
 const RRF_K = 60
@@ -24,7 +24,7 @@ export class SpaceRetrievalService {
     private readonly embedding: EmbeddingService,
     private readonly reranker: BrainRerankerService,
     private readonly sufficiency: BrainSufficiencyService,
-    @Optional() private readonly graphExpansion: SpaceGraphExpansionService | undefined = undefined,
+    @Optional() private readonly graphExpansion?: SpaceGraphExpansionService,
     private readonly repository: SpacesRetrievalRepository = new SpacesRetrievalRepository(),
   ) {}
 

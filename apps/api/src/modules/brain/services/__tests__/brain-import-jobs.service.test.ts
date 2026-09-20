@@ -114,12 +114,51 @@ describe('BrainImportJobsService', () => {
       },
       {
         job: baseJob({
-          job_type: 'fireflies_transcript_import',
-          title: 'FF',
-          payload: { transcriptId: 'ff-1' },
+          job_type: 'meeting_transcript_import',
+          title: 'Otter sync',
+          payload: {
+            provider: 'nt_otter',
+            externalId: 'm-9',
+            source: {
+              provider: 'nt_otter',
+              providerDisplayName: 'Otter',
+              kind: 'meeting',
+              externalRecordingId: 'm-9',
+              title: 'Otter sync',
+              participantEmails: [],
+              actions: [],
+              transcript: [{ speakerName: 'A', speakerEmail: null, timestamp: null, text: 'hi' }],
+            },
+          },
         }),
         expectPromptIncludes: 'Target brain: user',
         expectPromptIncludesAction: 'save_user_memory',
+        expectBrainId: undefined as string | undefined,
+      },
+      {
+        job: baseJob({
+          job_type: 'campaign_meeting_import',
+          title: 'Camp meeting',
+          payload: {
+            campaignId: 'camp-m',
+            provider: 'read_ai',
+            externalId: 'S1',
+            source: {
+              provider: 'read_ai',
+              kind: 'meeting',
+              externalRecordingId: 'S1',
+              title: 'Kickoff',
+              participantEmails: [],
+              actions: [],
+              transcript: [
+                { speakerName: 'Host', speakerEmail: null, timestamp: null, text: 'go' },
+              ],
+            },
+          },
+        }),
+        expectPromptIncludes: 'Target brain: campaign',
+        expectPromptIncludesAction: 'atlas_save_brain_context',
+        expectCampaignId: 'camp-m',
         expectBrainId: undefined as string | undefined,
       },
       {
@@ -154,17 +193,6 @@ describe('BrainImportJobsService', () => {
         expectPromptIncludes: 'Target brain: campaign',
         expectPromptIncludesAction: 'atlas_save_brain_context',
         expectCampaignId: 'camp-f',
-        expectBrainId: undefined as string | undefined,
-      },
-      {
-        job: baseJob({
-          job_type: 'campaign_fireflies_import',
-          title: 'Camp ff',
-          payload: { campaignId: 'camp-ff', transcriptId: 't1' },
-        }),
-        expectPromptIncludes: 'Target brain: campaign',
-        expectPromptIncludesAction: 'atlas_save_brain_context',
-        expectCampaignId: 'camp-ff',
         expectBrainId: undefined as string | undefined,
       },
       {

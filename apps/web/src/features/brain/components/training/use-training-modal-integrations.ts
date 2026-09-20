@@ -5,14 +5,8 @@ import { MEDIA_TOAST_ERRORS } from '@/lib/config/media-toast-errors.config'
 import { useCloudAttach } from '@/lib/hooks/use-cloud-attach'
 import { useWorkspaceSettingsModal } from '@/lib/settings'
 import { fetchSkSources, type SkSource } from '../../services/sk.service'
-import {
-  getFathomStatus,
-  getFirefliesStatus,
-} from '../../services/user-brain-import.service'
-import {
-  TRAINING_INTEGRATION_KEYS,
-  TRAINING_SOURCE_RAIL_INTEGRATIONS,
-} from './TrainingSourceRail'
+import { listMeetingProviders } from '../../services/user-brain-import.service'
+import { TRAINING_INTEGRATION_KEYS, TRAINING_SOURCE_RAIL_INTEGRATIONS } from './TrainingSourceRail'
 import type { SourceKey } from './types'
 
 export function useTrainingModalIntegrations({
@@ -69,10 +63,14 @@ export function useTrainingModalIntegrations({
       await refreshConnectionStatus()
       if (cancelled) return
       try {
-        const [fathom, fireflies] = await Promise.all([getFathomStatus(), getFirefliesStatus()])
+        // One call for every note taker; providers without a meeting list
+        // (webhook-only, such as Read AI) never show a rail entry.
+        const providers = await listMeetingProviders()
         if (!cancelled) {
-          setFathomConnected(fathom.connected)
-          setFirefliesConnected(fireflies.connected)
+          const connected = (id: string) =>
+            providers.some((p) => p.id === id && p.connected && p.listRecent)
+          setFathomConnected(connected('fathom'))
+          setFirefliesConnected(connected('fireflies'))
         }
       } catch {
         if (!cancelled) {
@@ -107,7 +105,10 @@ export function useTrainingModalIntegrations({
   useEffect(() => {
     if (!integrationsStatusReady || !open) return
     const allowed = new Set(connectedIntegrationRailItems.map((item) => item.key))
-    if (TRAINING_INTEGRATION_KEYS.some((key) => key === activeSource) && !allowed.has(activeSource)) {
+    if (
+      TRAINING_INTEGRATION_KEYS.some((key) => key === activeSource) &&
+      !allowed.has(activeSource)
+    ) {
       onActiveSourceChange('add')
     }
   }, [

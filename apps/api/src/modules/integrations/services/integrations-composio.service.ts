@@ -8,6 +8,7 @@ import { buildComposioCallbackRedirectUrl } from './integrations-composio-callba
 import { IntegrationsComposioCampaignService } from './integrations-composio-campaign.service'
 import { IntegrationsComposioWebhookService } from './integrations-composio-webhook.service'
 import { IntegrationsCoreService } from './integrations-core.service'
+import { isPersonalOnlyMeetingProvider } from './personal-cross-context-providers'
 
 @Injectable()
 export class IntegrationsComposioService {
@@ -45,10 +46,9 @@ export class IntegrationsComposioService {
       forceNewCamel === true ||
       forceNewCamel === 'true'
 
-    const PERSONAL_ONLY = ['fathom', 'fireflies']
     if (
       this.orgScope.isOrgContext(scope) &&
-      PERSONAL_ONLY.includes(integrationId) &&
+      isPersonalOnlyMeetingProvider(integrationId) &&
       scopeMode === 'org_shared'
     ) {
       return {

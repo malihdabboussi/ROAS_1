@@ -268,6 +268,67 @@ describe('BrainRetrievalService search lane data access', () => {
     )
   })
 
+  it('returns SK entries trained into a user brain', async () => {
+    const userBrain = {
+      id: 'brain-user',
+      owner_id: 'user-1',
+      org_id: null,
+      scope: 'user',
+      agent_id: null,
+      created_by: 'user-1',
+    }
+    const supabase = {
+      from: vi.fn((table: string) => {
+        if (table === 'ns_brains') return makeQuery([], userBrain)
+        if (table === 'brain_shares') return makeQuery([], null)
+        if (table === 'agent_team_members') return makeQuery([])
+        if (table === 'ns_sk_entries') {
+          return makeQuery([
+            {
+              id: 'sk-webinar',
+              brain_id: 'brain-user',
+              title: 'Tuesday Webinar Scheduling Rule',
+              content: 'Webinars generally achieve peak performance when scheduled on Tuesdays.',
+              entry_type: 'technique',
+              domain: 'marketing',
+              mastery: 0.3,
+              confidence: 0.9,
+              tags: ['webinars'],
+              metadata: {},
+            },
+          ])
+        }
+        return makeQuery([])
+      }),
+      rpc: vi.fn(async () => ({ data: [], error: null })),
+    }
+    const userClient = {
+      rpc: vi.fn(async () => ({ data: true, error: null })),
+    }
+    const service = new BrainRetrievalService({ getEmbedding: vi.fn(async () => null) } as any)
+    const result = await service.search({
+      supabase: supabase as any,
+      userClient: userClient as any,
+      family: 'user',
+      brainId: 'brain-user',
+      query: 'which day is the best day for webinar',
+      userId: 'user-1',
+      orgId: null,
+      requiredAccess: 'query',
+      limit: 10,
+    })
+    expect(result.results).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'sk-webinar',
+          kind: 'sk_entry',
+          family: 'user',
+          title: 'Tuesday Webinar Scheduling Rule',
+        }),
+      ]),
+    )
+  })
+
   it('returns company signals and attaches company object edges', async () => {
     const companyBrain = {
       id: 'brain-company',

@@ -20,25 +20,40 @@ import {
   type MeetingRecordingCandidate,
 } from '../domain/meeting-recording-reconciliation'
 import { renderUnifiedMeetingRecap } from '../domain/meeting-unified-recap'
-import {
-  normalizeFathomMeetingSource,
-  renderFathomTranscriptDocument,
-  type FathomMeetingSource,
-  type FathomSourceAction,
-} from '../providers/fathom-meeting-source'
+import { normalizeFathomMeetingSource } from '../providers/fathom-meeting-source'
+import { renderTranscriptDocument } from '../providers/transcript-document'
+import { readEmbeddedSource } from '../providers/transcript-source-to-recording-event'
+import type {
+  TranscriptSourceAction,
+  TranscriptSourceEvent,
+} from '../providers/transcript-source.types'
 import { MeetingProviderActionsRepository } from '../repositories/meeting-provider-actions.repository'
 import { MeetingRecapRepository } from '../repositories/meeting-recap.repository'
 import { MeetingWorkspaceResolutionRepository } from '../repositories/meeting-workspace-resolution.repository'
 import { MeetingWorkspaceStateRepository } from '../repositories/meeting-workspace-state.repository'
 import { MeetingWorkspaceRepository } from '../repositories/meeting-workspace.repository'
 
-type IngestFathomSourceInput = {
+type TranscriptInput = {
+  /** Raw provider payload (Fathom-shaped, or a bridged event carrying `transcript_source`). */
+  event?: Record<string, unknown>
+  /** Already-normalized transcript from any provider. Wins over `event`. */
+  source?: TranscriptSourceEvent
+}
+
+type IngestMeetingSourceInput = TranscriptInput & {
   meetingItemId: string
   spaceId: string
   userId: string
   orgId: string | null
   calendarEventId: string | null
-  event: Record<string, unknown>
+}
+
+/** One normalized source whichever way the caller handed the meeting over. */
+function resolveTranscriptSource(input: TranscriptInput): TranscriptSourceEvent {
+  if (input.source) return input.source
+  const embedded = readEmbeddedSource(input.event)
+  if (embedded) return embedded
+  return normalizeFathomMeetingSource(input.event ?? {})
 }
 
 @Injectable()
@@ -60,9 +75,9 @@ export class MeetingSourceIngestionService {
    * must never depend on the model being available.
    */
   private async refineSourceActions(
-    source: FathomMeetingSource,
+    source: TranscriptSourceEvent,
     input: { userId: string; orgId: string | null },
-  ): Promise<FathomSourceAction[]> {
+  ): Promise<TranscriptSourceAction[]> {
     if (source.actions.length === 0 || !this.embeddingService) return source.actions
     try {
       const completion = await this.embeddingService.callGeminiWithUsage(
@@ -93,13 +108,9 @@ export class MeetingSourceIngestionService {
 
   async findMatchingMeetingItem(
     supabase: SupabaseClient,
-    input: {
-      spaceId: string
-      userId: string
-      event: Record<string, unknown>
-    },
+    input: TranscriptInput & { spaceId: string; userId: string },
   ): Promise<string | null> {
-    const source = normalizeFathomMeetingSource(input.event)
+    const source = resolveTranscriptSource(input)
     if (source.calendarEventId) {
       const exactScheduled = await this.resolutionRepository.findByCalendarEvent(
         supabase,
@@ -159,9 +170,9 @@ export class MeetingSourceIngestionService {
     return matches.length === 1 ? matches[0]! : null
   }
 
-  async ingestFathomSource(
+  async ingestMeetingSource(
     supabase: SupabaseClient,
-    input: IngestFathomSourceInput,
+    input: IngestMeetingSourceInput,
   ): Promise<{
     recording_id: string
     transcript_doc_item_id: string | null
@@ -169,9 +180,9 @@ export class MeetingSourceIngestionService {
     primary_recording_id: string
     recap_doc_item_id: string
   }> {
-    const source = normalizeFathomMeetingSource(input.event)
+    const source = resolveTranscriptSource(input)
     await this.syncAutomaticCallKind(supabase, input, source)
-    await this.syncCallItemFathomRecording(supabase, input, source)
+    await this.syncCallItemRecording(supabase, input, source)
     const existingWorkspace = await this.resolutionRepository.findByMeetingItem(
       supabase,
       input.meetingItemId,
@@ -202,7 +213,7 @@ export class MeetingSourceIngestionService {
         ...scope,
         recordingId,
         source,
-        docBody: renderFathomTranscriptDocument(source),
+        docBody: renderTranscriptDocument(source),
       })
       transcriptDocItemId = String(document.id)
       await this.repository.linkTranscriptDocument(supabase, recordingId, transcriptDocItemId)
@@ -284,8 +295,8 @@ export class MeetingSourceIngestionService {
 
   private async syncAutomaticCallKind(
     supabase: SupabaseClient,
-    input: IngestFathomSourceInput,
-    source: ReturnType<typeof normalizeFathomMeetingSource>,
+    input: IngestMeetingSourceInput,
+    source: TranscriptSourceEvent,
   ): Promise<void> {
     const customData = await this.resolutionRepository.findMeetingItemCustomData(
       supabase,
@@ -303,13 +314,13 @@ export class MeetingSourceIngestionService {
       fathomAliases: profile.fathomAliases,
       fullName: profile.fullName,
       internalDomains: profile.internalDomains,
-      internalEmails: [recordedByEmail(input.event)],
+      internalEmails: [source.hostEmail ?? ''],
     })
     const callKind = resolveMeetingCallKind({
       identity,
-      recordedByEmail: recordedByEmail(input.event),
+      recordedByEmail: source.hostEmail ?? '',
       attendees: source.participantEmails.map((email) => ({ email })),
-      attendeeLabels: attendeeLabels(input.event),
+      attendeeLabels: attendeeLabels(source.raw),
       titleHint: source.title,
       summary: source.providerSummary,
     })
@@ -321,10 +332,10 @@ export class MeetingSourceIngestionService {
     )
   }
 
-  private async syncCallItemFathomRecording(
+  private async syncCallItemRecording(
     supabase: SupabaseClient,
-    input: IngestFathomSourceInput,
-    source: ReturnType<typeof normalizeFathomMeetingSource>,
+    input: IngestMeetingSourceInput,
+    source: TranscriptSourceEvent,
   ): Promise<void> {
     const customData = await this.resolutionRepository.findMeetingItemCustomData(
       supabase,
@@ -340,8 +351,8 @@ export class MeetingSourceIngestionService {
         providerMeetingId: source.providerMeetingId,
         host: resolveMeetingHost({
           recordedBy: {
-            email: recordedByEmail(input.event),
-            name: text(record(input.event.recorded_by).name),
+            email: source.hostEmail ?? '',
+            name: hostName(source),
           },
         }),
       },
@@ -390,9 +401,7 @@ function toCandidate(row: Record<string, unknown>): MeetingRecordingCandidate {
   }
 }
 
-function sourceToCandidate(
-  source: ReturnType<typeof normalizeFathomMeetingSource>,
-): MeetingRecordingCandidate {
+function sourceToCandidate(source: TranscriptSourceEvent): MeetingRecordingCandidate {
   return {
     provider: source.provider,
     externalRecordingId: source.externalRecordingId,
@@ -419,13 +428,28 @@ function record(value: unknown): Record<string, unknown> {
     : {}
 }
 
-function recordedByEmail(event: Record<string, unknown>): string {
-  return text(event.recorded_by_email) ?? text(record(event.recorded_by).email) ?? ''
+function hostName(source: TranscriptSourceEvent): string | null {
+  const raw = source.raw
+  return (
+    text(record(raw.recorded_by).name) ??
+    text(record(raw.owner).name) ??
+    (source.hostEmail
+      ? (source.transcript.find((turn) => turn.speakerEmail === source.hostEmail)?.speakerName ??
+        null)
+      : null)
+  )
 }
 
 function attendeeLabels(event: Record<string, unknown>): string[] {
   const labels = new Set<string>()
-  for (const key of ['calendar_invitees', 'attendees', 'invitees', 'shared_with']) {
+  for (const key of [
+    'calendar_invitees',
+    'attendees',
+    'invitees',
+    'shared_with',
+    'participants',
+    'meeting_attendees',
+  ]) {
     const rows = event[key]
     if (!Array.isArray(rows)) continue
     for (const row of rows) {
@@ -433,6 +457,7 @@ function attendeeLabels(event: Record<string, unknown>): string[] {
       const label =
         text(person.name) ??
         text(person.display_name) ??
+        text(person.displayName) ??
         text(person.matched_speaker_display_name) ??
         text(person.email)
       if (label) labels.add(label)

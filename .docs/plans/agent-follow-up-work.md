@@ -40323,3 +40323,271 @@ Evidence: `SidebarHqFlyouts.tsx` is 381 lines, `SidebarSimpleSection.tsx` is 376
 Needed work: Extract focused navigation-row and flyout-state components without changing the shared sidebar contracts or route behavior.
 
 Reason not done now: The files remain below the hard component limit, and structural decomposition is outside this focused navigation change.
+
+## 2026-09-11 - [FIX] Fireflies brain import dispatches no transcript text
+
+Status: Open (fixed by Phase 1 of `.docs/plans/meeting-notetaker-system-roa-40.md`)
+
+Found while: Planning ROA-40 (meeting note-taker system).
+
+Evidence: `apps/api/src/modules/brain/services/brain-import-jobs-enqueue.base.ts:151-169` stores only `{ transcriptId }`; `brain-import-jobs-input.base.ts:81-99` spreads that payload; `brain-import-jobs-execution.base.ts:304-321` `extractContentText` falls through to `JSON.stringify(input)`, and the lazy transcript fetch at `:42-43` runs for Fathom job types only. No code in `apps/api` fetches a Fireflies transcript before Atlas dispatch.
+
+Needed work: Fetch the transcript via `FirefliesApiService.getTranscript` before enqueue and place speaker turns under `transcript` in the job payload (generic `meeting_transcript_import` in the plan).
+
+Reason not done now: ROA-40 session was planning only; code changes need approval.
+
+## 2026-09-11 - [FIX] Fathom webhook accepts unsigned or mis-signed deliveries
+
+Status: Done in ROA-40 Phase 0 (2026-09-14): shared webhook door verifies Standard Webhooks signatures and rejects unsigned deliveries.
+
+Found while: Planning ROA-40.
+
+Evidence: `apps/api/src/modules/integrations/fathom/services/fathom-api.service.ts:138-157` compares the `x-fathom-signature` header to the stored `metadata.webhook_secret` string instead of verifying the Standard Webhooks HMAC (`webhook-id`/`webhook-timestamp`/`webhook-signature`, per developers.fathom.ai/webhooks); `fathom-webhook.service.ts:412-474` attributes unsigned events by invitee email; `fathom-webhooks.controller.ts:84-94` always returns 200.
+
+Needed work: HMAC-SHA256 over `${id}.${timestamp}.${body}` with the base64 `whsec_` secret, 5-minute window, `timingSafeEqual`; drop the payload-email fallback once the connection is identified by URL.
+
+Reason not done now: Planning-only session.
+
+## 2026-09-11 - [ARCH] Over-limit files on the ROA-40 change path
+
+Status: Open
+
+Found while: Planning ROA-40.
+
+Evidence: `apps/web/src/features/settings/components/settings-content/useIntegrations.ts` is 872 lines (hook limit 300); `apps/api/src/modules/spaces/services/space-automation-service-06.base.ts` is 835 lines (service limit 600); `apps/api/src/modules/integrations/services/integrations-core.service.ts` is 620 lines (limit 600); `integrations-overview.service.ts` is 573 (96%).
+
+Needed work: Extract the provider connect/disconnect dispatch from `useIntegrations.ts` into a per-provider map file before adding Read.ai branches; split `processFathomRecordingEvent` and its helpers out of `space-automation-service-06.base.ts` before generalizing the provider.
+
+Reason not done now: Planning-only session; decomposition is broader than ROA-40.
+
+## 2026-09-11 - [FIX] `ingest_fireflies_transcript` agent action is a no-op stub
+
+Status: Done in ROA-40 Phase 4 (2026-09-14): replaced by `ingest_meeting_transcript`.
+
+Found while: Planning ROA-40.
+
+Evidence: `apps/agent-api/src/modules/artifacts/services/artifact-brain-ingestion-actions.service.ts:475` `ingestFirefliesTranscript()` takes no arguments; registered at `artifact-action.registry.ts:636`, documented with a `transcript_id` example at `agent-sync/data/vibey-api-action-docs.ts:2667`.
+
+Needed work: Replace with one provider-agnostic action following AGENTS.md §8.5 (schema, preflight, lifecycle, policy, drift tests, docs) and §8.6 error contract.
+
+Reason not done now: Planning-only session.
+
+## 2026-09-14 - [REFACTOR] Delete the legacy Fathom webhook door after re-registration
+
+Status: Open (blocked on running `scripts/roas/reregister-fathom-webhooks.sh` in production)
+
+Found while: ROA-40 Phase 0 (shared meeting webhook door).
+
+Evidence: `apps/api/src/modules/integrations/fathom/controllers/fathom-webhooks.controller.ts` `receiveWebhook` and `services/fathom-webhook.service.ts` still accept unsigned deliveries on `POST /api/integrations/fathom/webhook` because Fathom stores the destination URL registered at connect time; `fathom-api.service.ts:138` `resolveUserByWebhookSecret` exists only for that route.
+
+Needed work: run the re-registration script, confirm zero hits on the legacy route in Vercel logs, then delete the route, `FathomWebhookService`, `resolveUserByWebhookSecret`, and the `listConnectedIntegrationUserIds`/`listProfilesForUserIds` repository helpers it uses.
+
+Reason not done now: production connections would stop landing until re-registered.
+
+## 2026-09-14 - [ARCH] `fathom-oauth.service.ts` is near the service limit
+
+Status: Open
+
+Found while: ROA-40 Phase 0.
+
+Evidence: `apps/api/src/modules/integrations/fathom/services/fathom-oauth.service.ts` is 564 lines after adding webhook re-registration (limit 600, extract at ~500 per `.docs/guidelines/architecture/project-architecture.md` §9).
+
+Needed work: move the webhook registration and re-registration methods (`createSharedDoorWebhook`, `reregisterWebhook`, `reregisterAllWebhooks`) into a `fathom-webhook-registration.service.ts`.
+
+Reason not done now: kept Phase 0 scoped to the door change; extraction is mechanical and safe to do in Phase 4 cleanup.
+
+## 2026-09-14 - [FIX] Web vitest fails at setup in this environment
+
+Status: Open
+
+Found while: ROA-40 Phase 1 (web changes to the Fireflies card and import calls).
+
+Evidence: `apps/web/tests/setup.ts:9` throws `Class extends value undefined is not a constructor` (`NodeTextEncoder` undefined) for every web test file under Node 22 and Node 20 in this worktree; the same command was also tried in the main checkout.
+
+Needed work: confirm the Node/jsdom combination the web suite expects (CLAUDE.md reports ~2395 passing on clean `main`) and fix `tests/setup.ts` or pin the runner version so the web suite runs on a fresh install.
+
+Reason not done now: outside ROA-40 scope; web changes were verified by typecheck and lint instead.
+
+## 2026-09-14 - [FIX] Pre-existing failure in `type-c-services.characterization.test.ts`
+
+Status: Open
+
+Found while: ROA-40 Phase 1.
+
+Evidence: `apps/api/src/modules/brain/services/__tests__/type-c-services.characterization.test.ts` "builds Slack mission input" fails with `Cannot find module '../../slack/services/slack-observation.service'` from `brain-import-jobs.base.ts:146`; identical failure on branch `claude/roa-40-modular-meeting-system` before Phase 1.
+
+Needed work: the lazy `require` in `getSlackObservationService` needs a mock in that test (or the require should be replaced by module injection).
+
+Reason not done now: unrelated to the meeting intake change.
+
+## 2026-09-14 - [STYLE] Read AI logo asset missing
+
+Status: Open
+
+Found while: ROA-40 Phase 2.
+
+Evidence: `apps/web/src/lib/integrations/integration-logo.ts` has no `read_ai` case and `apps/web/public/Integrations/` has no Read AI image, so the Library and Manage cards show the initials "RE".
+
+Needed work: add `apps/web/public/Integrations/ReadAI.png` (confirm brand-asset licensing first) and a `case 'read_ai'` in `integration-logo.ts`.
+
+Reason not done now: no licensed asset available in the repo; not needed for the integration to work.
+
+## 2026-09-14 - [REFACTOR] Move Fireflies connection rows onto the shared pasted-webhook helpers
+
+Status: Done in ROA-40 Phase 4 (2026-09-14)
+
+Found while: ROA-40 Phase 2.
+
+Evidence: `apps/api/src/modules/integrations/fireflies/repositories/fireflies.repository.ts` (`upsertConnection`, `ensureWebhookKey`, `markDisconnected`) duplicates `MeetingIntakeRepository.upsertPastedWebhookConnection` / `ensureWebhookKey` / `markPastedWebhookDisconnected` added for Read AI.
+
+Needed work: switch `FirefliesApiService` to the shared helpers (keeping `email`/`name` metadata) and delete the duplicated methods.
+
+Reason not done now: Fireflies has extra metadata and a passing test suite; consolidation belongs in the Phase 4 cleanup.
+
+## 2026-09-14 - [REFACTOR] Rename the Meetings-space trigger away from Fathom
+
+Status: Open
+
+Found while: ROA-40 Phase 3.
+
+Evidence: `external_fathom_recording_ready` / `FATHOM_RECORDING_READY` name the trigger that now fires for Fathom, Fireflies and Read AI (`apps/api/src/modules/spaces/services/space-automation-service-06.base.ts`, `packages/api-shared/src/types/flow-capabilities.ts:346`, `apps/web/src/features/spaces/lib/automation-catalog.ts`, 63 references). The trigger event carries `provider` as of Phase 3.
+
+Needed work: introduce `external_meeting_recording_ready` with a Flow capabilities migration and catalog label "Meeting recording ready", keep the old name as an alias for stored automations.
+
+Reason not done now: contract change across api, web and packages; out of ROA-40 scope.
+
+## 2026-09-14 - [FEATURE] Training panel: one "Meetings" source
+
+Status: Open
+
+Found while: ROA-40 Phase 3.
+
+Evidence: `apps/web/src/features/brain/components/training/{types.ts,TrainingSourceRail.tsx,TrainingOneTimeTab.tsx,training-queue-dispatch.ts}` still model Fathom and Fireflies as two rail entries and two staged-payload kinds; Phase 3 only switched connectivity to `GET /api/integrations/meetings/providers`.
+
+Needed work: one `meeting` staged kind carrying `{ provider, externalId, title }`, one rail entry listing connected providers with `listRecent`, and `importMeetingTranscript(provider, externalId)` on dispatch.
+
+Reason not done now: the web vitest runner fails at setup in this environment, so a UI refactor of this size could not be verified beyond typecheck.
+
+## 2026-09-14 - [FIX] Pre-existing failure in `space-automation-fathom-actions.service.test.ts`
+
+Status: Open
+
+Found while: ROA-40 Phase 3.
+
+Evidence: "uses authoritative provider actions instead of generating extra Fathom tasks" fails on the branch before Phase 0 (`suggest-tasks` is still called); unrelated to the meeting intake changes.
+
+Needed work: align the test with the current `meeting_workspace_actions_authoritative` behavior or fix the regression it describes.
+
+Reason not done now: pre-existing and outside ROA-40.
+
+## 2026-09-14 - [FIX] Read AI webhook address is shown only after Connect
+
+Status: Done 2026-09-14 (ROA-51 follow-on): the connect dialog shows the address before the key for Read AI and Fireflies via `GET /integrations/meetings/:provider/webhook-address`.
+
+Found while: Writing the wiki Features page for ROA-40.
+
+Evidence: `apps/web/src/features/settings/components/settings-content/IntegrationAccountsGroup.tsx:109` renders the address from `resolveMeetingWebhookUrl`, which needs `metadata.webhook_key` (`apps/web/src/lib/integrations/meeting-webhook-url.ts:17`); that key is minted by `ensureWebhookKey` inside `ReadAiApiService.connect` (`apps/api/src/modules/integrations/read-ai/services/read-ai-api.service.ts:54`). Read AI generates the signing key when the webhook is created, and creating the webhook needs the address, so the card's instruction ("create a webhook pointing at the ROAS address shown on the card and paste its signing key here", `integration-catalog.ts:443`) cannot be followed in that order on a first connect.
+
+Needed work: Mint the connection key before the key is pasted (for example a `GET /integrations/read-ai/webhook-address` that creates a pending connection row, or show the address on the catalog card via a preflight call), and confirm in the live run whether Read AI allows editing a webhook's address after creation (workaround: create with placeholder, connect, then edit).
+
+Reason not done now: Found after Phase 4 closed; it needs a real Read AI account to confirm the provider side before choosing the fix.
+
+## 2026-09-14 - [FEATURE] Defined note takers are push-only; no pull, no Train list, no Vibey import
+
+Status: Open
+
+Found while: ROA-51 Phase A (custom note takers from Settings).
+
+Evidence: `apps/api/src/modules/meetings/custom/custom-webhook-transcript-provider.ts` implements only the `push` capability group; `apps/agent-api/src/modules/artifacts/services/artifact-action-schemas.ts:3892` limits `ingest_meeting_transcript.provider` to the three built-in ids; the Train panel lists only providers with `listRecent`.
+
+Needed work: Optional `pull` config on a definition (bearer token, list endpoint, fetch endpoint with path templates) so a defined tool can appear in Train and be imported by Vibey; then widen the agent schema's allowed values to accept `nt_` ids from `GET /integrations/meetings/providers`.
+
+Reason not done now: The user scoped v1 to no-code webhook tools; pull needs a per-tool REST shape that the dialog does not collect yet.
+
+## 2026-09-14 - [FEATURE] Signature schemes for defined note takers stop at HMAC over the body
+
+Status: Open
+
+Found while: ROA-51 Phase A.
+
+Evidence: `apps/api/src/modules/meetings/custom/note-taker-definition.schema.ts` `NoteTakerSignatureSchema` offers `none` and `hmac_sha256` over the raw body. Fathom-style Standard Webhooks (`id.timestamp.body` with a `whsec_` key and a time window) exists only in `apps/api/src/modules/integrations/fathom/providers/fathom-webhook-signature.ts`.
+
+Needed work: Add a `standard_webhooks` scheme to the definition schema and reuse `verifyStandardWebhookSignature`; add a `timestampHeader` plus tolerance option for tools that sign `timestamp.body`.
+
+Reason not done now: No target tool needed it in v1; adding it later is one union member and one branch in `verifyDefinedSignature`.
+
+## 2026-09-14 - [REFACTOR] Read AI connect could reuse the generic note-taker connect route
+
+Status: Open (address route already shared since 2026-09-14; connect, status and disconnect still duplicated)
+
+Found while: ROA-51 Phase A.
+
+Evidence: `apps/api/src/modules/meetings/intake/services/meeting-connections.service.ts` implements status, webhook-address (pre-connect), connect and disconnect for any `nt_` provider; `apps/api/src/modules/integrations/read-ai/services/read-ai-api.service.ts` duplicates the same steps for `read_ai` and lacks the pre-connect address (the ordering gap logged 2026-09-14).
+
+Needed work: Let the generic connect route accept built-in pasted-webhook providers (`read_ai`, later `fireflies`) by reading their signature needs from the plug-in, then delete `read-ai-api.service.ts` and the web branch.
+
+Reason not done now: Out of ROA-51's scope; Read AI keeps working through its own route meanwhile.
+
+## 2026-09-14 - [FIX] Web test files fail on code this branch never touched
+
+Status: Open
+
+Found while: ROA-51 Phase B, after the web test setup was repaired (`apps/web/tests/setup.ts` now imports from `node:util`).
+
+Evidence: Running vitest in `apps/web` on branch `claude/roa-40-modular-meeting-system`: failing tests in `src/features/spaces/hooks/use-ensure-all-meetings-columns.test.ts`, `src/components/work-views/AllMeetingsNativeList.test.tsx`, `src/features/spaces/lib/normalize-space-schema.test.ts`, `src/features/home/components/HomeTaskDetailHost.test.tsx`, `src/features/agency-clients/LaunchesPage.test.tsx`, `src/components/client-scope/ClientScopeSelector.test.tsx`, `src/features/studio/services/studio-search-api.service.test.ts`, `src/components/spaces/cells/SpaceFieldIdCell.test.tsx`, `src/components/shell/shell-right-panel-files.logic.test.ts`, `src/components/deliverables/DeliverablePreviewEntityFull.test.tsx`, `tests/components.test.tsx`. None of the files they import changed on this branch (branch diff against d6224553 for apps/web).
+
+Needed work: Triage each against main now that the suite runs; most look like assertions that drifted from the component (column lists, labels, a missing mock export).
+
+Reason not done now: Outside ROA-51; the suite had been silently broken so the drift accumulated unnoticed.
+
+## 2026-09-14 - [FIX] Recording events marked "ignored" are never re-claimed once a route exists
+
+Status: Open
+
+Found while: ROA-51 live run; three Read AI deliveries were marked ignored because the Meetings space had no rule.
+
+Evidence: `apps/api/src/modules/spaces/repositories/space-automation-external-events.repository.ts` `claimFathomExternalEvent` re-claims only `failed` and `received` rows; a row in `ignored` (no matching route at the time) blocks every later delivery of the same meeting, including a manual re-push from the tool.
+
+Needed work: Treat `ignored` with reason `no_matching_route` as re-claimable (or age it out), so a meeting delivered before the rule existed can land once the rule is installed. Until then, delete the ignored rows for the meeting before re-pushing.
+
+Reason not done now: Claim semantics are shared with Fathom and Composio events; needs a small design pass and its own tests.
+
+## 2026-09-14 - [ARCH] `space-automation-service-03.base.ts` is near its limit
+
+Status: Open
+
+Found while: Adding `ensureMeetingLogAutomation` (ROA-51).
+
+Evidence: 568 of 600 lines.
+
+Needed work: Move the external-trigger sync helpers (`syncExternalTriggerForAutomation`, `syncFathomTriggerRoute`, `syncContactTriggerRoute`, the disable helpers) into their own service.
+
+Reason not done now: Out of scope for the live-run fix.
+
+## 2026-09-14 - [ARCH] The repository cannot build a database from scratch
+
+Status: Open
+
+Found while: Rebuilding the app-runner's local Supabase after a failed `db reset` (ROA-51 live run).
+
+Evidence: (1) `supabase/migrations/001_add_leads_table.sql` references `funnels`, which only `supabase/schema.sql` creates, and the Supabase CLI does not load that file, so `supabase db reset --local` fails at the second migration; `scripts/roas/apply-migrations-resilient.sh` with `RESET=1` is the only path that loads the base schema first. (2) Five tables are created nowhere in the repo but are required by later migrations and by the API: `skill_library`, `skill_library_resources`' parent, `app_errors`, `user_notifications`, `social_posts`, `template_skill_assignments` (grep of migrations and schema.sql finds no CREATE TABLE); they exist only in the production project. (3) `20260326100000_team_members_permissions_foundation.sql` calls `auth.jwt()`, which the local Postgres image does not define, so `has_team_campaign_access` and 21 dependent migrations fail locally. (4) `scripts/roas/migration-order.txt` stops at 2026-08-20; 147 newer files are not listed. (5) After a reset the storage service must be restarted before migrations that touch `storage.buckets`.
+
+Update 2026-09-15: the app-runner's local database was rebuilt from the production dump (structure only plus catalog and template rows; the scratch script stayed out of the repo). Two more differences surfaced: production keeps pgvector's type in public (public.vector) while the local stack installs it under extensions, so embedding columns only restore after creating the extension in public; and the dump's integrations_available table is empty although user_integrations.integration_id references it, so the 28 catalog inserts from the migrations were replayed. Dump files are now gitignored.
+
+Needed work: Add the missing five table definitions as migrations (dump their DDL from production once), make the base schema a numbered first migration or a CLI schema path, guard `auth.jwt()` usage with a local shim migration, regenerate the order file or drop it in favour of name order, and document the local bootstrap in `documentation/utilities`.
+
+Reason not done now: Requires the production DDL, which needs project credentials the agent does not hold.
+
+## 2026-09-15 — chat (agent-api): operational agenda quick path surfaces raw tool errors
+
+- File: `apps/agent-api/src/modules/chat/services/chat-stream-execution.service.ts` (`runAutoPipeline`, 568 LOC, near the 600 limit)
+- Evidence: when `runOperationalAgendaResearch` fails (e.g. `list_calendar_events` → 403 "Only org admins or agents can access Workspace calendars" on a personal workspace, or 401 "Invalid token" from a stale session token), the research result is returned with `failed` set and the user sees a generic "temporarily unavailable" toast. The quick path is an optimisation; its failure should fall back to the standard Brain-backed research stage (and the calendar step should report "calendar not connected" as a tool step, not a turn failure).
+- Needed: fall back to `runWithRecovery` with validated research settings when the quick path fails; keep the failed tool step in the activity list. Add a regression test in `chat-stream-execution.service.test.ts`.
+- Not done now: out of scope for ROA-40 live testing; the routing fix (`PAST_MEETING_RECALL_REQUEST`) removed the trigger for meeting-recall questions.
+
+## 2026-09-15 — chat (agent-api): chat-prewarm-context.service.ts at the LOC limit
+
+- File: `apps/agent-api/src/modules/chat/services/chat-prewarm-context.service.ts` (597 LOC after adding two one-line diagnostics; limit 600)
+- Evidence: adding a 3-line log block tripped `max-lines`; the fix had to be shaped around the limit.
+- Needed: extract the agent-policy block (`resolveAgentPolicy` + `canAgentUseCapability` + channel check, ~45 LOC shared with `chat-stable-turn-context.service.ts`) into a `ChatAgentAccessService` used by both, which also removes the duplicated logic.
+- Not done now: out of scope for ROA-40 live testing.

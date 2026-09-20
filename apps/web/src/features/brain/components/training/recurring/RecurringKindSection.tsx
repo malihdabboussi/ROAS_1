@@ -15,6 +15,7 @@ export const RECURRING_SECTION_KINDS: RecurringTabKind[] = [
   'slack',
   'fathom_auto',
   'fireflies_sync',
+  'read_ai_auto',
   'zoom_auto',
 ]
 

@@ -29,6 +29,16 @@ describe('shouldSkipBrainContextForOperationalAgenda', () => {
       shouldSkipBrainContextForOperationalAgenda('What positioning did Curtis recommend?'),
     ).toBe(false)
   })
+
+  it.each([
+    'can you summarize the last meeting demo about HR360 ?',
+    'What did we agree in the HR360 platform demonstration meeting?',
+    "Recap yesterday's meeting with Ricki",
+    'What were the action items from the previous meeting?',
+    'What happened in the latest client meeting?',
+  ])('keeps retrieval for questions about a meeting that already happened: %s', (content) => {
+    expect(shouldSkipBrainContextForOperationalAgenda(content)).toBe(false)
+  })
 })
 
 describe('isOperationalPriorityRecommendationRequest', () => {

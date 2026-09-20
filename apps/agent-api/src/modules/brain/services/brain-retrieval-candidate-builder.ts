@@ -56,7 +56,7 @@ export class BrainRetrievalCandidateBuilder {
   }
   skCandidate(input: CandidateInput, row: Record<string, unknown>): BrainRetrievalCandidate {
     return this.baseCandidate(input, row, {
-      family: 'agent',
+      family: input.family,
       kind: 'sk_entry',
       title: String(row.title ?? ''),
       content: String(row.content ?? ''),
@@ -65,7 +65,10 @@ export class BrainRetrievalCandidateBuilder {
       sourceTitle: (row.source_title as string | null) ?? null,
       semantic: Number(row.similarity ?? 0),
       lexical: this.lexicalScore(input.query, `${row.title ?? ''} ${row.content ?? ''}`, row),
-      matchReason: 'Matched agent Brain knowledge',
+      matchReason:
+        input.family === 'agent'
+          ? 'Matched agent Brain knowledge'
+          : 'Matched trained Brain knowledge',
     })
   }
   companyCandidate(input: CandidateInput, row: Record<string, unknown>): BrainRetrievalCandidate {
@@ -117,7 +120,10 @@ export class BrainRetrievalCandidateBuilder {
       matchReason: 'Matched Brain belief pattern',
     })
   }
-  perspectiveCandidate(input: CandidateInput, row: Record<string, unknown>): BrainRetrievalCandidate {
+  perspectiveCandidate(
+    input: CandidateInput,
+    row: Record<string, unknown>,
+  ): BrainRetrievalCandidate {
     return this.baseCandidate(input, row, {
       family: input.family,
       kind: 'perspective',
@@ -173,7 +179,10 @@ export class BrainRetrievalCandidateBuilder {
       matchReason: 'Matched Customer Brain avatar',
     })
   }
-  avatarAxisCandidate(input: CandidateInput, row: Record<string, unknown>): BrainRetrievalCandidate {
+  avatarAxisCandidate(
+    input: CandidateInput,
+    row: Record<string, unknown>,
+  ): BrainRetrievalCandidate {
     return this.baseCandidate(input, row, {
       family: 'customer',
       kind: 'avatar_axis',

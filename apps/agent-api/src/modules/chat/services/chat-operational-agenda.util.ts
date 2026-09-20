@@ -2,6 +2,10 @@ const OPERATIONAL_AGENDA_INTENT =
   /\b(?:open tasks?|my tasks?|tasks? assigned to me|assigned tasks?|meetings?|calendar|schedule|agenda|what should i (?:do|focus on)|what(?:'s| is) on top)\b/i
 const CONVERSATIONAL_CONTEXT_INTENT =
   /\b(?:why|because|based on|recent calls?|call transcripts?|transcripts?|said|discussed|discussion|slack|brain|clients?|campaigns?|performance|ad stats?|notes?|takeaways?|context|recommended|recommendation|proposals?|concepts?)\b/i
+// Questions about what happened in a meeting that already took place are
+// answered from the Brain (transcript memories), never from the calendar.
+const PAST_MEETING_RECALL_REQUEST =
+  /\b(?:summar(?:y|ies|ize|ise|ized|ised)|recap|agreed?|agreement|decided|decisions?|outcomes?|action items?|follow[- ]ups?|happened|went|last|latest|previous|earlier|yesterday|demo(?:s|nstration)?|presentation)\b/i
 const TASK_REQUEST =
   /\b(task|tasks|work|focus|priority|priorities|top)\b|\b(?:what|anything)\s+should\s+i\s+do\b/i
 const CALENDAR_REQUEST = /\b(meeting|meetings|calendar|agenda|schedule)\b/i
@@ -24,6 +28,7 @@ export function shouldSkipBrainContextForOperationalAgenda(content: string): boo
   const normalized = content.trim()
   if (extractCanonicalTaskLookupTitle(normalized)) return true
   if (!normalized || !OPERATIONAL_AGENDA_INTENT.test(normalized)) return false
+  if (PAST_MEETING_RECALL_REQUEST.test(normalized)) return false
   return !CONVERSATIONAL_CONTEXT_INTENT.test(normalized)
 }
 

@@ -10,8 +10,7 @@ const mocks = vi.hoisted(() => ({
   enqueueSkLinkIngest: vi.fn(),
   extractDocumentTextWithAsset: vi.fn(),
   fetchSkSources: vi.fn(),
-  getFathomStatus: vi.fn(),
-  getFirefliesStatus: vi.fn(),
+  listMeetingProviders: vi.fn(),
   importFathomMeeting: vi.fn(),
   importFirefliesTranscript: vi.fn(),
   listFathomMeetings: vi.fn(),
@@ -75,8 +74,7 @@ vi.mock('../../services/sk.service', () => ({
 vi.mock('../../services/user-brain-import.service', () => ({
   enqueueSkIngest: mocks.enqueueSkIngest,
   enqueueSkLinkIngest: mocks.enqueueSkLinkIngest,
-  getFathomStatus: mocks.getFathomStatus,
-  getFirefliesStatus: mocks.getFirefliesStatus,
+  listMeetingProviders: mocks.listMeetingProviders,
   importFathomMeeting: mocks.importFathomMeeting,
   importFirefliesTranscript: mocks.importFirefliesTranscript,
   listFathomMeetings: mocks.listFathomMeetings,
@@ -157,8 +155,11 @@ describe('TrainingModal', () => {
     vi.stubGlobal('ResizeObserver', ResizeObserverMock)
     mocks.fetchSkSources.mockResolvedValue([])
     mocks.refreshConnectionStatus.mockResolvedValue(undefined)
-    mocks.getFathomStatus.mockResolvedValue({ connected: true })
-    mocks.getFirefliesStatus.mockResolvedValue({ connected: false })
+    mocks.listMeetingProviders.mockResolvedValue([
+      { id: 'fathom', connected: true, listRecent: true },
+      { id: 'fireflies', connected: false, listRecent: true },
+      { id: 'read_ai', connected: true, listRecent: false },
+    ])
     mocks.listFathomMeetings.mockResolvedValue({ items: [], next_cursor: undefined })
     mocks.listFirefliesTranscripts.mockResolvedValue([])
     mocks.enqueueSkIngest.mockResolvedValue({ success: true, jobId: 'job-text', status: 'queued' })

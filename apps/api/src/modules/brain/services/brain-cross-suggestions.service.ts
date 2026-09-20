@@ -1,6 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import type { RequestScope } from '@vibey/api-shared'
+import { normalizeFathomMeetingSource } from '../../meetings/providers/fathom-meeting-source'
 import { BrainCrossSuggestionsRepository } from '../repositories/brain-cross-suggestions.repository'
+import { compactMeetingSource, type MeetingJobSource } from './brain-import-jobs-meeting-input'
 import { BrainImportJobsService } from './brain-import-jobs.service'
 
 @Injectable()
@@ -22,32 +24,20 @@ export class BrainCrossSuggestionsService {
     if (!originalJob?.payload) throw new NotFoundException('Original import job not found')
 
     const payload = originalJob.payload as Record<string, unknown>
-    let result: { jobId: string; status: string }
-
-    if (
-      suggestion.source_job_type === 'fathom_meeting_import' ||
-      originalJob.job_type === 'fathom_meeting_import'
-    ) {
-      const meeting = (payload.meeting ?? payload) as Record<string, unknown>
-      result = await this.importJobs.enqueueCampaignFathomImport(
-        userId,
-        {
-          campaignId: suggestion.target_campaign_id as string,
-          meeting,
-        },
-        org.orgId,
-      )
-    } else {
-      const transcriptId = payload.transcriptId as string
-      result = await this.importJobs.enqueueCampaignFirefliesImport(
-        userId,
-        {
-          campaignId: suggestion.target_campaign_id as string,
-          transcriptId,
-        },
-        org.orgId,
+    const source = resolveSuggestionSource(
+      String(suggestion.source_job_type ?? originalJob.job_type),
+      payload,
+    )
+    if (!source) {
+      throw new NotFoundException(
+        'This suggestion predates the shared meeting import; import the meeting again to get a fresh suggestion',
       )
     }
+    const result = await this.importJobs.enqueueCampaignMeetingImport(
+      userId,
+      { campaignId: suggestion.target_campaign_id as string, source },
+      org.orgId,
+    )
 
     await this.repo.markAccepted(id, result.jobId)
     await this.repo.markSuggestionNotificationsRead(userId, id)
@@ -62,4 +52,22 @@ export class BrainCrossSuggestionsService {
     await this.repo.markSuggestionNotificationsRead(userId, id)
     return { rejected: true }
   }
+}
+
+function resolveSuggestionSource(
+  jobType: string,
+  payload: Record<string, unknown>,
+): MeetingJobSource | null {
+  if (payload.source && typeof payload.source === 'object')
+    return payload.source as MeetingJobSource
+  if (
+    jobType === 'fathom_meeting_import' &&
+    payload.meeting &&
+    typeof payload.meeting === 'object'
+  ) {
+    return compactMeetingSource(
+      normalizeFathomMeetingSource(payload.meeting as Record<string, unknown>),
+    )
+  }
+  return null
 }
