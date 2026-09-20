@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tests and checks · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat active" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>✅ Tests and checks</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-10</span>
+  <span>Category: Tests and checks</span>
+  <span>Source of truth: <code>apps/*/vitest.config.ts</code>, <code>playwright.config.ts</code>, <code>scripts/smoke</code>, <code>.claude/rules/testing.md</code></span>
+</div>
+<p class="sub">How we prove things work. There are five kinds of check in this repo. This page says what each one is, when to use it, the exact command, and the one workflow every change goes through so tests stay consistent with the system.</p>
+
+<div class="grid g5">
+  <div class="card stat"><b>977</b><span>test files in web</span></div>
+  <div class="card stat"><b>541</b><span>test files in api</span></div>
+  <div class="card stat"><b>266</b><span>test files in agent-api</span></div>
+  <div class="card stat"><b>8</b><span>browser test files</span></div>
+  <div class="card stat"><b>6</b><span>smoke and e2e scripts</span></div>
+</div>
+
+<h2 id="kinds"><span class="n">1</span> The five kinds of check</h2>
+<div class="grid g2">
+  <div class="card kind green"><h3>🧩 Unit tests</h3>
+    <p>Small, fast tests of one function or service. The database and outside services are faked. Run them for the app you touched, not the whole repo.</p>
+    <pre>pnpm --filter @vibey/api test
+pnpm --filter @vibey/web test
+pnpm --filter @vibey/agent-api test</pre>
+    <p>To run one file or folder, add a path filter:</p>
+    <pre>pnpm --filter @vibey/api test src/modules/brain</pre>
+    <div class="where">📍 Runner: Vitest. Config <code>apps/api/vitest.config.ts</code> (picks <code>src/**/*.test.ts</code>, fakes set in <code>apps/api/src/test/setup.ts</code>), <code>apps/web/vitest.config.ts</code>, <code>apps/agent-api/vitest.config.ts</code>. Brain tests live in <code>apps/api/src/modules/brain/services/__tests__/</code>.</div>
+  </div>
+  <div class="card kind teal"><h3>🔗 Integration tests</h3>
+    <p>Tests that call an API route end to end inside the process, still with a faked database. They live in one folder in the api app and run with the same command as unit tests.</p>
+    <pre>pnpm --filter @vibey/api test src/test/integration</pre>
+    <div class="where">📍 <code>apps/api/src/test/integration/</code>, for example <code>brain.integration.test.ts</code> covering <code>POST /api/brain/remember</code>, <code>POST /api/brain/search</code>, <code>GET /api/brain/stats</code>, <code>GET /api/brain/health</code>, memory CRUD · contract tests in <code>apps/api/src/test/contract/</code></div>
+  </div>
+  <div class="card kind purple"><h3>🖥️ Browser tests</h3>
+    <p>Playwright drives a real browser through the web app. Eight files cover login, chat, file upload, navigation, onboarding, studio, and team. They expect the web app to already be running on port 3000.</p>
+    <pre>pnpm dev:app                       # terminal 1, leave running
+pnpm --filter @vibey/web test:e2e  # terminal 2</pre>
+    <div class="where">📍 <code>playwright.config.ts</code> at repo root, tests in <code>apps/web/e2e/*.spec.ts</code>. Warning: the config has a <code>webServer</code> block that will start the dev server if none is listening, which breaks the "attach, never start" rule in <code>.claude/rules/testing.md</code>. Start the app yourself first.</div>
+  </div>
+  <div class="card kind orange"><h3>💨 Smoke scripts</h3>
+    <p>Scripts that poke a running system to confirm one flow still works: chat context window, customer signal loop, queue mixing, contacts, and one ClickUp task lifecycle. They need real services and are run by hand.</p>
+    <pre>pnpm smoke:chat-context
+pnpm smoke:customer-signal
+pnpm test:e2e:task-sync</pre>
+    <div class="where">📍 Root <code>package.json</code> scripts <code>smoke:*</code> and <code>test:e2e:task-sync</code> · files in <code>scripts/smoke/</code> and <code>scripts/e2e/</code></div>
+  </div>
+  <div class="card kind blue" style="grid-column:1 / -1"><h3>👀 Static checks and the visual look</h3>
+    <p>Type check, lint, and the architecture size check catch mistakes without running anything. The visual check is a person, or the assistant, opening the running app at three screen sizes and looking. Every commit runs the size check and the linter on the staged files automatically.</p>
+    <pre>pnpm --filter @vibey/api typecheck
+pnpm --filter @vibey/api lint
+pnpm architecture:check</pre>
+    <div class="where">📍 Per-app <code>typecheck</code> and <code>lint</code> in <code>apps/*/package.json</code> · <code>scripts/arch/check-loc.mjs</code> · hook <code>.husky/pre-commit</code> · visual workflow is the <code>test-improve</code> command, which attaches to a running app and never starts one</div>
+  </div>
+</div>
+
+<h2 id="workflow"><span class="n">2</span> The one workflow every change goes through</h2>
+<p class="sub">Use this order for any change, small or big. It matches the order the shipping command uses, so nothing is surprised at pull-request time.</p>
+<div class="card">
+  <ol>
+    <li><strong>Say how you will know it worked, before coding.</strong> One line per acceptance rule: the route or command, the expected state, and the exact evidence. "Loads without error" is not evidence; "GET /api/brain/health returns 200 with <code>memory_count &gt; 0</code>" is.</li>
+    <li><strong>Write or update the unit test next to the code.</strong> Same folder, <code>.test.ts</code> suffix. Fake the database like the existing tests do.</li>
+    <li><strong>Run the tests for that app only.</strong> <code>pnpm --filter &lt;app&gt; test &lt;path&gt;</code>. Red first if it is a bug fix, then green.</li>
+    <li><strong>Run type check and lint for that app.</strong> Web lint has known old violations on <code>main</code>; only new ones count.</li>
+    <li><strong>If a route changed, run the integration test for it</strong>, or add one in <code>apps/api/src/test/integration/</code>.</li>
+    <li><strong>If a screen changed, look at it.</strong> Start the app yourself, then run the browser tests or the visual check at phone, tablet, and desktop widths. Never let a test start a server.</li>
+    <li><strong>If it touches queues or outside services, run the matching smoke script</strong> against your local stack, never against staging or production with side effects.</li>
+    <li><strong>Write the doc and changelog, then commit.</strong> The commit hook runs the size check and linter on the staged files. Then open the pull request.</li>
+  </ol>
+  <div class="where">📍 Acceptance rule wording from <code>.claude/rules/testing.md</code> · order from <code>.claude/rules/git-workflow.md</code> "Ship order is docs → tests → review → remediate → approve → commit → push → PR" · known lint baseline noted in <code>AGENTS.md</code> "Cursor Cloud specific instructions"</div>
+
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>Wing fixes the Slack end-date bug from the Brain page, Problem 2, cause 2a.</span></div>
+    <div class="sc-row"><b>What happens</b><span>Wing writes the acceptance rule first: "a personal Slack import for 1 to 7 September never includes a message stamped 8 September". Then adds a test in the brain tests folder that fakes Slack returning messages on both sides of the end date and expects only the in-range ones. Runs the brain tests, sees red, fixes the input builder to pass the end date, sees green. Runs api type check and lint. No screen changed, so no browser test. Writes the changelog line, commits, and the hook passes.</span></div>
+    <div class="sc-row"><b>What you see</b><span>One new test file, one green run, one pull request with the acceptance rule in its description.</span></div>
+    <div class="where">📍 Bug: <code>apps/api/src/modules/brain/services/brain-import-jobs-input.base.ts:277</code> · existing Slack tests to copy from: <code>apps/api/src/modules/brain/services/__tests__/brain-import-jobs-slack-person.test.ts</code>, <code>brain-import-sweep-schedule.test.ts</code> · pull request template <code>.github/pull_request_template.md</code></div>
+  </div>
+</div>
+
+<h2 id="which"><span class="n">3</span> Which check for which change</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>You changed</th><th>Run at least</th><th>Also if possible</th></tr></thead>
+    <tbody>
+      <tr><td>A service or repository in api</td><td>Unit tests for that module, api typecheck, api lint</td><td>The integration test for the route that uses it</td></tr>
+      <tr><td>A controller or route</td><td>Integration test in <code>apps/api/src/test/integration</code></td><td>The browser test that hits that screen</td></tr>
+      <tr><td>A React component or page in web</td><td>Web unit tests for the folder, web typecheck</td><td>Browser test plus the visual check at three widths</td></tr>
+      <tr><td>Anything in agent-api or the agent tools</td><td>agent-api unit tests, typecheck</td><td><code>pnpm smoke:chat-context</code> against a local stack</td></tr>
+      <tr><td>A queue, worker, or import job</td><td>Unit tests for the job, plus a local run with Redis</td><td><code>scripts/smoke/runtime-queue-mixed-smoke.ts</code></td></tr>
+      <tr><td>A database migration</td><td>Apply to a staging project and run the integration tests</td><td>A row-level-security check for the table</td></tr>
+      <tr><td>Only docs or the wiki</td><td>Open the page, click every link</td><td>The wiki link check in the wiki README</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="ground"><span class="n">4</span> Ground rules</h2>
+<div class="card">
+  <ul>
+    <li>Browser tests attach to an app that is already running. They never start servers.</li>
+    <li>Anything that is not your own machine is read-only during tests. No submits, no sends, no purchases.</li>
+    <li>Every acceptance rule needs a deterministic way to know it passed: an exit code, a log line, a row in a table.</li>
+    <li>Scope test runs to the app you touched. Running everything through Turborepo is slow and some backend apps need secrets to even start their tests.</li>
+    <li>There is no CI workflow file in the repo. The pre-commit hook and the pull request review are the gates today.</li>
+  </ul>
+  <div class="where">📍 <code>.claude/rules/testing.md</code> · <code>AGENTS.md</code> "Lint/test baselines" · <code>.github/</code> contains only <code>pull_request_template.md</code></div>
+</div>
+
+<h2 id="pages"><span class="n">5</span> Test pages for specific areas</h2>
+<div class="card">
+  <ul>
+    <li><a href="brain-textbook-import.html">Check a textbook import end to end</a>, no clicking, about 20 seconds on a fully local stack. First real pass on 2026-09-10.</li>
+    <li><a href="brain-memory-search.html">Memory in, search out</a>: the personal-memory door plus the search road, no clicking, about 20 seconds. First real pass on 2026-09-10.</li>
+  </ul>
+  <p class="empty">Next: how to reproduce the unwanted Slack data for ROA-18.</p>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">Commands were read from <code>package.json</code> files and configs on 2026-09-09, not run. Test file counts are from a file search on the same day.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

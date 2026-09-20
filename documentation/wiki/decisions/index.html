@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Decisions and plans · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat active" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>⚖️ Decisions and plans</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-13</span>
+  <span>Category: Decisions and plans</span>
+  <span>Source of truth: <code>.docs/plans</code>, Linear project RoasX1ds Merge</span>
+</div>
+<p class="sub">Choices we made and why, so nobody re-argues them, plus what is coming next.</p>
+
+<h2><span class="n">1</span> Decisions so far</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Date</th><th>Decision</th><th>Why</th></tr></thead>
+    <tbody>
+      <tr><td>2026-09-13</td><td>Meeting note takers join through one contract, one front door and one brain import job; Fathom, Fireflies and Read.ai are plug-ins behind it.</td><td>Two separate pipes existed, Fireflies imports carried no transcript, and the Fathom webhook did not verify its sender. One shape for a meeting already existed in the meetings domain; naming it makes every new tool a plug-in class, a catalog row and a seed. Given up: a per-provider rewrite of the Flow trigger name this pass. Plan: <code>.docs/plans/meeting-notetaker-system-roa-40.md</code>, page <a href="../integrations/meeting-note-takers.html">Integrations › Meeting note takers</a>, <a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a> / <a href="https://linear.app/1dscollective/issue/ROA-44/modular-feature-planning">ROA-44</a>.</td></tr>
+      <tr><td>2026-09-09</td><td>Documentation is written as an HTML wiki with seven categories.</td><td>Visual pages are easier to read and understand than long markdown. One home, one style, plain words first, technical details on a switch.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2><span class="n">2</span> Open questions</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Question</th><th>Options</th><th>Linear</th></tr></thead>
+    <tbody>
+      <tr><td>Client database: extend the current tables or build new ones with a relation to the organization?</td><td>Extend existing tables, or build new tables.</td><td><a href="https://linear.app/1dscollective/issue/ROA-15/deeper-dive-into-current-client-database">ROA-15</a></td></tr>
+      <tr><td>Which third-party service imports Instagram and TikTok content?</td><td>To be determined.</td><td><a href="https://linear.app/1dscollective/issue/ROA-23/import-content">ROA-23</a></td></tr>
+      <tr><td>Where does an MCP-backed meeting fetch run: in api (no MCP client today) or through agent-api?</td><td>Add an MCP client to api, or call an internal agent-api endpoint.</td><td><a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a></td></tr>
+      <tr><td>Should the brain have one search implementation shared by the web app and the AI agent?</td><td>Merge into one, or keep two and sync fixes by hand.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">A decision entry needs: date, the decision in one sentence, why, and what we gave up. Link the plan file if there is one.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

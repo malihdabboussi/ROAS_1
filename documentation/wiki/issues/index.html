@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Issues and risks · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat active" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🚨 Issues and risks</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-10</span>
+  <span>Category: Issues and risks</span>
+</div>
+<p class="sub">Problems we found, why they matter, and where they stand. Every row links to the map page that explains it and to the Linear ticket that tracks it.</p>
+
+<h2><span class="n">1</span> Open issues</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Area</th><th>Issue</th><th>Why it matters</th><th>Status</th><th>Linear</th></tr></thead>
+    <tbody>
+      <tr><td>Brain queue</td><td><a href="../system-map/brain.html#other-f1">Two workers listen on the brain import queue; which one runs a job is luck</a></td><td>The api runs jobs in-process, the mission worker forwards them to agent-api. Both attach to the same Redis queue, so logs and behavior move between processes.</td><td><span class="tag red">open, high</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-33">ROA-33</a></td></tr>
+      <tr><td>Brain queue</td><td><a href="../system-map/brain.html#other-f2">api worker drops the hourly Page Grader catch-up sweep</a></td><td>The api registers the hourly timer but its worker only understands the 3-second one. With the api as the only consumer, catch-up never runs.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-34">ROA-34</a></td></tr>
+      <tr><td>Brain queue</td><td><a href="../system-map/brain.html#other-f3">20-minute stale window can re-run a big import and pay for a chunk twice</a></td><td>Each Atlas chunk call can take 15 minutes; a three-chunk job legitimately passes 20. The sweep reclaims it mid-flight.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-35">ROA-35</a></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#other-f4">Memories created through the plain API have no embedding</a></td><td>The create endpoint hashes and inserts but never embeds, so search by meaning cannot find those rows.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-36">ROA-36</a></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#other-f5">Chat processing never fingerprints the whole conversation</a></td><td>Replaying a conversation pays Gemini again and can insert near-duplicate memories.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-37">ROA-37</a></td></tr>
+      <tr><td>Brain / DB</td><td><a href="../system-map/brain.html#other-f6">Memory, source, and snapshot types are not enforced by the database</a></td><td>Free-text columns, code writes values outside its own list, and a snapshot default ("Belief") the code never produces.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-38">ROA-38</a></td></tr>
+      <tr><td>Agent chat</td><td><a href="../system-map/brain.html#live-4">Helper never reads the personal brain before answering, and is denied its memory tools</a></td><td>Root cause found: the chat prewarm service declares the policy service as <code>Type | undefined</code> behind <code>@Optional()</code>, so Nest injects nothing and the personal-brain flag is always false. Explains this and Live finding 1. Two-line fix plus a DI test.</td><td><span class="tag green">fixed 2026-09-15</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-32">ROA-32</a>, blocks <a href="https://linear.app/1dscollective/issue/ROA-29">ROA-29</a></td></tr>
+      <tr><td>Agent chat</td><td><a href="../system-map/brain.html#live-5">Helper's search skipped textbook entries in personal and customer brains</a></td><td>The Specific Knowledge lane ran only for agent brains, so trained techniques and principles in a personal brain never reached chat. Fixed: lane runs for every brain family; trained items carry provenance (type, mastery, confidence, training source).</td><td><span class="tag green">fixed 2026-09-15</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-53">ROA-53</a></td></tr>
+      <tr><td>Brain / UI</td><td><a href="../features/brain.html#questions">Activity tab shows a skipped import exactly like a successful one</a></td><td>When Atlas reads a transcript and keeps nothing (status <code>skipped</code>, reason stored on the job row), the row still shows a green check and a dash. Users cannot tell "saved 5 memories" from "saved nothing" without asking. Show the skip reason in the list.</td><td><span class="tag gray">no ticket yet</span></td><td></td></tr>
+      <tr><td>Brain</td><td><a href="../tests/brain-memory-search.html#watch">Brain health counters disagree</a></td><td><code>total_memories</code> says 1 while <code>memory_counts_by_type</code> is empty after a successful save. Two queries, two answers.</td><td><span class="tag gray">no ticket yet</span></td><td></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#live-3">Crashed textbook import poisons retries, retries report success</a></td><td>Fingerprint is registered before the work. One crash means every retry says "already present" and the job is marked succeeded with zero entries. Proven locally 2026-09-10.</td><td><span class="tag red">open</span></td><td>no ticket yet</td></tr>
+      <tr><td>Local dev</td><td><a href="../tests/brain-textbook-import.html#fail">agent-api borrows the api's env file, including PORT</a></td><td>A fresh agent-api start binds the api's port and the web app then 404s. Needs its own env file with PORT=3003.</td><td><span class="tag orange">open</span></td><td>no ticket yet</td></tr>
+      <tr><td>Local dev / infra</td><td><a href="../system-map/brain.html#live-2">Local dev shares its job queue with a cloud environment</a></td><td>A cloud api on the same dev Redis grabs local brain jobs and runs them in the cloud. Local terminals stay silent, source rows pile up in the shared DB, errors are invisible. Fix: local Redis for local dev.</td><td><span class="tag red">open</span></td><td>no ticket yet</td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#live-2">Textbook ingest leaves sources stuck at "processing" on failure</a></td><td>Seen twice live: source created, entries never written, no failed state, UI shows "Retrying…" forever.</td><td><span class="tag red">open</span></td><td>no ticket yet</td></tr>
+      <tr><td>Brain ops</td><td><a href="../system-map/brain.html#other">Brain-ops synthesis jobs never complete locally</a></td><td>15 "Crystallize" jobs spinning for up to 2 days with no worker and no error shown.</td><td><span class="tag gray">no ticket yet</span></td><td></td></tr>
+      <tr><td>Agent chat</td><td><a href="../system-map/brain.html#live-1">Helper says "remembered" but saves nothing</a></td><td>Seen live on dev 2026-09-09, twice. The helper is allowed to save memories but its generated docs never teach it the action, so it reaches for campaign and company actions whose docs and handlers disagree on field names. First try: 3 failures then a false "saved". Second try: 7 failures, honest reply, wrong advice.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-29">ROA-29</a>, <a href="https://linear.app/1dscollective/issue/ROA-30">ROA-30</a>, <a href="https://linear.app/1dscollective/issue/ROA-31">ROA-31</a></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#problem-1">The AI agent uses a different copy of the brain search code</a></td><td>A fix in one copy does not reach the other. Bad answers may come from code nobody is looking at.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#problem-2">The import doors let in unwanted data</a></td><td>Personal Slack pulls past the end date, filtering is prompt-only, finished imports can repeat, copies duplicate rows.</td><td><span class="tag orange">in progress</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-18/fix-brain-critical-issues">ROA-18</a></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#problem-3">Database and code disagree</a></td><td>A missing SQL function, a hand-made table, no generated types, an hourly job that does nothing.</td><td><span class="tag red">open</span></td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>Brain</td><td><a href="../system-map/brain.html#other">Smaller findings: permissions, duplication, data quality</a></td><td>A few doors skip permission checks, two doors fetch any URL, several counters and labels are wrong.</td><td><span class="tag gray">no ticket yet</span></td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2><span class="n">2</span> How to add an issue</h2>
+<div class="card">
+  <ul>
+    <li>Add a row above with the area, a plain one-line name, why it matters, status, and the Linear link.</li>
+    <li>Point the name at the section of the System map page that explains it.</li>
+    <li>When it is fixed, change the status to <span class="tag green">fixed</span> and keep the row for one release so people can see it was handled.</li>
+  </ul>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">Status words: open, in progress, fixed, won't fix. Keep them to those four.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

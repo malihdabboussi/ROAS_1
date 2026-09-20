@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Integrations · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat active" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🔌 Integrations</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-14</span>
+  <span>Category: Integrations</span>
+  <span>Source of truth: <code>apps/api/src/modules/integrations</code>, <code>documentation/integrations</code></span>
+</div>
+<p class="sub">Each outside service we connect to, what we get from it, and how the connection is set up.</p>
+
+<h2><span class="n">1</span> Services we know about</h2>
+<div class="grid g4">
+  <div class="card"><h3>💬 Slack</h3><small>Channels feed the brain on a schedule. Notifications go out.</small><br><span class="tag gray">no page yet</span></div>
+  <a class="card" href="meeting-note-takers.html"><h3>🎙️ Fathom</h3><small>Meeting recordings and transcripts into the brain and the Meetings space. OAuth plus webhook.</small><br><span class="tag teal">page</span></a>
+  <a class="card" href="meeting-note-takers.html"><h3>🎙️ Fireflies</h3><small>Meeting transcripts into the brain and the Meetings space. API key plus a pasted webhook address; the transcript is fetched on each delivery.</small><br><span class="tag teal">page</span></a>
+  <a class="card" href="meeting-note-takers.html#add-readai"><h3>🎙️ Read.ai</h3><small>Third note taker: pasted signing key, meeting reports pushed to ROAS. Built in ROA-40; live run pending.</small><br><span class="tag teal">page</span></a>
+  <div class="card"><h3>🗂️ ROAS Portal (Page Grader)</h3><small>Client packages synced into campaigns and the brain.</small><br><span class="tag gray">no page yet</span></div>
+  <div class="card"><h3>🧠 Google Gemini</h3><small>Embeddings and text generation for the brain.</small><br><span class="tag gray">no page yet</span></div>
+  <div class="card"><h3>🗄️ Supabase</h3><small>The database and login.</small><br><span class="tag gray">no page yet</span></div>
+  <div class="card"><h3>📸 Instagram and TikTok</h3><small>Content import, service to be chosen.</small><br><span class="tag gray">ROA-23</span></div>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">Add a service by copying <code>../_template.html</code> into this folder and linking it here.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

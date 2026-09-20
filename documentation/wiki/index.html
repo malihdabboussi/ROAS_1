@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ROAS Wiki</title>
+<link rel="stylesheet" href="assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="start-here/index.html">Start here</a>
+  <a class="cat" href="system-map/index.html">System map</a>
+  <a class="cat" href="features/index.html">Features</a>
+  <a class="cat" href="integrations/index.html">Integrations</a>
+  <a class="cat" href="issues/index.html">Issues and risks</a>
+  <a class="cat" href="tests/index.html">Tests and checks</a>
+  <a class="cat" href="decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🧭 ROAS Wiki</h1>
+<p class="sub">The human-readable map of the ROAS platform. Plain words first. Flip the switch at the top right when you want file paths and table names.</p>
+
+<div class="grid g4">
+  <a class="card kind blue" href="start-here/index.html"><div class="em">🚀</div><h3>Start here</h3><small>How to run the project, where things live, the rules we follow.</small></a>
+  <a class="card kind green" href="system-map/index.html"><div class="em">🗺️</div><h3>System map</h3><small>What each part of the system is and how it works. One page per area. Grows as we learn.</small></a>
+  <a class="card kind purple" href="features/index.html"><div class="em">✨</div><h3>Features</h3><small>What the product does for the user, one page per feature.</small></a>
+  <a class="card kind teal" href="integrations/index.html"><div class="em">🔌</div><h3>Integrations</h3><small>Each outside service we connect to and how.</small></a>
+  <a class="card kind red" href="issues/index.html"><div class="em">🚨</div><h3>Issues and risks</h3><small>Problems found, why they matter, their status, and the Linear ticket.</small></a>
+  <a class="card kind orange" href="tests/index.html"><div class="em">✅</div><h3>Tests and checks</h3><small>How we prove things work and what "good" looks like.</small></a>
+  <a class="card kind yellow" href="decisions/index.html"><div class="em">⚖️</div><h3>Decisions and plans</h3><small>Choices we made and why, plus what is coming next.</small></a>
+</div>
+
+<h2><span class="n">🕒</span> Recently changed</h2>
+<div class="card">
+  <table>
+    <thead><tr><th>Date</th><th>Page</th><th>What changed</th><th>Linear</th></tr></thead>
+    <tbody>
+      <tr><td>2026-09-17</td><td><a href="system-map/brain.html#door-note-taker">System map › Brain</a></td><td>Flow diagram and door table updated for ROA-40: Fathom and Fireflies are no longer separate doors; one "Note taker meeting" door covers Fathom, Fireflies, Read AI and admin-defined tools, with the shared webhook, delivery record, auto-ingest gate, ticket and Meetings-space route spelled out.</td><td><a href="https://linear.app/1dscollective/issue/ROA-40">ROA-40</a></td></tr>
+      <tr><td>2026-09-16</td><td><a href="features/brain.html#more">Features › Brain</a></td><td>Recurring tab: Read AI card added (status only, meetings arrive through the shared door); the "Smaller surfaces" list now says what each Recurring channel really is, Zoom included.</td><td><a href="https://linear.app/1dscollective/issue/ROA-54">ROA-54</a></td></tr>
+      <tr><td>2026-09-16</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Two questions answered: a green check in the Activity tab means "processed", not "saved" (Atlas skips transcripts with nothing durable, and the list hides the reason); finished jobs leave the Activity tab after 24 hours (5 minutes inside a brain or campaign) while their memories stay. Train section gains a "Reading the Activity tab" note; Issues page gains the skipped-looks-like-success row.</td><td></td></tr>
+      <tr><td>2026-09-15</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Question answered: does the helper use what I trained? Two gaps closed the same day: the personal brain was never read (ROA-32) and textbook entries were never searched for personal brains; trained items now reach the model with provenance and an instruction to cite them and flag conflicts.</td><td><a href="https://linear.app/1dscollective/issue/ROA-52">ROA-52</a> <a href="https://linear.app/1dscollective/issue/ROA-53">ROA-53</a></td></tr>
+      <tr><td>2026-09-15</td><td><a href="system-map/brain.html#live-5">System map › Brain</a></td><td>Live finding 4 marked fixed (commits 1bf99eab, 357e75d9, drift test). New Live finding 5: the helper's retrieval skipped Specific Knowledge outside agent brains, fixed in dd588087 and 28b2d99d.</td><td><a href="https://linear.app/1dscollective/issue/ROA-32">ROA-32</a></td></tr>
+      <tr><td>2026-09-14</td><td><a href="features/meeting-note-takers.html#add-tool">Features › Meeting note takers</a></td><td>Adding a note taker got easier: paste one delivery and Detect fields fills the paths, or start from a template; the mapping test runs on the same sample. Read AI and Fireflies now show the ROAS address before the key, matching Read AI's setup steps; the ordering gap is closed on both pages.</td><td><a href="https://linear.app/1dscollective/issue/ROA-51">ROA-51</a></td></tr>
+      <tr><td>2026-09-14</td><td><a href="features/meeting-note-takers.html#add-tool">Features › Meeting note takers</a></td><td>New section 7: a platform admin adds a note taker without code from Settings › Integrations › More integrations (type cards, form with signature rule, event filter and JSON field map, sample-delivery test, save); the Library lists it for everyone and users see their webhook address before Connect. Limits and technical notes included.</td><td><a href="https://linear.app/1dscollective/issue/ROA-51">ROA-51</a></td></tr>
+      <tr><td>2026-09-14</td><td><a href="features/meeting-note-takers.html">Features › Meeting note takers</a></td><td>New page, the user's side of the modular note-taker system: connect Fathom, Fireflies or Read AI in Settings, a meeting arrives on its own through one door, where it shows up (Meetings space, brain, customer brain), import a past meeting from Train, ask Vibey, disconnect. Findings tab: per-tool table, proof per phase, what a person must do before the live run.</td><td><a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a></td></tr>
+      <tr><td>2026-09-14</td><td><a href="integrations/meeting-note-takers.html">Integrations › Meeting note takers</a></td><td>Updated from plan to delivered: Phases 0 to 4 marked done with commits, the three problems marked fixed with the fixing code, "planned" paths replaced by built ones, Read AI setup-order gap recorded, open questions retargeted at the Phase 5 live run.</td><td><a href="https://linear.app/1dscollective/issue/ROA-49">ROA-49</a></td></tr>
+      <tr><td>2026-09-13</td><td><a href="integrations/meeting-note-takers.html">Integrations › Meeting note takers</a></td><td>New page: how Fathom and Fireflies feed the brain today, three problems found (empty Fireflies import, unverified Fathom webhook, empty agent action), the ROA-40 plan in plain words, how a user adds Read.ai, how any future tool joins, six delivery phases with proof, provider facts from official docs.</td><td><a href="https://linear.app/1dscollective/issue/ROA-40/create-a-meeting-moduler-system">ROA-40</a></td></tr>
+      <tr><td>2026-09-13</td><td><a href="decisions/index.html">Decisions and plans</a></td><td>Decision recorded: one meeting contract with plug-in providers; open question on where an MCP-backed fetch runs.</td><td><a href="https://linear.app/1dscollective/issue/ROA-44/modular-feature-planning">ROA-44</a></td></tr>
+      <tr><td>2026-09-13</td><td><a href="integrations/index.html">Integrations</a></td><td>Fathom and Fireflies cards now link to their page; Read.ai listed as planned.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#story">Features › Brain</a></td><td>New "One story" tab: a year of pricing decisions shows memories, one snapshot, and Cortex Max working together, as a scenario, a flow, numbered steps with code, and a who-does-what table.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="system-map/brain.html#other-f10">System map › Brain</a></td><td>Other finding 10: the meeting crystallize pipeline has no caller and is not registered. Crystallize answers corrected to say meetings reach snapshots only through Atlas.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Question answered: nothing expires after 6 months; that phrase is the extractor's filter at write time, and validity dates are labels, not deletion.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>One-line definitions added for crystallize and Cortex Max, plus the "how has our pricing thinking changed?" scenario that shows what Cortex Max adds and how it differs from crystallize.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Question answered: what snapshots are for, with the "15% off or they walk" scenario.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Worked example of crystallize: one sales call becomes one snapshot through four model calls in three steps, then the gate, the embedding, and the row.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Question answered: the two meanings of "crystallize" (one text into one snapshot, versus the Cortex Max rebuild-everything button) and how they differ from the Cortex Max switch.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td>All pages</td><td>Search fix: a result on another page with the same file name (System map › Brain vs Features › Brain) was treated as the same page and went nowhere. Results now show their category, and the Features brain page is titled "Brain, from the user's side".</td><td></td></tr>
+      <tr><td>2026-09-11</td><td>All pages</td><td>Search box in the top bar (press / to focus). Matches every section of every page, opens the right tab. Index generated by <code>tools/build-search-index.py</code>; re-run it after editing pages.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="system-map/brain.html#tables">System map › Brain</a></td><td>Cortex Max explained where the thinking-layer tables are listed, with triggers and job kinds; Portal door card says "ROAS Portal" and "Page Grader" are one system; question answered on connecting the Portal.</td><td></td></tr>
+      <tr><td>2026-09-11</td><td><a href="features/brain.html#questions">Features › Brain</a></td><td>Question answered: what Cortex Max is, what it builds in the background, and what triggers each job.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#other-f8">System map › Brain</a></td><td>Other findings 8 and 9 from the feature trace: the share dialog cannot grant "train" and downgrades existing train shares; the pending-captures review queue has no screen.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="features/brain.html">Features › Brain</a></td><td>First feature page: the brain from the user's side, ten screens with a scenario each, component, browser call, and API door per point. Long surfaces in a "More surfaces" tab.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#summary">System map › Brain</a></td><td>New "The brain in one paragraph" summary card at the top of the page.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#questions">System map › Brain</a></td><td>Definition added: what significance and confidence mean, who sets them on each road, the floors (0.5 / 0.6 / 0.3), and the Atlas defaults (0.7 / 0.8).</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#other-f7">System map › Brain</a></td><td>Question answered: why the graph says 2 memories and draws 1 dot (textbook entries are counted, not drawn), and why every Atlas memory shows 70% / 80% (hard-coded defaults). Recorded as Other finding 7.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#questions">System map › Brain</a></td><td>Questions answered: user brain vs customer brain in training, agent brain per agent and how to test it, campaign brain per campaign and its three feeds.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#flow">System map › Brain</a></td><td>Flow map redrawn in six numbered stages (ticket in the database → doorbell in Redis → claim → Atlas → save tool → shelves). Fingerprint and embedding separated. New Flow tab: every step with the store it touches, which door takes which road, and why the shelves are tables, not stages. Four questions answered.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#other-flow">System map › Brain</a></td><td>Six new findings from the flow trace: two workers on one queue, dropped hourly sweep, stale window vs chunk time, memories without embeddings, chat pipeline without a fingerprint, unenforced type columns.</td><td><a href="https://linear.app/1dscollective/issue/ROA-33">ROA-33</a> to <a href="https://linear.app/1dscollective/issue/ROA-38">ROA-38</a></td></tr>
+      <tr><td>2026-09-10</td><td>All pages</td><td>Layout v2: fixed outline on the left built from the headings, tabs per page so long findings and evidence leave the Overview (Brain: Findings; Start here: Local database; test pages: Evidence), roomier one-per-row cards, deep links open the right tab.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#live-4">System map › Brain</a></td><td>Root cause of Live findings 1 and 4: a union-typed optional dependency in the chat prewarm service is never injected, so the personal-brain flag is always false and the helper is denied its memory tools.</td><td><a href="https://linear.app/1dscollective/issue/ROA-29">ROA-29</a></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#live-4">System map › Brain</a></td><td>Live finding 4: the helper never searches the personal brain before answering; answered "Wednesday" while the brain says Tuesday.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#questions">System map › Brain</a></td><td>Question answered: what is inside one memory row, column by column, from the first locally saved memory.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="tests/brain-memory-search.html">Tests › Memory in, search out</a></td><td>Second automated test: remember endpoint → Atlas → memory with embedding → search finds it by meaning, score 0.77.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>2026-09-10</td><td><a href="tests/brain-textbook-import.html">Tests › Textbook import end to end</a></td><td>First automated test page, from the first successful fully local run: job → sweep → Atlas → Gemini → rows in 16 seconds.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>2026-09-10</td><td><a href="system-map/brain.html#live-3">System map › Brain</a></td><td>Live finding 3: a crashed import registers its fingerprint first, so every retry reports success with nothing stored.</td><td></td></tr>
+      <tr><td>2026-09-10</td><td><a href="start-here/index.html#localdb">Start here</a></td><td>New section 7: your own local database, restored from a dev dump, with every command and pitfall.</td><td></td></tr>
+      <tr><td>2026-09-09</td><td><a href="system-map/brain.html#live-2">System map › Brain</a></td><td>Live finding 2: local dev shares its Redis queue with a cloud api, so local brain jobs run in the cloud. Start here updated: local Redis is mandatory.</td><td></td></tr>
+      <tr><td>2026-09-09</td><td><a href="system-map/brain.html#live-1">System map › Brain</a></td><td>First live finding from the running system: chat "remember" saved nothing while claiming success. Chat-door scenario corrected to show the agent-api path.</td><td><a href="https://linear.app/1dscollective/issue/ROA-18/fix-brain-critical-issues">ROA-18</a></td></tr>
+      <tr><td>2026-09-09</td><td><a href="start-here/index.html#questions">Start here</a></td><td>First question answered: how to start Redis, and why the queue-worker is not Redis.</td><td></td></tr>
+      <tr><td>2026-09-09</td><td><a href="start-here/index.html">Start here</a></td><td>Real start commands, prerequisites, first-time setup steps, and the config each app needs, all with paths.</td><td></td></tr>
+      <tr><td>2026-09-09</td><td><a href="tests/index.html">Tests and checks</a></td><td>Five kinds of check with commands, the one workflow every change follows, and which check for which change.</td><td></td></tr>
+      <tr><td>2026-09-09</td><td><a href="system-map/brain.html">System map › Brain</a></td><td>Scenario blocks added: one story per brain kind, per door, per problem cause, each with code and table paths. Questions card added to every page.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>2026-09-09</td><td><a href="system-map/brain.html">System map › Brain</a></td><td>First full map of the brain: five brain kinds, tables, doors in, readers, three biggest problems.</td><td><a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></td></tr>
+      <tr><td>2026-09-09</td><td><a href="issues/index.html">Issues and risks</a></td><td>Brain problems listed with links to the map.</td><td><a href="https://linear.app/1dscollective/issue/ROA-18/fix-brain-critical-issues">ROA-18</a></td></tr>
+      <tr><td>2026-09-09</td><td><a href="start-here/index.html">Start here</a></td><td>Apps, ports, deploy map, and rules from the project instructions.</td><td></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<h2><span class="n">📝</span> How to add or update a page</h2>
+<div class="card">
+  <ul>
+    <li>Copy <code>_template.html</code> into the right category folder and fill in the header block: last updated, category, Linear link, source of truth.</li>
+    <li>Write plain words first. Wrap file paths and line numbers in <code>class="tech"</code> so they only show with the switch.</li>
+    <li>Update an existing page instead of creating a new one when the topic already exists. Bump its date.</li>
+    <li>Add the page to its category index and to the "Recently changed" table above.</li>
+    <li>Full rules are in <code>documentation/wiki/README.md</code>.</li>
+  </ul>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">Wiki started 2026-09-09. Plain HTML, no build step. Open this file in a browser or serve the folder statically.</p>
+
+</div>
+<script src="assets/wiki.js"></script>
+</body>
+</html>

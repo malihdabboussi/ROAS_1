@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memory in, search out test · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat active" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+<div class="wrap">
+<h1>✅ Memory in, search out</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-10</span>
+  <span>Category: <a href="index.html">Tests and checks</a></span>
+  <span>Linear: <a href="https://linear.app/1dscollective/issue/ROA-9/understand-brain">ROA-9</a></span>
+  <span>Source of truth: local run on 2026-09-10 00:24 local, log <code>/tmp/roas-agent-api.log</code></span>
+</div>
+<p class="sub">Proves the personal-memory door and the search road together, with no clicking: a sentence goes in through the api's "remember" endpoint, Atlas stores it as a memory with an embedding, then the api's search endpoint finds it by meaning. About 20 seconds on a fully local stack. Pairs with <a href="brain-textbook-import.html">the textbook import test</a>, which covers the other door.</p>
+<div class="pathnote">📍 Paths starting with <code>brain/</code> mean <code>apps/api/src/modules/brain/</code>.</div>
+
+<h2 id="pre"><span class="n">1</span> Preconditions</h2>
+<div class="card">
+  <ul>
+    <li>Same as the textbook test: your own database and Redis, api on 3001, agent-api on 3003, gateway on 18789, Gemini key in <code>apps/api/.env</code>.</li>
+    <li>A login token for the test user. No password needed: ask the local auth admin API for a magic link and exchange it for a session. Keep the token in a scratch file, never in chat.</li>
+  </ul>
+  <div class="where">📍 Token: <code>POST /auth/v1/admin/generate_link</code> with the service key and <code>type: magiclink</code> → <code>hashed_token</code> → <code>POST /auth/v1/verify</code> with the anon key and <code>type: magiclink, token_hash</code> → <code>access_token</code>. The api verifies it against the local project's keys: <code>brain/guards/brain-auth.guard.ts</code>.</div>
+</div>
+
+<h2 id="steps"><span class="n">2</span> Steps</h2>
+<div class="card">
+  <ol>
+    <li><strong>Prove the token</strong>: <code>GET /api/brain/health</code> with <code>Authorization: Bearer</code> returns 200 and the brain counters.</li>
+    <li><strong>Remember one distinctive sentence</strong>:
+<pre>POST /api/brain/remember
+{"content": "…", "source_type": "document", "source_title": "Lead magnet note"}</pre>
+    Response: <code>{"success": true, "jobId": "…", "status": "queued"}</code>.</li>
+    <li><strong>Watch the job</strong> reach <code>succeeded</code> within about 20 seconds, then read the newest <code>ns_memories</code> row: a <code>memory_type</code>, <code>source_type = document</code>, and <code>embedding is not null</code>.</li>
+    <li><strong>Search by meaning</strong>, with a question that does not reuse the sentence's words:
+<pre>GET /api/brain/search?q=which%20lead%20magnet%20converts%20best&amp;limit=3</pre>
+    Expect the new memory first with a score above about 0.7.</li>
+  </ol>
+  <div class="where">📍 Remember: <code>brain/controllers/memories.controller.ts:39</code> → <code>brain/services/brain-import-jobs-enqueue.base.ts:10</code> <code>enqueueDocumentRemember</code> → job type <code>document_remember</code>, Atlas told <code>target_brain: user</code>, skill <code>knowledge-intake</code> (<code>brain/services/brain-import-jobs-input.base.ts:102-108</code>) → Atlas calls <code>save_user_memory</code> on agent-api · Search: <code>brain/controllers/search.controller.ts:45-63</code>, default mode <code>hybrid</code> → <code>brain/services/brain-retrieval.service.ts</code><br>🗄️ <code>brain_import_jobs</code>, <code>ns_memories</code></div>
+</div>
+
+<h2 id="pass" data-tab="Evidence"><span class="n">3</span> What a pass looks like, from the real run</h2>
+<div class="card">
+  <div class="scenario">
+    <div class="sc-row"><b>Situation</b><span>2026-09-10 00:24 local, test user, Default Brain, sentence: "Our best-performing lead magnet in 2026 is the free ROAS audit checklist; it converts at 38% on LinkedIn traffic."</span></div>
+    <div class="sc-row"><b>What happens</b><span>Health returned 200 with 1 textbook entry and 0 memories. Remember returned job <code>8016bd4c…</code> queued. Processing at +4 s, succeeded at +16 s: "Saved the lead magnet performance fact…".</span></div>
+    <div class="sc-row"><b>What you see</b><span>One <code>ns_memories</code> row, type fact, embedded. Search for "which lead magnet converts best" returned it first, score 0.77, and the webinar technique from the other test second, score 0.64.</span></div>
+    <div class="where">📍 Evidence: api response bodies above; local DB rows; agent-api log around 00:24:40 local.</div>
+  </div>
+</div>
+
+<h2 id="watch" data-tab="Evidence"><span class="n">4</span> Things to watch</h2>
+<div class="card">
+  <ul>
+    <li><strong>Counters disagree.</strong> After the run, health reported <code>total_memories: 1</code> but <code>memory_counts_by_type: {}</code>. Two different queries feed those numbers. Worth a small ticket.</li>
+    <li><strong>Search needs the embedding.</strong> A memory created without one, for example through the api's direct create path, will never be found by meaning. See Problem 3 on the Brain page.</li>
+    <li><strong>This is not the chat door.</strong> The helper in chat still fails to save memories (ROA-29). This test proves the storage and search roads are healthy, which narrows ROA-29 to the agent's instructions.</li>
+  </ul>
+  <div class="where">📍 Counters: <code>brain/repositories/memory-stats.repository.ts</code> <code>getHealthStats</code> vs RPC <code>brain_memory_counts_by_type</code> (<code>supabase/migrations/20260519173400_brain_legend_type_counts.sql</code>) · direct create without embedding: <code>brain/services/memories.service.ts:52</code></div>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">Written from the first successful local run on 2026-09-10. Every path was read from the code that executed.</p>
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>

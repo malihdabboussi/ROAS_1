@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>System map · ROAS Wiki</title>
+<link rel="stylesheet" href="../assets/wiki.css">
+</head>
+<body>
+
+<div class="nav"><div class="in">
+  <a class="brand" href="../index.html">🧭 ROAS Wiki</a>
+  <a class="cat" href="../start-here/index.html">Start here</a>
+  <a class="cat active" href="../system-map/index.html">System map</a>
+  <a class="cat" href="../features/index.html">Features</a>
+  <a class="cat" href="../integrations/index.html">Integrations</a>
+  <a class="cat" href="../issues/index.html">Issues and risks</a>
+  <a class="cat" href="../tests/index.html">Tests and checks</a>
+  <a class="cat" href="../decisions/index.html">Decisions and plans</a>
+  <span class="spacer"></span>
+  <label><input type="checkbox" id="tech"> Show technical details</label>
+</div></div>
+
+<div class="wrap">
+
+<h1>🗺️ System map</h1>
+<div class="meta">
+  <span>Last updated: 2026-09-09</span>
+  <span>Category: System map</span>
+</div>
+<p class="sub">What each part of the system is and how it works. One page per area. This is the backbone of the wiki: every page here links to its issues, tests, and decisions.</p>
+
+<h2><span class="n">1</span> Areas</h2>
+<div class="grid g3">
+  <a class="card kind green" href="brain.html"><div class="em">🧠</div><h3>Brain</h3><small>The notebook the AI helper keeps. Five brain kinds, how data gets in, how it is read, the three biggest problems.</small><br><span class="tag green">mapped</span> <span class="tag gray">ROA-9</span></a>
+  <div class="card kind gray"><div class="em">🖼️</div><h3>Artifacts</h3><small>How the system builds and saves the things it makes for clients, like media from chat.</small><br><span class="tag gray">not mapped yet</span> <span class="tag gray">ROA-21</span></div>
+  <div class="card kind gray"><div class="em">👥</div><h3>Client database</h3><small>The tables that hold client information and how they relate to organizations.</small><br><span class="tag gray">not mapped yet</span> <span class="tag gray">ROA-15</span></div>
+  <div class="card kind gray"><div class="em">🤖</div><h3>Agents and OpenClaw</h3><small>How the AI helpers run, which tools they can call, and how they reach the backend.</small><br><span class="tag gray">not mapped yet</span></div>
+  <div class="card kind gray"><div class="em">📦</div><h3>Spaces and campaigns</h3><small>The containers work is organized in.</small><br><span class="tag gray">not mapped yet</span></div>
+  <div class="card kind gray"><div class="em">🗂️</div><h3>ROAS Portal (Page Grader)</h3><small>The separate client-intel product and how it syncs into ROAS.</small><br><span class="tag gray">partly covered in Brain</span></div>
+</div>
+
+<h2 id="questions"><span class="n">?</span> Questions people asked</h2>
+<div class="card">
+  <p class="empty">No questions yet. Ask about any section of this page; the answer gets written here with the date, so the same question never needs asking twice.</p>
+  <dl class="qa"></dl>
+</div>
+
+<p class="footer">Add an area by copying <code>../_template.html</code> into this folder and adding a card above.</p>
+
+</div>
+<script src="../assets/wiki.js"></script>
+</body>
+</html>
